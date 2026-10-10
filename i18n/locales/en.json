@@ -1,0 +1,391 @@
+{
+  "nav": {
+    "home": "Home",
+    "courses": "Courses",
+    "assignments": "Assignments",
+    "contest": "Contest",
+    "career": "Career",
+    "mentor": "Mentor",
+    "search": "Search",
+    "jumpTo": "Jump to",
+    "collapse": "Collapse menu",
+    "reviews": "Reviews",
+    "cohort": "Cohort",
+    "sessions": "Sessions",
+    "cohorts": "Cohorts",
+    "people": "People",
+    "programs": "Programs",
+    "contests": "Contests"
+  },
+  "common": {
+    "retry": "Retry",
+    "language": "Language",
+    "open": "Open",
+    "soon": "Coming soon",
+    "soonText": "This section is still being built.",
+    "toHome": "Back to home",
+    "synthetic": "Demo data",
+    "saveError": "Could not save. Please try again.",
+    "back": "Back",
+    "optional": "optional"
+  },
+  "time": {
+    "now": "now",
+    "dh": "{d}d {h}h",
+    "hm": "{h}h {m}m",
+    "m": "{m}m",
+    "in": "in {value}"
+  },
+  "home": {
+    "title": "Home",
+    "greeting": "Hi, {name}",
+    "summary": "Week {week} of {total} · cohort {cohort}",
+    "nextUp": "Next up",
+    "nextUpDue": "Due in",
+    "queue": "Queue",
+    "queueEmpty": "All caught up. Check in with your mentor or pick your next course.",
+    "queueEmptyAction": "Open courses",
+    "courses": "External courses",
+    "coursesHint": "Courses live on other sites. Track your progress here.",
+    "coursesEmpty": "Add a link to a course you are taking and track your progress.",
+    "coursesDone": "{done} of {total} done",
+    "mentor": "Mentor",
+    "mentorNext": "Next session",
+    "cohort": "Cohort",
+    "cohortMembers": "{n} students",
+    "contest": "Next contest",
+    "contestIn": "In",
+    "register": "Register",
+    "registered": "You are registered",
+    "unregister": "Cancel registration",
+    "contestNone": "No contest scheduled yet.",
+    "career": "Career",
+    "careerDone": "{done} of {total}",
+    "loadError": "Could not load your data",
+    "loadErrorHint": "Check your connection and try again.",
+    "statusError": "Could not save the course status",
+    "mentorNone": "No mentor assigned yet. The academy will let you know."
+  },
+  "kind": {
+    "session": "Session",
+    "assignment": "Assignment",
+    "quiz": "Quiz",
+    "feedback": "Feedback",
+    "contest": "Contest"
+  },
+  "status": {
+    "todo": "Not started",
+    "in_progress": "In progress",
+    "done": "Done",
+    "label": "Status of {title}"
+  },
+  "careerSteps": {
+    "cv": "CV",
+    "github": "GitHub profile",
+    "mock": "Mock interview",
+    "apply": "First applications",
+    "linkedin": "LinkedIn profile"
+  },
+  "feedbackCount": "{n} new",
+  "roles": {
+    "mentee": "Student",
+    "mentor": "Mentor",
+    "head": "Head of academy"
+  },
+  "auth": {
+    "title": "Sign in to dev.house",
+    "subtitle": "The academy's learning space.",
+    "telegram": "Sign in with Telegram",
+    "or": "or with email",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "noAccount": "No account? Access is by invitation —",
+    "contact": "message the academy",
+    "demo": "Demo accounts (development only)",
+    "demoPassword": "Password",
+    "logout": "Sign out",
+    "account": "Account",
+    "err": {
+      "emailRequired": "Enter your email",
+      "emailInvalid": "That address looks mistyped",
+      "passwordRequired": "Enter your password",
+      "invalid": "Wrong email or password.",
+      "noTelegram": "This Telegram is not linked to an account.",
+      "network": "Can't reach the server. Check your connection and try again."
+    },
+    "contactCta": "Message the academy"
+  },
+  "invite": {
+    "title": "Welcome to dev.house",
+    "subtitle": "{by} invites you to the academy. Set your name and password to get started.",
+    "role": "Role",
+    "program": "Program",
+    "validUntil": "Invitation valid until {date}",
+    "name": "Full name",
+    "nameHint": "Your mentor and cohort will see this",
+    "passwordHelp": "At least 8 characters",
+    "confirm": "Repeat password",
+    "submit": "Create account",
+    "toLogin": "Go to sign in",
+    "used": "This invitation has already been used.",
+    "err": {
+      "name": "Use 2 to 80 characters",
+      "password": "At least 8 characters",
+      "confirm": "Passwords don't match"
+    },
+    "problem": {
+      "missing": {
+        "title": "Invitation not found",
+        "text": "Check the full link or ask the academy for a new one."
+      },
+      "used": {
+        "title": "Invitation already used",
+        "text": "If that was you, just sign in. Otherwise ask for a new link."
+      },
+      "expired": {
+        "title": "Invitation expired",
+        "text": "Links are valid for a limited time. Ask the academy to send a new one."
+      }
+    }
+  },
+  "mentor": {
+    "summary": "{n} submissions waiting for review",
+    "summaryOverdue": "{n} over 48h",
+    "summaryClear": "Review queue is empty",
+    "reviews": "Reviews",
+    "oldestFirst": "Oldest first",
+    "overdue": "> 48h",
+    "waiting": "Waiting for review",
+    "emptyTitle": "All reviewed",
+    "emptyText": "New student submissions will appear here.",
+    "cohort": "Cohort {name}",
+    "week": "week {week} of {total}",
+    "atRisk": "Falling behind",
+    "overdueN": "{n} in review",
+    "coursesDoneLabel": "Courses done: {done} of {total}",
+    "sessions": "Upcoming sessions",
+    "noSessions": "No sessions scheduled."
+  },
+  "head": {
+    "title": "Academy",
+    "summary": "{cohorts} cohorts · {mentees} students",
+    "summaryBacklog": "{n} submissions awaiting review",
+    "summaryRisk": "{n} falling behind",
+    "invite": "Invite",
+    "cohorts": "Cohorts",
+    "sort": "sort",
+    "noMentor": "No mentor",
+    "notStarted": "Not started",
+    "noCohorts": "No cohorts yet.",
+    "invites": "Invitations",
+    "expired": "Expired",
+    "expiresIn": "Expires in {value}",
+    "copyLink": "Copy link for {email}",
+    "linkCopied": "Link copied",
+    "copyFailed": "Could not copy",
+    "noInvites": "No pending invitations.",
+    "mentorLoad": "Mentor load",
+    "oldest": "Oldest submission waiting",
+    "waitingLabel": "Waiting for review: {n}",
+    "contestRegistered": "Registered: {n}",
+    "enterResults": "Enter results",
+    "col": {
+      "cohort": "Cohort",
+      "mentor": "Mentor",
+      "mentees": "Students",
+      "week": "Week",
+      "progress": "Courses",
+      "atRisk": "Behind",
+      "backlog": "Reviews"
+    }
+  },
+  "errors": {
+    "forbidden": "No access",
+    "forbiddenText": "This page isn't available for your role.",
+    "notFound": "Page not found",
+    "generic": "Something went wrong",
+    "genericText": "Try going back to the home page."
+  },
+  "subStatus": {
+    "not_submitted": "Not submitted",
+    "waiting": "In review",
+    "changes": "Changes requested",
+    "accepted": "Accepted"
+  },
+  "assignment": {
+    "notFound": "Assignment not found",
+    "toList": "Back to assignments",
+    "due": "Due",
+    "pastDue": "Past due",
+    "reviewer": "Reviewed by",
+    "summary": "{done} of {total} accepted",
+    "group": {
+      "open": "Open",
+      "done": "Accepted"
+    },
+    "empty": {
+      "open": "All assignments are accepted.",
+      "done": "Nothing accepted yet."
+    }
+  },
+  "submission": {
+    "submit": "Submit your work",
+    "resubmit": "Submit the fixed version",
+    "hint": "Link to a repository or pull request. It goes to your mentor's review queue.",
+    "url": "Link to your work",
+    "note": "Note for your mentor",
+    "notePlaceholder": "What you did, where you got stuck, what to look at",
+    "send": "Send for review",
+    "sentToast": "Sent for review",
+    "sent": "Sent {date}",
+    "history": "Submission history",
+    "waitingTitle": "In review",
+    "waitingText": "{mentor} will review it and leave feedback. You can send a new version after that.",
+    "err": {
+      "urlRequired": "Paste a link to your work",
+      "url": "Use a link starting with http:// or https://",
+      "note": "2000 characters max",
+      "conflict": "This work is already in review or accepted"
+    }
+  },
+  "review": {
+    "notFound": "Submission not found",
+    "toList": "Back to review queue",
+    "waitingFor": "waiting {value}",
+    "work": "Work",
+    "verdict": "Your decision",
+    "feedback": "Feedback",
+    "feedbackHelp": "Required when requesting changes",
+    "feedbackPlaceholder": "What works, what to fix, and why",
+    "accept": "Accept",
+    "requestChanges": "Request changes",
+    "acceptedToast": "Submission accepted",
+    "changesToast": "Changes requested",
+    "yourReview": "Decision",
+    "earlier": "Earlier attempts",
+    "task": "Assignment",
+    "due": "Due: {date}",
+    "err": {
+      "feedbackRequired": "Write what needs fixing",
+      "already": "This submission was already reviewed"
+    },
+    "reviewedOn": "reviewed {date}"
+  },
+  "inviteForm": {
+    "title": "Invite to the academy",
+    "subtitle": "They get a link, set a name and password, and land in their role.",
+    "menteeHint": "Studies in a cohort with a mentor",
+    "mentorHint": "Leads a cohort, reviews work",
+    "cohort": "Cohort",
+    "cohortPlaceholder": "Choose a cohort",
+    "programPlaceholder": "Choose a program",
+    "submit": "Create invitation",
+    "createdTitle": "Invitation created",
+    "createdText": "Send the link to {email}. It's valid until {date}.",
+    "copy": "Copy",
+    "sendHint": "No emails yet: send the link via Telegram or email yourself.",
+    "another": "Invite another",
+    "toPeople": "Back to people",
+    "err": {
+      "cohort": "Choose a cohort for the student",
+      "userExists": "A user with this email already exists",
+      "pending": "This email already has an active invitation"
+    }
+  },
+  "careerHints": {
+    "cv": "One page, program projects, GitHub links",
+    "github": "Pinned repos with READMEs and live demos",
+    "linkedin": "Photo, role headline, projects and stack",
+    "mock": "Mock interview with a mentor or alumnus",
+    "apply": "First 10 applications to internships and junior roles"
+  },
+  "career": {
+    "title": "Job readiness",
+    "subtitle": "Tick steps off as you finish them. Your mentor sees your progress and will suggest what to strengthen."
+  },
+  "queue": {
+    "feedback": "New mentor feedback",
+    "session": {
+      "group": "Group session",
+      "one": "1:1 with your mentor"
+    }
+  },
+  "sessions": {
+    "kind": {
+      "group": "Group session",
+      "one": "1:1"
+    },
+    "mockNote": "Session schedule is demo data for now; rescheduling and booking come later.",
+    "contactTitle": "Need to get in touch?",
+    "contactText": "Message your mentor in the cohort chat. For academy questions, use our Telegram."
+  },
+  "courses": {
+    "add": "Add a course",
+    "addHint": "Any course on another site: paste its title and link.",
+    "title": "Title",
+    "link": "Link",
+    "addButton": "Add",
+    "remove": "Remove course {title}",
+    "removed": "Removed “{title}”",
+    "undo": "Undo",
+    "err": {
+      "title": "Title must be 2 to 120 characters"
+    }
+  },
+  "contest": {
+    "about": "{n} problems in 90 minutes. Solve on LeetCode; the academy enters results.",
+    "past": "Past contests",
+    "you": "you",
+    "solvedLabel": "Solved {n} of {total}",
+    "noResults": "No results yet.",
+    "enter": "Current contest results",
+    "filled": "Entered {n} of {total} · problems: {problems}",
+    "solvedFor": "Problems solved: {name}",
+    "noEntries": "Nobody has registered yet.",
+    "save": "Save results",
+    "saved": "Saved {n} results",
+    "standings": "Standings"
+  },
+  "reviews": {
+    "waiting": "Waiting",
+    "reviewed": "Reviewed",
+    "noneReviewed": "No reviewed submissions yet."
+  },
+  "roster": {
+    "mentee": "Student",
+    "assignments": "Assignments",
+    "courses": "Courses",
+    "waiting": "In review",
+    "flags": "Flags",
+    "empty": "No students in this cohort yet.",
+    "noCohort": "You don't have a cohort assigned yet."
+  },
+  "people": {
+    "all": "All",
+    "plural": {
+      "mentee": "Students",
+      "mentor": "Mentors",
+      "head": "Leadership"
+    },
+    "search": "Name, email or cohort",
+    "name": "Name",
+    "where": "Cohort / program",
+    "noMatch": "No one matches.",
+    "revoke": "Revoke invitation for {email}",
+    "revoked": "Invitation for {email} revoked"
+  },
+  "cohorts": {
+    "hint": "Open a cohort to see its students.",
+    "notFound": "Cohort not found",
+    "toList": "Back to cohorts",
+    "startsOn": "starts {date}"
+  },
+  "programs": {
+    "hint": "Program modules and the cohorts studying them.",
+    "modules": "{n} modules",
+    "cohorts": "cohorts: {n}",
+    "noCohorts": "No cohorts yet.",
+    "editSoon": "Program editing is coming later."
+  }
+}

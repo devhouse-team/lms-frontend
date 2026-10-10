@@ -1,0 +1,237 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-10T08:12:40.131870Z",
+  "title": "Design System: dev.house LMS",
+  "extensions": {
+    "colorMeta": {
+      "signal-yellow": {
+        "role": "primary",
+        "displayName": "Signal Yellow",
+        "canonical": "#FFC700",
+        "tonalRamp": [
+          "#211900",
+          "#3a2c00",
+          "#5e4700",
+          "#8f6c00",
+          "#bf9100",
+          "#e6b200",
+          "#ffc700",
+          "#ffe980"
+        ]
+      },
+      "graphite-night": {
+        "role": "neutral",
+        "displayName": "Graphite Night",
+        "canonical": "#1A1A1A",
+        "tonalRamp": [
+          "#141414",
+          "#1a1a1a",
+          "#1d1d1d",
+          "#232323",
+          "#2c2c2c",
+          "#3d3d3d",
+          "#77777a",
+          "#bcbcc0"
+        ]
+      },
+      "status-done": {
+        "role": "semantic",
+        "displayName": "Status Done",
+        "canonical": "#34D399"
+      },
+      "status-risk": {
+        "role": "semantic",
+        "displayName": "Status Risk",
+        "canonical": "#F87171"
+      },
+      "status-warning": {
+        "role": "semantic",
+        "displayName": "Status Warning",
+        "canonical": "#FBBF24"
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Next up title only."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Page greeting and auth titles."
+      },
+      "section": {
+        "displayName": "Section",
+        "purpose": "Section and rail headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Row titles, form text, prose (max 65ch)."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Badges, status segments, metadata."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Every number, date and duration."
+      },
+      "countdown": {
+        "displayName": "Countdown",
+        "purpose": "Time left in Next up."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "state",
+        "value": "150ms ease-out",
+        "purpose": "Colour and background changes on hover, selection, status."
+      },
+      {
+        "name": "nudge",
+        "value": "translateX(2px) 150ms ease-out",
+        "purpose": "Row chevron on hover."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one next step per view.",
+      "html": "<button class=\"ds-btn-primary\">Открыть <svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M5 12h14M12 5l7 7-7 7\"/></svg></button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;gap:6px;background:#FFC700;color:#1A1A1A;border:0;border-radius:6px;padding:8px 12px;font:500 14px Geist,system-ui,sans-serif;cursor:pointer;transition:background-color 150ms ease-out}.ds-btn-primary:hover{background:#E6B200}.ds-btn-primary:focus-visible{outline:2px solid #FFC700;outline-offset:2px}"
+    },
+    {
+      "name": "Soft Button",
+      "kind": "button",
+      "refersTo": "button-soft",
+      "description": "Secondary call to action in the rail.",
+      "html": "<button class=\"ds-btn-soft\">Записаться</button>",
+      "css": ".ds-btn-soft{background:rgba(255,199,0,.12);color:#FFC700;border:0;border-radius:6px;padding:8px 12px;font:500 14px Geist,system-ui,sans-serif;cursor:pointer;transition:background-color 150ms ease-out}.ds-btn-soft:hover{background:rgba(255,199,0,.2)}.ds-btn-soft:focus-visible{outline:2px solid #FFC700;outline-offset:2px}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Neutral secondary action.",
+      "html": "<button class=\"ds-btn-outline\">Повторить</button>",
+      "css": ".ds-btn-outline{background:transparent;color:#F5F5F4;border:0;box-shadow:inset 0 0 0 1px #3D3D3D;border-radius:6px;padding:8px 12px;font:500 14px Geist,system-ui,sans-serif;cursor:pointer;transition:background-color 150ms ease-out}.ds-btn-outline:hover{background:#232323}.ds-btn-outline:focus-visible{outline:2px solid #FFC700;outline-offset:2px}"
+    },
+    {
+      "name": "Queue List",
+      "kind": "custom",
+      "refersTo": "list-row",
+      "description": "Ruled list frame with figure column and chevron.",
+      "html": "<ul class=\"ds-list\"><li><a class=\"ds-row\" href=\"#\"><span class=\"ds-row-title\">Сессия с ментором</span><span class=\"ds-fig\">1д 3ч</span><span class=\"ds-chev\">›</span></a></li><li><a class=\"ds-row\" href=\"#\"><span class=\"ds-row-title\">Квиз: асинхронный JavaScript</span><span class=\"ds-fig ds-urgent\">18ч 2м</span><span class=\"ds-chev\">›</span></a></li></ul>",
+      "css": ".ds-list{list-style:none;margin:0;padding:0;border-radius:8px;box-shadow:inset 0 0 0 1px #2E2E2E;background:#1A1A1A}.ds-list li+li{border-top:1px solid #2E2E2E}.ds-row{display:flex;align-items:center;gap:12px;padding:12px 16px;color:#F5F5F4;text-decoration:none;font:400 14px Geist,system-ui,sans-serif;transition:background-color 150ms ease-out}.ds-row:hover{background:#232323}.ds-row:focus-visible{outline:2px solid #FFC700;outline-offset:-2px}.ds-row-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ds-fig{font:400 12px 'Geist Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;color:#9C9CA0}.ds-urgent{color:#FFC700}.ds-chev{color:#77777A;transition:transform 150ms ease-out}.ds-row:hover .ds-chev{transform:translateX(2px)}"
+    },
+    {
+      "name": "Course Status Control",
+      "kind": "custom",
+      "refersTo": "status-in-progress",
+      "description": "Three-way segmented status: not started, in progress, done.",
+      "html": "<div class=\"ds-seg\" role=\"radiogroup\"><button role=\"radio\" aria-checked=\"false\">Не начат</button><button role=\"radio\" aria-checked=\"true\" class=\"ds-on-prog\">В процессе</button><button role=\"radio\" aria-checked=\"false\">Пройден</button></div>",
+      "css": ".ds-seg{display:inline-flex;padding:2px;border-radius:6px;background:#1D1D1D;box-shadow:inset 0 0 0 1px #2E2E2E}.ds-seg button{height:28px;padding:0 8px;border:0;border-radius:4px;background:transparent;color:#9C9CA0;font:500 12px Geist,system-ui,sans-serif;cursor:pointer;transition:background-color 150ms ease-out,color 150ms ease-out}.ds-seg button:hover{color:#F5F5F4;background:#232323}.ds-seg button:focus-visible{outline:2px solid #FFC700;outline-offset:1px}.ds-seg .ds-on-prog{background:rgba(255,199,0,.15);color:#FFC700;box-shadow:inset 0 0 0 1px rgba(255,199,0,.4)}"
+    },
+    {
+      "name": "Next Up Panel",
+      "kind": "card",
+      "refersTo": "next-up-panel",
+      "description": "The single raised panel: what to do next.",
+      "html": "<section class=\"ds-next\"><span class=\"ds-badge\">Задание</span><h2>Ревью кода: корзина на Vue</h2><div class=\"ds-next-foot\"><div><p class=\"ds-next-lbl\">Сдать через</p><p class=\"ds-count\">2д 4ч</p></div><button class=\"ds-btn-primary\">Открыть</button></div></section>",
+      "css": ".ds-next{background:#232323;box-shadow:inset 0 0 0 1px #2E2E2E;border-radius:8px;padding:24px;color:#F5F5F4;font-family:Geist,system-ui,sans-serif}.ds-next h2{margin:12px 0 0;font:600 28px/1.2 Geist,system-ui,sans-serif;letter-spacing:-.025em}.ds-badge{font:500 12px Geist,sans-serif;padding:2px 6px;border-radius:4px;box-shadow:inset 0 0 0 1px #3D3D3D;color:#BCBCC0}.ds-next-foot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:24px}.ds-next-lbl{margin:0;font-size:14px;color:#9C9CA0}.ds-count{margin:2px 0 0;font:500 30px 'Geist Mono',monospace;font-variant-numeric:tabular-nums}.ds-btn-primary{background:#FFC700;color:#1A1A1A;border:0;border-radius:6px;padding:10px 14px;font:500 14px Geist,sans-serif;cursor:pointer}.ds-btn-primary:hover{background:#E6B200}.ds-btn-primary:focus-visible{outline:2px solid #FFC700;outline-offset:2px}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Large field with label above.",
+      "html": "<label class=\"ds-field\"><span>Email</span><input class=\"ds-input\" type=\"email\" placeholder=\"you@devhouse.kz\"></label>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:6px;font:500 14px Geist,system-ui,sans-serif;color:#F5F5F4}.ds-input{height:40px;padding:0 12px;border:0;border-radius:6px;background:#1A1A1A;color:#F5F5F4;box-shadow:inset 0 0 0 1px #3D3D3D;font:400 14px Geist,sans-serif;caret-color:#FFC700}.ds-input::placeholder{color:#77777A}.ds-input:focus-visible{outline:none;box-shadow:inset 0 0 0 2px #FFC700}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Night Shift Desk",
+    "overview": "The dev.house mentors are working engineers who mentor after hours, and their students study around jobs and university. The interface is the desk they sit at in the evening: a dark graphite surface, everything in reach, nothing shouting. A single desk lamp, Signal Yellow, lights the one thing that needs you now. Density is a feature: ruled lists and tables with hairline dividers, figures in Geist Mono with tabular numerals. Depth comes from tone, not shadow. Motion is short and only reports state.",
+    "keyCharacteristics": [
+      "Dark-first graphite ground, tonal layering instead of shadows",
+      "One yellow signal per view; status is a tint, never a heavy fill",
+      "Ruled lists and tables over card grids",
+      "Geist for words, Geist Mono for every figure",
+      "Main column plus a quiet right-hand context rail",
+      "Flat, exact controls with hairline rings and visible focus"
+    ],
+    "rules": [
+      {
+        "name": "The One Lamp Rule",
+        "body": "Only one element per view is filled solid Signal Yellow: the next step. Every other use of yellow is text, a ring, or the Signal Yellow Ink tint.",
+        "section": "colors"
+      },
+      {
+        "name": "The Status-Is-A-Tint Rule",
+        "body": "Status is shown as a tinted background with matching text and a 1px inset ring, never as a solid fill.",
+        "section": "colors"
+      },
+      {
+        "name": "The Never-Colour-Alone Rule",
+        "body": "Every coloured status also carries a word or an icon, so meaning survives without colour.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mono-For-Figures Rule",
+        "body": "If it is a number, a date or a duration, it is set in Geist Mono with tabular numerals. Mono is never used for prose or for technical decoration.",
+        "section": "typography"
+      },
+      {
+        "name": "The Small Section Rule",
+        "body": "Section headings are 14px semibold. Hierarchy comes from the content's own weight, not from big section titles.",
+        "section": "typography"
+      },
+      {
+        "name": "The Main-And-Rail Rule",
+        "body": "The main column holds what you act on; the rail holds context about who and when. New role homes follow the same split.",
+        "section": "layout"
+      },
+      {
+        "name": "The Tone-Not-Shadow Rule",
+        "body": "To lift something, move it one step up the graphite ladder and give it a hairline ring. Never add a drop shadow or glow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep exactly one solid Signal Yellow element per view: the next step.",
+      "Do set every number, date and duration in Geist Mono with tabular numerals.",
+      "Do group items in one ruled list frame with hairline dividers.",
+      "Do pair every status colour with a word or icon.",
+      "Do turn time figures yellow only when they cross a real threshold (under 24h to a deadline, over 48h waiting).",
+      "Do use skeletons for loading and empty states that tell the user what to do next.",
+      "Do theme browser surfaces from the palette: yellow selection, caret and focus ring, graphite scrollbars."
+    ],
+    "donts": [
+      "Don't build pages from grids of same-size cards with stock illustrations; this is not a course catalogue.",
+      "Don't add gamification: streaks, XP, badges, confetti.",
+      "Don't add drop shadows or glows; use the graphite ladder and hairline rings.",
+      "Don't put an eyebrow or kicker label above a heading.",
+      "Don't fill status pills solid; status is always a tint plus a ring.",
+      "Don't use Text Dimmed for anything a user must read.",
+      "Don't use Geist Mono for prose or as a \"techy\" costume.",
+      "Don't use a modal where an inline control works (course status, contest registration)."
+    ]
+  }
+}
