@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import type { CohortRoster } from '~~/shared/types'
-
 definePageMeta({ roles: ['mentor'] })
 
 const { t } = useI18n()
 useHead({ title: () => `${t('nav.cohort')} · dev.house` })
-const { data, status, refresh } = await useFetch<CohortRoster[]>('/api/cohorts/mine', { key: 'cohorts-mine' })
+const { data, status, refresh } = await useFetch('/api/cohorts/mine', { key: 'cohorts-mine' })
 </script>
 
 <template>

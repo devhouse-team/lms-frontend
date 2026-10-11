@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import type { HeadDashboard } from '~~/shared/types'
-
 const { t, locale } = useI18n()
 const toast = useToast()
-const { data, status, refresh } = useFetch<HeadDashboard>('/api/dashboard/head', { key: 'dashboard-head' })
+const { data, status, refresh } = useFetch('/api/dashboard/head', { key: 'dashboard-head' })
 const { left, ago, stale } = useCountdown()
 
 const fmtDate = (iso: string, opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale.value, opts).format(new Date(iso))

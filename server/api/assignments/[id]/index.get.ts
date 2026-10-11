@@ -2,7 +2,8 @@ import type { AssignmentDetail } from '~~/shared/types'
 
 export default defineEventHandler(async (event): Promise<AssignmentDetail> => {
   const user = await requireRole(event, 'mentee')
-  const a = db.assignments.find(x => x.id === getRouterParam(event, 'id') && x.cohortId === user.cohortId)
+  const id = await requireIdParam(event)
+  const a = db.assignments.find(x => x.id === id && x.cohortId === user.cohortId)
   if (!a) throw createError({ statusCode: 404, statusMessage: 'Assignment not found' })
   const cohort = db.cohorts.find(c => c.id === a.cohortId)!
   const mentor = db.users.find(u => u.id === cohort.mentorId)

@@ -2,7 +2,7 @@ import type { ReviewDetail } from '~~/shared/types'
 
 export default defineEventHandler(async (event): Promise<ReviewDetail> => {
   const mentor = await requireRole(event, 'mentor')
-  const { sub, mentee, cohort } = requireOwnSubmission(mentor.id, getRouterParam(event, 'id'))
+  const { sub, mentee, cohort } = requireOwnSubmission(mentor.id, await requireIdParam(event))
   const a = db.assignments.find(x => x.id === sub.assignmentId)!
   return {
     id: sub.id,

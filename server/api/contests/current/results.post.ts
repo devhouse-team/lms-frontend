@@ -1,6 +1,7 @@
 import { z } from 'zod'
+import type { ContestView } from '~~/shared/types'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event): Promise<ContestView> => {
   await requireRole(event, 'head')
   const c = db.contest
   const body = z.object({

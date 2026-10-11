@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { StudentDashboard } from '~~/shared/types'
-
 definePageMeta({ roles: ['mentee'] })
 
 const { t } = useI18n()
@@ -8,7 +6,7 @@ const toast = useToast()
 useHead({ title: () => `${t('nav.career')} · dev.house` })
 
 // Career steps live on the mentee dashboard payload; reuse its cache key
-const { data, status, refresh } = await useFetch<StudentDashboard>('/api/dashboard/mentee', { key: 'dashboard-mentee' })
+const { data, status, refresh } = await useFetch('/api/dashboard/mentee', { key: 'dashboard-mentee' })
 const done = computed(() => data.value?.career.filter(s => s.done).length ?? 0)
 
 async function toggle(id: string) {

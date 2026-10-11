@@ -1,7 +1,7 @@
-import type { CourseStatus, StudentDashboard } from '~~/shared/types'
+import type { CourseStatus } from '~~/shared/types'
 
 export function useStudentDashboard() {
-  const { data, status, error, refresh } = useFetch<StudentDashboard>('/api/dashboard/mentee', { key: 'dashboard-mentee' })
+  const { data, status, error, refresh } = useFetch('/api/dashboard/mentee', { key: 'dashboard-mentee' })
 
   async function setCourseStatus(id: string, next: CourseStatus) {
     const course = data.value?.courses.find(c => c.id === id)

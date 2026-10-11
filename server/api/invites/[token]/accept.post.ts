@@ -1,10 +1,11 @@
 import type { DbUser } from '../../../utils/db'
 import { z } from 'zod'
+import type { AuthResponse } from '~~/shared/types'
 
 const body = z.object({ name: z.string().trim().min(2).max(80), password: z.string().min(8).max(128) })
 
-export default defineEventHandler(async (event) => {
-  const token = getRouterParam(event, 'token')
+export default defineEventHandler(async (event): Promise<AuthResponse> => {
+  const token = await requireTokenParam(event)
   const inv = db.invites.find(i => i.token === token)
   if (!inv) throw createError({ statusCode: 404, statusMessage: 'Invite not found' })
   if (inv.acceptedAt) throw createError({ statusCode: 410, statusMessage: 'Invite already used' })

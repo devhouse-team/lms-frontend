@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import type { ProgramView } from '~~/shared/types'
-
 definePageMeta({ roles: ['head'] })
 const { t } = useI18n()
 useHead({ title: () => `${t('nav.programs')} · dev.house` })
-const { data, status, refresh } = await useFetch<ProgramView[]>('/api/programs', { key: 'programs' })
+const { data, status, refresh } = await useFetch('/api/programs', { key: 'programs' })
 </script>
 
 <template>

@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import type { MentorProfile } from '~~/shared/types'
-
 definePageMeta({ roles: ['mentee'] })
 
 const { t, locale } = useI18n()
 const { left } = useCountdown()
 useHead({ title: () => `${t('nav.mentor')} · dev.house` })
 
-const { data, status, refresh } = await useFetch<MentorProfile>('/api/mentor/profile', { key: 'mentor-profile' })
+const { data, status, refresh } = await useFetch('/api/mentor/profile', { key: 'mentor-profile' })
 const fmt = (iso: string) => new Intl.DateTimeFormat(locale.value, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
 </script>
 

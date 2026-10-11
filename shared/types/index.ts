@@ -283,3 +283,22 @@ export interface MentorProfile {
   cohortName: string
   sessions: SessionItem[]
 }
+
+/* ---------- mutation responses ---------- */
+
+export interface OkResponse {
+  ok: true
+}
+
+export interface AuthResponse {
+  role: Role
+}
+
+export interface CourseStatusUpdate {
+  id: string
+  status: CourseStatus
+}
+
+export interface ContestRegistration {
+  registered: boolean
+}

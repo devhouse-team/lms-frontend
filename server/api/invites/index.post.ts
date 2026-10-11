@@ -1,5 +1,5 @@
-
 import { z } from 'zod'
+import type { InvitePublic } from '~~/shared/types'
 
 const body = z.object({
   email: z.string().trim().toLowerCase().email().max(200),
@@ -10,7 +10,7 @@ const body = z.object({
 
 const INVITE_TTL_MS = 7 * DAY_MS
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event): Promise<InvitePublic> => {
   const head = await requireRole(event, 'head')
   const { email, role, cohortId, program } = await readValidatedBody(event, body.parse)
 

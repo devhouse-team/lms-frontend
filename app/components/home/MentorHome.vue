@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import type { MentorDashboard } from '~~/shared/types'
-
 const { t, locale } = useI18n()
-const { data, status, refresh } = useFetch<MentorDashboard>('/api/dashboard/mentor', { key: 'dashboard-mentor' })
+const { data, status, refresh } = useFetch('/api/dashboard/mentor', { key: 'dashboard-mentor' })
 const { ago, left, stale } = useCountdown()
 
 const fmtDate = (iso: string, opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale.value, opts).format(new Date(iso))

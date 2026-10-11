@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import type { ReviewListItem } from '~~/shared/types'
-
 definePageMeta({ roles: ['mentor'] })
 
 const { t, locale } = useI18n()
 const { ago, stale } = useCountdown()
 useHead({ title: () => `${t('nav.reviews')} · dev.house` })
 
-const { data, status, refresh } = await useFetch<{ waiting: ReviewListItem[], reviewed: ReviewListItem[] }>('/api/reviews', { key: 'reviews' })
+const { data, status, refresh } = await useFetch('/api/reviews', { key: 'reviews' })
 const tab = ref<'waiting' | 'reviewed'>('waiting')
 const items = computed(() => data.value?.[tab.value] ?? [])
 const fmt = (iso: string) => new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(iso))

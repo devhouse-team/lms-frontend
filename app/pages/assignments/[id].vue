@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { z } from 'zod'
-import type { AssignmentDetail } from '~~/shared/types'
 
 definePageMeta({ roles: ['mentee'] })
 
@@ -10,7 +9,7 @@ const toast = useToast()
 const { left, urgent } = useCountdown()
 
 const id = computed(() => String(route.params.id))
-const { data, status, error, refresh } = await useFetch<AssignmentDetail>(() => `/api/assignments/${id.value}`)
+const { data, status, error, refresh } = await useFetch(() => `/api/assignments/${id.value}`)
 useHead({ title: () => `${data.value?.title ?? t('nav.assignments')} · dev.house` })
 
 const fmt = (iso: string) => new Intl.DateTimeFormat(locale.value, { weekday: 'short', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }).format(new Date(iso))

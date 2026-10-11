@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { SubmissionView } from '~~/shared/types'
 import type { DbSubmission } from '../../../utils/db'
 
 const body = z.object({
@@ -6,9 +7,10 @@ const body = z.object({
   note: z.string().trim().max(2000).optional()
 })
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event): Promise<SubmissionView> => {
   const user = await requireRole(event, 'mentee')
-  const a = db.assignments.find(x => x.id === getRouterParam(event, 'id') && x.cohortId === user.cohortId)
+  const id = await requireIdParam(event)
+  const a = db.assignments.find(x => x.id === id && x.cohortId === user.cohortId)
   if (!a) throw createError({ statusCode: 404, statusMessage: 'Assignment not found' })
 
   const status = assignmentStatus(user.id, a.id)

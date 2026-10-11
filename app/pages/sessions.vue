@@ -7,7 +7,7 @@ const { t, locale } = useI18n()
 const { left } = useCountdown()
 useHead({ title: () => `${t('nav.sessions')} · dev.house` })
 
-const { data, status, refresh } = await useFetch<SessionItem[]>('/api/sessions', { key: 'sessions' })
+const { data, status, refresh } = await useFetch('/api/sessions', { key: 'sessions' })
 const dayKey = (iso: string) => new Intl.DateTimeFormat(locale.value, { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(iso))
 const time = (iso: string) => new Intl.DateTimeFormat(locale.value, { hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
 

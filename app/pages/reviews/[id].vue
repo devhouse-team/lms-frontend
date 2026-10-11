@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { ReviewDetail, ReviewListItem } from '~~/shared/types'
-
 definePageMeta({ roles: ['mentor'] })
 
 const route = useRoute()
@@ -9,7 +7,7 @@ const toast = useToast()
 const { ago, stale } = useCountdown()
 
 const id = computed(() => String(route.params.id))
-const { data, status, error, refresh } = await useFetch<ReviewDetail>(() => `/api/reviews/${id.value}`)
+const { data, status, error, refresh } = await useFetch(() => `/api/reviews/${id.value}`)
 useHead({ title: () => `${data.value?.assignment.title ?? t('nav.reviews')} · dev.house` })
 
 const fmt = (iso: string) => new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
@@ -30,7 +28,7 @@ async function decide(verdict: 'accepted' | 'changes') {
     toast.add({ title: verdict === 'accepted' ? t('review.acceptedToast') : t('review.changesToast'), icon: 'i-lucide-check', color: 'success' })
     clearNuxtData(['dashboard-mentor', 'reviews'])
     // Move straight to the next oldest submission, if any
-    const next = await $fetch<{ waiting: ReviewListItem[] }>('/api/reviews').then(r => r.waiting.find(w => w.id !== id.value)).catch(() => undefined)
+    const next = await $fetch('/api/reviews').then(r => r.waiting.find(w => w.id !== id.value)).catch(() => undefined)
     feedback.value = ''
     await navigateTo(next ? next.to : '/reviews')
   } catch (e) {

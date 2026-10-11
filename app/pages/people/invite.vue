@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { z } from 'zod'
-import type { CohortOption, InvitePublic, ProgramSlug } from '~~/shared/types'
+import type { InvitePublic, ProgramSlug } from '~~/shared/types'
 
 definePageMeta({ roles: ['head'] })
 
@@ -8,7 +8,7 @@ const { t, locale } = useI18n()
 const toast = useToast()
 useHead({ title: () => `${t('inviteForm.title')} · dev.house` })
 
-const { data: cohorts } = await useFetch<CohortOption[]>('/api/cohorts/options', { default: () => [] })
+const { data: cohorts } = await useFetch('/api/cohorts/options', { default: () => [] })
 
 const programs: { value: ProgramSlug, label: string }[] = [
   { value: 'frontend', label: 'Frontend Development' },
@@ -39,7 +39,7 @@ const link = computed(() => created.value && import.meta.client ? `${window.loca
 async function onSubmit() {
   sending.value = true
   try {
-    created.value = await $fetch<InvitePublic>('/api/invites', {
+    created.value = await $fetch('/api/invites', {
       method: 'POST',
       body: { email: state.email.trim(), role: state.role, cohortId: state.role === 'mentee' ? state.cohortId : undefined, program: state.role === 'mentor' ? state.program : undefined }
     })

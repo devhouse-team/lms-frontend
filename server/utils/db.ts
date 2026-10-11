@@ -3,7 +3,7 @@
  * credentials and photos (from devhouse-client) and program modules.
  * State resets when the server restarts. Replace with the real API later.
  */
-import type { CourseStatus, ProgramSlug, Role } from '~~/shared/types'
+import type { CourseStatus, ProgramSlug, Role, SubmissionStatus } from '~~/shared/types'
 import { programs } from '../data/programs'
 
 const HOUR = 3_600_000
@@ -11,6 +11,8 @@ const DAY = 24 * HOUR
 const WEEK = 7 * DAY
 
 export const DEMO_PASSWORD = 'devhouse'
+/** Shared test-account password. Override per environment with NUXT_TEST_PASSWORD. */
+const TEST_PASSWORD = useRuntimeConfig().testPassword || DEMO_PASSWORD
 
 export interface DbUser {
   id: string
@@ -42,8 +44,6 @@ export interface DbCourse {
   url: string
   status: CourseStatus
 }
-
-export type SubmissionStatus = 'waiting' | 'changes' | 'accepted'
 
 export interface DbSubmission {
   id: string
@@ -86,10 +86,12 @@ const mentors: DbUser[] = [
   { id: 'm-yerassyl', role: 'mentor', name: 'Ерасыл Болат', email: 'yerassyl@demo.devhouse.kz', password: DEMO_PASSWORD, title: 'Frontend Developer' },
   { id: 'm-yedige', role: 'mentor', name: 'Едиге Аширбек', email: 'yedige@demo.devhouse.kz', password: DEMO_PASSWORD, avatar: '/mentors/yedige-ashirbek.jpg', title: 'Ex iOS intern @Yandex' },
   { id: 'm-daulet', role: 'mentor', name: 'Даулет Дандыкулов', email: 'daulet@demo.devhouse.kz', password: DEMO_PASSWORD, avatar: '/mentors/daulet-dandykulov.jpg', title: 'ML Engineer' },
-  { id: 'm-abdurroshid', role: 'mentor', name: 'Абдуррошид Жаңаберген', email: 'abdurroshid@demo.devhouse.kz', password: DEMO_PASSWORD, avatar: '/mentors/abdurroshid-zhanabergen.jpg', title: 'ICPC 2x semifinalist' }
+  { id: 'm-abdurroshid', role: 'mentor', name: 'Абдуррошид Жаңаберген', email: 'abdurroshid@demo.devhouse.kz', password: DEMO_PASSWORD, avatar: '/mentors/abdurroshid-zhanabergen.jpg', title: 'ICPC 2x semifinalist' },
+  { id: 'm-test', role: 'mentor', name: 'Test Mentor', email: 'test.mentor@devhouse.kz', password: TEST_PASSWORD, title: 'QA test account' }
 ]
 
 const head: DbUser = { id: 'h-1', role: 'head', name: 'Сауле Ахметова', email: 'head@demo.devhouse.kz', password: DEMO_PASSWORD }
+const testHead: DbUser = { id: 'h-test', role: 'head', name: 'Test Head', email: 'test.head@devhouse.kz', password: TEST_PASSWORD }
 
 const cohorts: DbCohort[] = [
   { id: 'c-fe7', name: 'FE-7', program: 'frontend', mentorId: 'm-nurzhan', startAt: now - 5 * WEEK - 2 * DAY, totalWeeks: 26 },
@@ -112,7 +114,7 @@ const menteeNames: Record<string, string[]> = {
 const translit = (s: string) => s.toLowerCase().split(' ')[0]!
   .replace(/[аә]/g, 'a').replace(/б/g, 'b').replace(/в/g, 'v').replace(/[гғ]/g, 'g').replace(/д/g, 'd').replace(/е/g, 'e').replace(/ж/g, 'zh').replace(/з/g, 'z').replace(/[иі]/g, 'i').replace(/й/g, 'y').replace(/[кқ]/g, 'k').replace(/л/g, 'l').replace(/м/g, 'm').replace(/[нң]/g, 'n').replace(/[оө]/g, 'o').replace(/п/g, 'p').replace(/р/g, 'r').replace(/с/g, 's').replace(/т/g, 't').replace(/[уұү]/g, 'u').replace(/ф/g, 'f').replace(/[хһ]/g, 'h').replace(/ц/g, 'ts').replace(/ч/g, 'ch').replace(/ш/g, 'sh').replace(/щ/g, 'sch').replace(/[ыь]/g, '').replace(/э/g, 'e').replace(/ю/g, 'yu').replace(/я/g, 'ya')
 
-const mentees: DbUser[] = Object.entries(menteeNames).flatMap(([cohortId, names]) =>
+const seededMentees: DbUser[] = Object.entries(menteeNames).flatMap(([cohortId, names]) =>
   names.map((name, i) => ({
     id: `s-${cohortId}-${i}`,
     role: 'mentee' as const,
@@ -123,6 +125,11 @@ const mentees: DbUser[] = Object.entries(menteeNames).flatMap(([cohortId, names]
     ...(cohortId === 'c-fe7' && i === 0 ? { email: 'aliya@demo.devhouse.kz', telegram: '@aliya_demo' } : {})
   }))
 )
+
+const mentees: DbUser[] = [
+  ...seededMentees,
+  { id: 's-test', role: 'mentee', name: 'Test Student', email: 'test.mentee@devhouse.kz', password: TEST_PASSWORD, cohortId: 'c-fe7' }
+]
 
 const courseCatalog: Record<ProgramSlug, Omit<DbCourse, 'id' | 'userId' | 'status'>[]> = {
   frontend: [
@@ -283,7 +290,7 @@ const contests: DbContest[] = [
 export const db = {
   now,
   programs,
-  users: [head, ...mentors, ...mentees],
+  users: [head, testHead, ...mentors, ...mentees],
   cohorts,
   courses,
   assignments,

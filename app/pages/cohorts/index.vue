@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import type { CohortRow } from '~~/shared/types'
-
 definePageMeta({ roles: ['head'] })
 const { t } = useI18n()
 useHead({ title: () => `${t('nav.cohorts')} · dev.house` })
-const { data, status, refresh } = await useFetch<CohortRow[]>('/api/cohorts', { key: 'cohorts' })
+const { data, status, refresh } = await useFetch('/api/cohorts', { key: 'cohorts' })
 </script>
 
 <template>

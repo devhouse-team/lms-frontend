@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { ContestsResponse } from '~~/shared/types'
-
 definePageMeta({ roles: ['mentee', 'mentor'] })
 
 const { t, locale } = useI18n()
@@ -9,7 +7,7 @@ const { role, user } = useAuth()
 const { left } = useCountdown()
 useHead({ title: () => `${t('nav.contest')} · dev.house` })
 
-const { data, status, refresh } = await useFetch<ContestsResponse>('/api/contests', { key: 'contests' })
+const { data, status, refresh } = await useFetch('/api/contests', { key: 'contests' })
 const fmt = (iso: string, withTime = true) => new Intl.DateTimeFormat(locale.value, withTime
   ? { weekday: 'short', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }
   : { day: 'numeric', month: 'long' }).format(new Date(iso))

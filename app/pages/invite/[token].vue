@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { z } from 'zod'
-import type { InvitePublic } from '~~/shared/types'
 
 definePageMeta({ layout: 'auth', public: true })
 
@@ -9,7 +8,7 @@ const { t, locale } = useI18n()
 const { afterLogin } = useAuth()
 const token = computed(() => String(route.params.token))
 
-const { data: invite, error, status } = await useFetch<InvitePublic>(() => `/api/invites/${token.value}`)
+const { data: invite, error, status } = await useFetch(() => `/api/invites/${token.value}`)
 useHead({ title: () => `${t('invite.title')} · dev.house` })
 
 const problem = computed<'missing' | 'used' | 'expired' | null>(() => {

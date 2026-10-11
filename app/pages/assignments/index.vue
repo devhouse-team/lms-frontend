@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { AssignmentListItem } from '~~/shared/types'
-
 definePageMeta({ roles: ['mentee'] })
 
 const { t, locale } = useI18n()
@@ -8,7 +6,7 @@ const { left, urgent } = useCountdown()
 const now = useNow()
 useHead({ title: () => `${t('nav.assignments')} · dev.house` })
 
-const { data, status, refresh } = await useFetch<AssignmentListItem[]>('/api/assignments', { key: 'assignments' })
+const { data, status, refresh } = await useFetch('/api/assignments', { key: 'assignments' })
 const fmt = (iso: string) => new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'short' }).format(new Date(iso))
 
 const open = computed(() => (data.value ?? []).filter(a => a.status !== 'accepted'))

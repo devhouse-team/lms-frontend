@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { ContestEntry, ContestsResponse } from '~~/shared/types'
-
 definePageMeta({ roles: ['head'] })
 
 const { t, locale } = useI18n()
@@ -9,8 +7,8 @@ const { left } = useCountdown()
 useHead({ title: () => `${t('nav.contests')} · dev.house` })
 
 const [{ data, status, refresh }, { data: entries, refresh: refreshEntries }] = await Promise.all([
-  useFetch<ContestsResponse>('/api/contests', { key: 'contests' }),
-  useFetch<ContestEntry[]>('/api/contests/current/entries', { key: 'contest-entries', default: () => [] })
+  useFetch('/api/contests', { key: 'contests' }),
+  useFetch('/api/contests/current/entries', { key: 'contest-entries', default: () => [] })
 ])
 
 const fmt = (iso: string, withTime = true) => new Intl.DateTimeFormat(locale.value, withTime

@@ -50,7 +50,7 @@ export function cohortRoster(c: DbCohort, now = Date.now()): CohortRoster {
 }
 
 /** Head sees every cohort; a mentor only their own. */
-export function requireCohortAccess(user: { id: string, role: string }, cohortId?: string) {
+export function requireCohortAccess(user: { id: string, role: string }, cohortId: string) {
   const c = db.cohorts.find(x => x.id === cohortId)
   if (!c || (user.role === 'mentor' && c.mentorId !== user.id) || user.role === 'mentee') {
     throw createError({ statusCode: 404, statusMessage: 'Cohort not found' })

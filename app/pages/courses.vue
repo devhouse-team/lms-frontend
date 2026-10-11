@@ -8,7 +8,7 @@ const { t } = useI18n()
 const toast = useToast()
 useHead({ title: () => `${t('nav.courses')} · dev.house` })
 
-const { data, status, refresh } = await useFetch<ExternalCourse[]>('/api/courses', { key: 'courses' })
+const { data, status, refresh } = await useFetch('/api/courses', { key: 'courses' })
 const done = computed(() => data.value?.filter(c => c.status === 'done').length ?? 0)
 
 async function onChange(id: string, next: CourseStatus) {
@@ -48,7 +48,7 @@ async function onRemove(id: string) {
 
 async function restore(c: ExternalCourse, idx: number) {
   try {
-    const created = await $fetch<ExternalCourse>('/api/courses', { method: 'POST', body: { title: c.title, url: c.url } })
+    const created = await $fetch('/api/courses', { method: 'POST', body: { title: c.title, url: c.url } })
     if (c.status !== 'todo') {
       await $fetch(`/api/courses/${created.id}/status`, { method: 'PATCH', body: { status: c.status } })
       created.status = c.status
@@ -70,7 +70,7 @@ const adding = ref(false)
 async function onAdd() {
   adding.value = true
   try {
-    const c = await $fetch<ExternalCourse>('/api/courses', { method: 'POST', body: { title: state.title.trim(), url: state.url.trim() } })
+    const c = await $fetch('/api/courses', { method: 'POST', body: { title: state.title.trim(), url: state.url.trim() } })
     data.value?.push(c)
     state.title = ''
     state.url = ''

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { PeopleResponse, Role } from '~~/shared/types'
+import type { Role } from '~~/shared/types'
 
 definePageMeta({ roles: ['head'] })
 
@@ -8,7 +8,7 @@ const toast = useToast()
 const { left } = useCountdown()
 useHead({ title: () => `${t('nav.people')} · dev.house` })
 
-const { data, status, refresh } = await useFetch<PeopleResponse>('/api/people', { key: 'people' })
+const { data, status, refresh } = await useFetch('/api/people', { key: 'people' })
 
 const filter = ref<'all' | Role>('all')
 const q = ref('')

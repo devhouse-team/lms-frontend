@@ -29,7 +29,7 @@ export function assignmentStatus(menteeId: string, assignmentId: string): Assign
 }
 
 /** Mentor may act on a submission only if the mentee is in one of their cohorts */
-export function requireOwnSubmission(mentorId: string, submissionId?: string) {
+export function requireOwnSubmission(mentorId: string, submissionId: string) {
   const sub = db.submissions.find(s => s.id === submissionId)
   const mentee = sub && db.users.find(u => u.id === sub.menteeId)
   const cohort = mentee && db.cohorts.find(c => c.id === mentee.cohortId)
