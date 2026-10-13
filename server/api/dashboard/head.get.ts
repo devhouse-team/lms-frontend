@@ -9,7 +9,7 @@ export default defineEventHandler(async (event): Promise<HeadDashboard> => {
 
   const mentorLoad: MentorLoad[] = db.users.filter(u => u.role === 'mentor').map((m) => {
     const cohortIds = new Set(db.cohorts.filter(c => c.mentorId === m.id).map(c => c.id))
-    const menteeIds = new Set(db.users.filter(u => u.cohortId && cohortIds.has(u.cohortId)).map(u => u.id))
+    const menteeIds = new Set(db.users.filter(u => u.cohortId && cohortIds.has(u.cohortId) && isCounted(u)).map(u => u.id))
     const waiting = pending.filter(s => menteeIds.has(s.menteeId))
     const oldest = waiting.reduce<number | undefined>((min, s) => (min === undefined || s.submittedAt < min ? s.submittedAt : min), undefined)
     return { id: m.id, name: m.name, avatar: m.avatar, waiting: waiting.length, oldestAt: oldest ? new Date(oldest).toISOString() : undefined }

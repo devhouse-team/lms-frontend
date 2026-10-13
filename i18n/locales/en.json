@@ -27,7 +27,9 @@
     "synthetic": "Demo data",
     "saveError": "Could not save. Please try again.",
     "back": "Back",
-    "optional": "optional"
+    "optional": "optional",
+    "cancel": "Cancel",
+    "save": "Save"
   },
   "time": {
     "now": "now",
@@ -359,7 +361,8 @@
     "waiting": "In review",
     "flags": "Flags",
     "empty": "No students in this cohort yet.",
-    "noCohort": "You don't have a cohort assigned yet."
+    "noCohort": "You don't have a cohort assigned yet.",
+    "status": "Status"
   },
   "people": {
     "all": "All",
@@ -375,11 +378,66 @@
     "revoke": "Revoke invitation for {email}",
     "revoked": "Invitation for {email} revoked"
   },
+  "assignments": {
+    "manage": "Assignments",
+    "add": "Add assignment",
+    "none": "No assignments yet.",
+    "due": "due {date}",
+    "submissions": "submissions: {n}",
+    "delete": "Delete assignment",
+    "confirmDelete": "Delete assignment \"{title}\"?",
+    "deleted": "Assignment deleted",
+    "hasSubmissions": "Can't delete: this assignment already has submissions.",
+    "created": "Assignment created",
+    "saved": "Changes saved",
+    "createTitle": "New assignment",
+    "editTitle": "Edit assignment",
+    "title": "Title",
+    "description": "Description",
+    "dueAt": "Due date and time",
+    "err": {
+      "title": "Enter a title (2+ characters)",
+      "description": "Add a description",
+      "dueAt": "Set a due date"
+    }
+  },
   "cohorts": {
     "hint": "Open a cohort to see its students.",
     "notFound": "Cohort not found",
     "toList": "Back to cohorts",
-    "startsOn": "starts {date}"
+    "startsOn": "starts {date}",
+    "create": "Create cohort",
+    "edit": "Edit",
+    "createTitle": "New cohort",
+    "editTitle": "Cohort settings",
+    "name": "Name",
+    "program": "Program",
+    "programPlaceholder": "Choose a program",
+    "startAt": "Start date",
+    "totalWeeks": "Duration, weeks",
+    "mentor": "Mentor",
+    "mentorPlaceholder": "No mentor",
+    "created": "Cohort \"{name}\" created",
+    "saved": "Changes saved",
+    "err": {
+      "name": "Enter a name (2+ characters)",
+      "program": "Choose a program",
+      "startAt": "Enter a start date",
+      "totalWeeks": "1 to 104 weeks",
+      "nameTaken": "A cohort with this name already exists"
+    },
+    "addMentee": "Add student",
+    "addTitle": "Add a student to the cohort",
+    "student": "Student",
+    "addPlaceholder": "Choose a student",
+    "noOthers": "No students in other cohorts.",
+    "add": "Add",
+    "moveTo": "Move to another cohort",
+    "moved": "{name} moved to {cohort}",
+    "statusSaved": "Status updated",
+    "status": "Status",
+    "actions": "Actions for {name}",
+    "fromCohort": "from {cohort}"
   },
   "programs": {
     "hint": "Program modules and the cohorts studying them.",
@@ -387,5 +445,11 @@
     "cohorts": "cohorts: {n}",
     "noCohorts": "No cohorts yet.",
     "editSoon": "Program editing is coming later."
+  },
+  "enrollment": {
+    "active": "Active",
+    "paused": "Paused",
+    "completed": "Completed",
+    "dropped": "Dropped"
   }
 }

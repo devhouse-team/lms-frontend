@@ -210,8 +210,12 @@ export interface CohortOption {
 
 /* ---------- section pages ---------- */
 
+export type EnrollmentStatus = 'active' | 'paused' | 'completed' | 'dropped'
+export const ENROLLMENT_STATUSES: EnrollmentStatus[] = ['active', 'paused', 'completed', 'dropped']
+
 export interface CohortRosterRow extends Person {
   email: string
+  enrollment: EnrollmentStatus
   coursesDone: number
   coursesTotal: number
   accepted: number
@@ -219,6 +223,14 @@ export interface CohortRosterRow extends Person {
   waiting: number
   overdue: number
   atRisk: boolean
+}
+
+export interface ManagedAssignment {
+  id: string
+  title: string
+  description: string
+  dueAt: string
+  submissions: number
 }
 
 export interface CohortRoster {
@@ -230,12 +242,14 @@ export interface CohortRoster {
   week: number
   totalWeeks: number
   startAt: string
+  assignments: ManagedAssignment[]
   mentees: CohortRosterRow[]
 }
 
 export interface PersonRow extends Person {
   email: string
   role: Role
+  cohortId?: string
   cohortName?: string
   programTitle?: string
 }
@@ -285,6 +299,21 @@ export interface MentorProfile {
 }
 
 /* ---------- mutation responses ---------- */
+
+/** Body for creating / editing a cohort. startAt is a YYYY-MM-DD date. */
+export interface CohortInput {
+  name: string
+  program: ProgramSlug
+  startAt: string
+  totalWeeks: number
+  mentorId?: string | null
+}
+
+/** Body for PATCH /api/enrollments/:menteeId; at least one field. */
+export interface EnrollmentUpdate {
+  cohortId?: string
+  status?: EnrollmentStatus
+}
 
 export interface OkResponse {
   ok: true

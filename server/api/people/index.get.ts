@@ -14,6 +14,7 @@ export default defineEventHandler(async (event): Promise<PeopleResponse> => {
           avatar: u.avatar,
           email: u.email,
           role: u.role,
+          cohortId: u.cohortId,
           cohortName: cohort?.name ?? (mentorCohorts.map(c => c.name).join(', ') || undefined),
           programTitle: programTitle(cohort?.program ?? mentorCohorts[0]?.program)
         }

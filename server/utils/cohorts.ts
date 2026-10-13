@@ -1,8 +1,15 @@
+import type { H3Event } from 'h3'
+import { z } from 'zod'
 import type { CohortRoster, CohortRow } from '~~/shared/types'
-import type { DbCohort } from './db'
+import type { DbCohort, DbUser } from './db'
+
+/** Mentees who count in head metrics: dropped students are out of the cohort's numbers. */
+export const isCounted = (u: DbUser) => u.enrollment !== 'dropped'
+/** Only active students can be flagged at risk. */
+export const isActive = (u: DbUser) => (u.enrollment ?? 'active') === 'active'
 
 export function cohortRow(c: DbCohort, now = Date.now()): CohortRow {
-  const mentees = db.users.filter(u => u.role === 'mentee' && u.cohortId === c.id)
+  const mentees = db.users.filter(u => u.role === 'mentee' && u.cohortId === c.id && isCounted(u))
   const ids = new Set(mentees.map(m => m.id))
   const courses = db.courses.filter(k => ids.has(k.userId))
   const mentor = db.users.find(u => u.id === c.mentorId)
@@ -16,7 +23,7 @@ export function cohortRow(c: DbCohort, now = Date.now()): CohortRow {
     week: cohortWeek(c, now),
     totalWeeks: c.totalWeeks,
     progress: courses.length ? courses.filter(k => k.status === 'done').length / courses.length : 0,
-    atRisk: mentees.filter(m => menteeProgress(m, now).atRisk).length,
+    atRisk: mentees.filter(m => isActive(m) && menteeProgress(m, now).atRisk).length,
     backlog: db.submissions.filter(s => s.status === 'waiting' && ids.has(s.menteeId)).length
   }
 }
@@ -33,6 +40,9 @@ export function cohortRoster(c: DbCohort, now = Date.now()): CohortRoster {
     week: cohortWeek(c, now),
     totalWeeks: c.totalWeeks,
     startAt: new Date(c.startAt).toISOString(),
+    assignments: assignments
+      .map(a => ({ id: a.id, title: a.title, description: a.description, dueAt: new Date(a.dueAt).toISOString(), submissions: db.submissions.filter(s => s.assignmentId === a.id).length }))
+      .sort((a, b) => a.dueAt.localeCompare(b.dueAt)),
     mentees: db.users
       .filter(u => u.role === 'mentee' && u.cohortId === c.id)
       .map((u) => {
@@ -40,6 +50,8 @@ export function cohortRoster(c: DbCohort, now = Date.now()): CohortRoster {
         const subs = db.submissions.filter(s => s.menteeId === u.id)
         return {
           ...p,
+          atRisk: p.atRisk && isActive(u),
+          enrollment: u.enrollment ?? 'active',
           email: u.email,
           accepted: assignments.filter(a => assignmentStatus(u.id, a.id) === 'accepted').length,
           assignmentsTotal: assignments.length,
@@ -56,4 +68,40 @@ export function requireCohortAccess(user: { id: string, role: string }, cohortId
     throw createError({ statusCode: 404, statusMessage: 'Cohort not found' })
   }
   return c
+}
+
+export const cohortBody = z.object({
+  name: z.string().trim().min(2).max(40),
+  program: z.enum(['frontend', 'backend', 'mobile', 'ml', 'algorithms']),
+  startAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(d => !Number.isNaN(Date.parse(d)), 'Invalid date'),
+  totalWeeks: z.number().int().min(1).max(104),
+  mentorId: z.string().nullish()
+})
+
+/** 400 unless the id is an existing mentor-role user (or empty). */
+export function assertMentor(mentorId?: string | null) {
+  if (mentorId && !db.users.some(u => u.id === mentorId && u.role === 'mentor')) {
+    throw createError({ statusCode: 400, statusMessage: 'Unknown mentor' })
+  }
+}
+
+export function assertUniqueCohortName(name: string, selfId?: string) {
+  if (db.cohorts.some(c => c.id !== selfId && c.name.toLowerCase() === name.toLowerCase())) {
+    throw createError({ statusCode: 409, statusMessage: 'Cohort name taken' })
+  }
+}
+
+export const assignmentBody = z.object({
+  title: z.string().trim().min(2).max(120),
+  description: z.string().trim().min(1).max(5000),
+  dueAt: z.string().datetime()
+})
+
+/** Mentor of the cohort or head may manage its assignments: 400 unknown cohort, 403 otherwise. */
+export async function requireAssignmentAccess(event: H3Event, cohortId: string) {
+  const { user } = await requireUserSession(event)
+  const cohort = db.cohorts.find(c => c.id === cohortId)
+  if (!cohort) throw createError({ statusCode: 400, statusMessage: 'Unknown cohort' })
+  if (user.role === 'head' || (user.role === 'mentor' && cohort.mentorId === user.id)) return cohort
+  throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
 }
