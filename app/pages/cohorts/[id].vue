@@ -56,6 +56,7 @@ const fmt = (iso: string) => new Intl.DateTimeFormat(locale.value, { day: 'numer
           <UButton :label="t('cohorts.addMentee')" icon="i-lucide-user-plus" color="neutral" variant="outline" size="sm" @click="adding = true" />
         </div>
         <RosterTable :rows="data.mentees" :move-targets="moveTargets" @status="setStatus" @move="moveTo" />
+        <AssignmentsManager :cohort-id="data.id" :assignments="data.assignments" @changed="refresh()" />
       </div>
     </HomeState>
   </AppPage>

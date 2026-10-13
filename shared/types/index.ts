@@ -225,6 +225,14 @@ export interface CohortRosterRow extends Person {
   atRisk: boolean
 }
 
+export interface ManagedAssignment {
+  id: string
+  title: string
+  description: string
+  dueAt: string
+  submissions: number
+}
+
 export interface CohortRoster {
   id: string
   name: string
@@ -234,6 +242,7 @@ export interface CohortRoster {
   week: number
   totalWeeks: number
   startAt: string
+  assignments: ManagedAssignment[]
   mentees: CohortRosterRow[]
 }
 

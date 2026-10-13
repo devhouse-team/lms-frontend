@@ -378,6 +378,29 @@
     "revoke": "Revoke invitation for {email}",
     "revoked": "Invitation for {email} revoked"
   },
+  "assignments": {
+    "manage": "Assignments",
+    "add": "Add assignment",
+    "none": "No assignments yet.",
+    "due": "due {date}",
+    "submissions": "submissions: {n}",
+    "delete": "Delete assignment",
+    "confirmDelete": "Delete assignment \"{title}\"?",
+    "deleted": "Assignment deleted",
+    "hasSubmissions": "Can't delete: this assignment already has submissions.",
+    "created": "Assignment created",
+    "saved": "Changes saved",
+    "createTitle": "New assignment",
+    "editTitle": "Edit assignment",
+    "title": "Title",
+    "description": "Description",
+    "dueAt": "Due date and time",
+    "err": {
+      "title": "Enter a title (2+ characters)",
+      "description": "Add a description",
+      "dueAt": "Set a due date"
+    }
+  },
   "cohorts": {
     "hint": "Open a cohort to see its students.",
     "notFound": "Cohort not found",
