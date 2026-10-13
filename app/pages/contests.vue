@@ -50,12 +50,12 @@ const shown = computed(() => data.value?.past[selected.value])
     <HomeState :status="status" :has-data="!!data" @retry="refresh()">
       <div v-if="data" class="mx-auto w-full max-w-4xl space-y-10">
         <section v-if="data.current" aria-labelledby="cur-title">
-          <header class="flex flex-wrap items-end justify-between gap-4">
+          <header class="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p class="num text-sm text-muted">{{ fmt(data.current.at) }} · {{ t('home.contestIn') }} {{ left(data.current.at) }}</p>
-              <h1 id="cur-title" class="mt-1 text-xl font-semibold tracking-tight text-highlighted">{{ data.current.title }}</h1>
+              <h1 id="cur-title" class="text-xl font-semibold tracking-tight text-highlighted">{{ data.current.title }}</h1>
+              <p class="num mt-1 text-sm text-muted">{{ fmt(data.current.at) }} · {{ t('home.contestIn') }} {{ left(data.current.at) }}</p>
             </div>
-            <p class="num text-sm text-muted">{{ t('head.contestRegistered', { n: data.current.registrations }) }}</p>
+            <p class="num text-sm leading-7 text-muted">{{ t('head.contestRegistered', { n: data.current.registrations }) }}</p>
           </header>
 
           <div class="mt-5 rounded-lg ring-1 ring-inset ring-default">

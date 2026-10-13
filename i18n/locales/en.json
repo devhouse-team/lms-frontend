@@ -29,6 +29,7 @@
     "back": "Back",
     "optional": "optional",
     "cancel": "Cancel",
+    "delete": "Delete",
     "save": "Save"
   },
   "time": {
@@ -362,7 +363,8 @@
     "flags": "Flags",
     "empty": "No students in this cohort yet.",
     "noCohort": "You don't have a cohort assigned yet.",
-    "status": "Status"
+    "students": "Students",
+    "actions": "Actions: {name}"
   },
   "people": {
     "all": "All",
@@ -385,7 +387,10 @@
     "due": "due {date}",
     "submissions": "submissions: {n}",
     "delete": "Delete assignment",
-    "confirmDelete": "Delete assignment \"{title}\"?",
+    "confirmTitle": "Delete assignment?",
+    "confirmDelete": "\"{title}\" will be deleted permanently.",
+    "editNamed": "Edit: {title}",
+    "deleteNamed": "Delete: {title}",
     "deleted": "Assignment deleted",
     "hasSubmissions": "Can't delete: this assignment already has submissions.",
     "created": "Assignment created",

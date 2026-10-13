@@ -15,16 +15,26 @@ const openForm = (a?: ManagedAssignment) => {
 }
 const fmt = (iso: string) => new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
 
-async function remove(a: ManagedAssignment) {
-  if (!confirm(t('assignments.confirmDelete', { title: a.title }))) return
+const deleting = ref<ManagedAssignment>()
+const confirmOpen = computed({ get: () => !!deleting.value, set: (v) => { if (!v) deleting.value = undefined } })
+const removing = ref(false)
+
+async function remove() {
+  const a = deleting.value
+  if (!a) return
+  removing.value = true
   try {
     await $fetch(`/api/assignments/${a.id}`, { method: 'DELETE' })
     toast.add({ title: t('assignments.deleted'), icon: 'i-lucide-check', color: 'success' })
     clearNuxtData(['dashboard-mentor', 'dashboard-head'])
     emit('changed')
+    deleting.value = undefined
   } catch (e) {
     const has = (e as { statusCode?: number }).statusCode === 409
     toast.add({ title: has ? t('assignments.hasSubmissions') : t('common.saveError'), color: 'error', icon: 'i-lucide-circle-alert' })
+    deleting.value = undefined
+  } finally {
+    removing.value = false
   }
 }
 </script>
@@ -32,6 +42,12 @@ async function remove(a: ManagedAssignment) {
 <template>
   <section class="space-y-3">
     <AssignmentFormModal v-model:open="modal" :cohort-id="cohortId" :assignment="editing" @saved="emit('changed')" />
+    <UModal v-model:open="confirmOpen" :title="t('assignments.confirmTitle')" :description="t('assignments.confirmDelete', { title: deleting?.title ?? '' })">
+      <template #footer>
+        <UButton :label="t('common.cancel')" color="neutral" variant="ghost" @click="confirmOpen = false" />
+        <UButton :label="t('common.delete')" color="error" :loading="removing" @click="remove" />
+      </template>
+    </UModal>
     <div class="flex items-center justify-between gap-3">
       <h2 class="text-sm font-semibold text-highlighted">{{ t('assignments.manage') }}</h2>
       <UButton :label="t('assignments.add')" icon="i-lucide-plus" color="neutral" variant="outline" size="sm" @click="openForm()" />
@@ -43,8 +59,8 @@ async function remove(a: ManagedAssignment) {
           <p class="truncate text-sm text-highlighted">{{ a.title }}</p>
           <p class="num text-xs text-muted">{{ t('assignments.due', { date: fmt(a.dueAt) }) }} · {{ t('assignments.submissions', { n: a.submissions }) }}</p>
         </div>
-        <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="sm" :aria-label="t('cohorts.edit')" @click="openForm(a)" />
-        <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="sm" :aria-label="t('assignments.delete')" @click="remove(a)" />
+        <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="sm" :aria-label="t('assignments.editNamed', { title: a.title })" @click="openForm(a)" />
+        <UButton icon="i-lucide-trash-2" color="neutral" variant="ghost" size="sm" class="hover:text-error" :aria-label="t('assignments.deleteNamed', { title: a.title })" @click="deleting = a" />
       </li>
     </ul>
   </section>

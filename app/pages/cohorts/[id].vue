@@ -20,7 +20,7 @@ async function update(m: CohortRosterRow, body: { status?: EnrollmentStatus, coh
     toast.add({ title: ok, icon: 'i-lucide-check', color: 'success' })
   } catch {
     toast.add({ title: t('common.saveError'), color: 'error', icon: 'i-lucide-circle-alert' })
-    await refresh() // reset the status select to the server value
+    await refresh() // reset to the server value
   }
 }
 const setStatus = (m: CohortRosterRow, status: EnrollmentStatus) => update(m, { status }, t('cohorts.statusSaved'))
@@ -52,10 +52,13 @@ const fmt = (iso: string) => new Intl.DateTimeFormat(locale.value, { day: 'numer
             <UButton :label="t('cohorts.edit')" icon="i-lucide-pencil" color="neutral" variant="outline" size="sm" @click="editing = true" />
           </div>
         </header>
-        <div class="flex justify-end">
-          <UButton :label="t('cohorts.addMentee')" icon="i-lucide-user-plus" color="neutral" variant="outline" size="sm" @click="adding = true" />
-        </div>
-        <RosterTable :rows="data.mentees" :move-targets="moveTargets" @status="setStatus" @move="moveTo" />
+        <section class="space-y-3">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-sm font-semibold text-highlighted">{{ t('roster.students') }} <span class="num font-normal text-muted">{{ data.mentees.length }}</span></h2>
+            <UButton :label="t('cohorts.addMentee')" icon="i-lucide-user-plus" color="neutral" variant="outline" size="sm" @click="adding = true" />
+          </div>
+          <RosterTable :rows="data.mentees" :move-targets="moveTargets" @status="setStatus" @move="moveTo" />
+        </section>
         <AssignmentsManager :cohort-id="data.id" :assignments="data.assignments" @changed="refresh()" />
       </div>
     </HomeState>
