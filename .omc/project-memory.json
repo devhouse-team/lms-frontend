@@ -1,0 +1,206 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1791889612391,
+  "projectRoot": "/Users/almazamanzholuly/Documents/dev-house/lms/frontend",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "nuxt",
+        "version": "4.6.0",
+        "category": "fullstack"
+      },
+      {
+        "name": "vue",
+        "version": "3.5.43",
+        "category": "frontend"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build 2>&1 | tail -5; (npm run dev -- --port 3111 > $TMPDIR/dev.log 2>&1 &); sleep 15; tail -3 $TMPDIR/dev.log",
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": "npm run dev",
+    "scripts": {
+      "build": "nuxt build",
+      "dev": "nuxt dev",
+      "generate": "nuxt generate",
+      "preview": "nuxt preview",
+      "postinstall": "nuxt prepare",
+      "typecheck": "nuxt typecheck"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "app",
+      "public"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "app": {
+      "path": "app",
+      "purpose": "Application code",
+      "fileCount": 3,
+      "lastAccessed": 1791889612385,
+      "keyFiles": [
+        "app.config.ts",
+        "app.vue",
+        "error.vue"
+      ]
+    },
+    "i18n": {
+      "path": "i18n",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1791889612386,
+      "keyFiles": []
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 2,
+      "lastAccessed": 1791889612387,
+      "keyFiles": [
+        "favicon.ico",
+        "robots.txt"
+      ]
+    },
+    "server": {
+      "path": "server",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1791889612387,
+      "keyFiles": []
+    },
+    "shared": {
+      "path": "shared",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1791889612388,
+      "keyFiles": []
+    },
+    "app/assets": {
+      "path": "app/assets",
+      "purpose": "Static assets",
+      "fileCount": 0,
+      "lastAccessed": 1791889612388,
+      "keyFiles": []
+    },
+    "app/components": {
+      "path": "app/components",
+      "purpose": "UI components",
+      "fileCount": 10,
+      "lastAccessed": 1791889612388,
+      "keyFiles": [
+        "AppPage.vue",
+        "CohortsTable.vue",
+        "ContestResults.vue"
+      ]
+    },
+    "app/middleware": {
+      "path": "app/middleware",
+      "purpose": "Middleware",
+      "fileCount": 1,
+      "lastAccessed": 1791889612388,
+      "keyFiles": [
+        "auth.global.ts"
+      ]
+    },
+    "app/pages": {
+      "path": "app/pages",
+      "purpose": "Page components",
+      "fileCount": 11,
+      "lastAccessed": 1791889612388,
+      "keyFiles": [
+        "[...slug].vue",
+        "career.vue",
+        "cohort.vue"
+      ]
+    },
+    "server/api": {
+      "path": "server/api",
+      "purpose": "API routes",
+      "fileCount": 0,
+      "lastAccessed": 1791889612389,
+      "keyFiles": []
+    },
+    "server/data": {
+      "path": "server/data",
+      "purpose": "Data files",
+      "fileCount": 1,
+      "lastAccessed": 1791889612389,
+      "keyFiles": [
+        "programs.ts"
+      ]
+    },
+    "server/utils": {
+      "path": "server/utils",
+      "purpose": "Utility functions",
+      "fileCount": 9,
+      "lastAccessed": 1791889612389,
+      "keyFiles": [
+        "auth.ts",
+        "cohorts.ts",
+        "contests.ts"
+      ]
+    },
+    "shared/types": {
+      "path": "shared/types",
+      "purpose": "Type definitions",
+      "fileCount": 2,
+      "lastAccessed": 1791889612389,
+      "keyFiles": [
+        "auth.d.ts",
+        "index.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "server/utils/db.ts",
+      "accessCount": 1,
+      "lastAccessed": 1791890035169,
+      "type": "file"
+    },
+    {
+      "path": "app/components/CohortFormModal.vue",
+      "accessCount": 1,
+      "lastAccessed": 1791890261997,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}
