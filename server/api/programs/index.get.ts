@@ -7,7 +7,7 @@ export default defineEventHandler(async (event): Promise<ProgramView[]> => {
     cohorts: db.cohorts.filter(c => c.program === p.slug).map(c => ({
       id: c.id,
       name: c.name,
-      mentees: db.users.filter(u => u.cohortId === c.id).length,
+      mentees: db.users.filter(u => u.cohortId === c.id && isCounted(u)).length,
       mentor: db.users.find(u => u.id === c.mentorId)?.name
     }))
   }))

@@ -3,7 +3,7 @@
  * credentials and photos (from devhouse-client) and program modules.
  * State resets when the server restarts. Replace with the real API later.
  */
-import type { CourseStatus, ProgramSlug, Role, SubmissionStatus } from '~~/shared/types'
+import type { CourseStatus, EnrollmentStatus, ProgramSlug, Role, SubmissionStatus } from '~~/shared/types'
 import { programs } from '../data/programs'
 
 const HOUR = 3_600_000
@@ -25,6 +25,8 @@ export interface DbUser {
   title?: string
   telegram?: string
   cohortId?: string
+  /** Mentees only; absent means active */
+  enrollment?: EnrollmentStatus
 }
 
 export interface DbCohort {
