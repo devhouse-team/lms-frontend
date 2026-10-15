@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { z } from 'zod'
-import type { CohortRoster, CohortRow, ProgramSlug } from '~~/shared/types'
+import type { CohortRoster, OkResponse } from '~~/shared/types'
 
 /** Create (no `cohort`) or edit a cohort. Head only. */
 const props = defineProps<{ cohort?: CohortRoster }>()
@@ -14,22 +14,23 @@ const NO_MENTOR = '__none'
 const { data: programs } = await useFetch('/api/programs', { key: 'programs', default: () => [] })
 const { data: people } = await useFetch('/api/people', { key: 'people' })
 
-const programItems = computed(() => programs.value.map(p => ({ value: p.slug, label: p.title })))
+const programItems = computed(() => programs.value.map(p => ({ value: p.id, label: p.title })))
 const mentorItems = computed(() => [
   { value: NO_MENTOR, label: t('cohorts.mentorPlaceholder') },
-  ...(people.value?.people ?? []).filter(p => p.role === 'mentor').map(p => ({ value: p.id, label: p.name }))
+  // Anyone who isn't a student can mentor; a new mentor has no cohort yet, so no role either
+  ...(people.value?.people ?? []).filter(p => p.role !== 'mentee').map(p => ({ value: p.id, label: p.name }))
 ])
 
 const schema = computed(() => z.object({
   name: z.string().trim().min(2, t('cohorts.err.name')).max(40, t('cohorts.err.name')),
-  program: z.string({ message: t('cohorts.err.program') }).min(1, t('cohorts.err.program')),
+  programId: z.string({ message: t('cohorts.err.program') }).min(1, t('cohorts.err.program')),
   startAt: z.string().min(1, t('cohorts.err.startAt')),
   totalWeeks: z.number({ message: t('cohorts.err.totalWeeks') }).int(t('cohorts.err.totalWeeks')).min(1, t('cohorts.err.totalWeeks')).max(104, t('cohorts.err.totalWeeks')),
   mentorId: z.string()
 }))
 
-interface State { name: string, program?: ProgramSlug, startAt: string, totalWeeks: number, mentorId: string }
-const blank = (): State => ({ name: '', program: undefined, startAt: '', totalWeeks: 26, mentorId: NO_MENTOR })
+interface State { name: string, programId?: string, startAt: string, totalWeeks: number, mentorId: string }
+const blank = (): State => ({ name: '', programId: undefined, startAt: '', totalWeeks: 26, mentorId: NO_MENTOR })
 const state = reactive<State>(blank())
 const saving = ref(false)
 
@@ -38,20 +39,20 @@ watch(open, (isOpen) => {
   if (!isOpen) return
   const c = props.cohort
   Object.assign(state, c
-    ? { name: c.name, program: c.program, startAt: c.startAt.slice(0, 10), totalWeeks: c.totalWeeks, mentorId: c.mentor?.id ?? NO_MENTOR }
+    ? { name: c.name, programId: c.programId, startAt: c.startAt.slice(0, 10), totalWeeks: c.totalWeeks, mentorId: c.mentor?.id ?? NO_MENTOR }
     : blank())
 })
 
 async function onSubmit() {
   saving.value = true
-  const body = { name: state.name.trim(), program: state.program, startAt: state.startAt, totalWeeks: state.totalWeeks, mentorId: state.mentorId === NO_MENTOR ? null : state.mentorId }
+  const body = { name: state.name.trim(), programId: state.programId, startAt: state.startAt, totalWeeks: state.totalWeeks, mentorId: state.mentorId === NO_MENTOR ? null : state.mentorId }
   try {
     if (props.cohort) {
-      await $fetch<CohortRoster>(`/api/cohorts/${props.cohort.id}`, { method: 'PATCH', body })
+      await $fetch<OkResponse>(`/api/cohorts/${props.cohort.id}`, { method: 'PATCH', body })
       toast.add({ title: t('cohorts.saved'), icon: 'i-lucide-check', color: 'success' })
       emit('saved', props.cohort.id)
     } else {
-      const created = await $fetch<CohortRow>('/api/cohorts', { method: 'POST', body })
+      const created = await $fetch('/api/cohorts', { method: 'POST', body })
       toast.add({ title: t('cohorts.created', { name: created.name }), icon: 'i-lucide-check', color: 'success' })
       emit('saved', created.id)
     }
@@ -73,8 +74,8 @@ async function onSubmit() {
         <UFormField :label="t('cohorts.name')" name="name">
           <UInput v-model="state.name" autocomplete="off" class="w-full" />
         </UFormField>
-        <UFormField :label="t('cohorts.program')" name="program">
-          <USelect v-model="state.program" :items="programItems" :placeholder="t('cohorts.programPlaceholder')" class="w-full" />
+        <UFormField :label="t('cohorts.program')" name="programId" :help="cohort ? t('cohorts.programLocked') : undefined">
+          <USelect v-model="state.programId" :items="programItems" :placeholder="t('cohorts.programPlaceholder')" :disabled="!!cohort" class="w-full" />
         </UFormField>
         <div class="grid grid-cols-2 gap-4">
           <UFormField :label="t('cohorts.startAt')" name="startAt">

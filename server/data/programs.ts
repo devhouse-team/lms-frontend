@@ -4,7 +4,8 @@ import type { Program } from '~~/shared/types'
 const ALGO_LECTURES = 'Общие лекции: алгоритмы и структуры данных для технических интервью'
 
 // Module titles copied from devhouse-client/src/data/<program>/syllabusItems.ts
-export const programs: Program[] = [
+/** Syllabus by slug; the API has programs but not their modules yet */
+export const programs: Omit<Program, 'id'>[] = [
   {
     slug: 'frontend',
     title: 'Frontend Development',

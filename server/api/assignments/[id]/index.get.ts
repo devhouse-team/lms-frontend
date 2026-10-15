@@ -1,21 +1,25 @@
+import type { components } from '~~/shared/types/api'
 import type { AssignmentDetail } from '~~/shared/types'
 
 export default defineEventHandler(async (event): Promise<AssignmentDetail> => {
   const user = await requireRole(event, 'mentee')
-  const id = await requireIdParam(event)
-  const a = db.assignments.find(x => x.id === id && x.cohortId === user.cohortId)
-  if (!a) throw createError({ statusCode: 404, statusMessage: 'Assignment not found' })
-  const cohort = db.cohorts.find(c => c.id === a.cohortId)!
-  const mentor = db.users.find(u => u.id === cohort.mentorId)
-  const subs = attempts(user.id, a.id)
+  const { cohortId, lessonId } = parseAssignmentKey(getRouterParam(event, 'id'))
+  const [a, cohort, staff, mentors] = await Promise.all([
+    apiFetch<components['schemas']['StudentAssignment']>(event, `/cohorts/${cohortId}/lessons/${lessonId}/assignment`),
+    apiFetch<components['schemas']['CohortRead']>(event, `/cohorts/${cohortId}`),
+    listStaff(event, cohortId),
+    apiFetch<components['schemas']['MentorAssignmentRead'][]>(event, `/cohorts/${cohortId}/mentors`)
+  ])
+  const mentor = mentors.find(m => String(m.mentee.id) === user.id)?.mentor ?? cohortMentor(staff)
+  const submissions = [...a.submissions].sort(byVersionDesc)
   return {
-    id: a.id,
+    id: assignmentKey(cohortId, lessonId),
     title: a.title,
-    description: a.description,
-    dueAt: new Date(a.dueAt).toISOString(),
+    description: a.instructions,
+    dueAt: dueAt(a.due_on),
     cohortName: cohort.name,
-    mentor: mentor ? { id: mentor.id, name: mentor.name, avatar: mentor.avatar } : null,
-    status: subs[0]?.status ?? 'not_submitted',
-    submissions: subs.map(toSubmissionView)
+    mentor: mentor ? person(mentor) : null,
+    status: submissions[0] ? toUiStatus(submissions[0].status) : 'not_submitted',
+    submissions: submissions.map(s => submissionView(s, staff))
   }
 })

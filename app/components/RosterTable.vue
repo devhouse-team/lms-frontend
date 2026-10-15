@@ -33,7 +33,7 @@ const menuItems = (m: CohortRosterRow) => [
               <UAvatar :src="m.avatar" :alt="m.name" size="xs" class="hidden sm:inline-flex" />
               <div class="min-w-0 max-w-[7rem] sm:max-w-none">
                 <p class="truncate" :class="m.enrollment === 'dropped' || m.enrollment === 'completed' ? 'text-muted' : 'text-highlighted'">{{ m.name }}</p>
-                <p class="num hidden truncate text-xs text-muted sm:block">{{ m.email }}</p>
+                <p class="num hidden truncate text-xs text-muted sm:block">{{ m.username }}</p>
               </div>
             </div>
           </td>

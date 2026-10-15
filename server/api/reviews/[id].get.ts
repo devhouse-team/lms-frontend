@@ -1,15 +1,23 @@
+import type { components } from '~~/shared/types/api'
 import type { ReviewDetail } from '~~/shared/types'
 
+type S = components['schemas']
+
+/** Earlier attempts aren't exposed to staff by the API yet, so `history` stays empty */
 export default defineEventHandler(async (event): Promise<ReviewDetail> => {
-  const mentor = await requireRole(event, 'mentor')
-  const { sub, mentee, cohort } = requireOwnSubmission(mentor.id, await requireIdParam(event))
-  const a = db.assignments.find(x => x.id === sub.assignmentId)!
+  await requireRole(event, 'mentor')
+  const sub = await apiFetch<S['SubmissionDetail']>(event, `/submissions/${apiId(getRouterParam(event, 'id'))}`)
+  const [assignment, cohort, staff] = await Promise.all([
+    apiFind<S['StudentAssignment']>(event, `/cohorts/${sub.cohort_id}/lessons/${sub.lesson_id}/assignment`),
+    apiFetch<S['CohortRead']>(event, `/cohorts/${sub.cohort_id}`),
+    listStaff(event, sub.cohort_id)
+  ])
   return {
-    id: sub.id,
-    assignment: { id: a.id, title: a.title, description: a.description, dueAt: new Date(a.dueAt).toISOString() },
-    mentee: { id: mentee.id, name: mentee.name, avatar: mentee.avatar },
+    id: String(sub.id),
+    assignment: { id: String(sub.lesson_id), title: sub.assignment_title, description: assignment?.instructions ?? '', dueAt: dueAt(sub.due_on) },
+    mentee: person(sub.student),
     cohortName: cohort.name,
-    submission: toSubmissionView(sub),
-    history: attempts(mentee.id, a.id).filter(s => s.id !== sub.id).map(toSubmissionView)
+    submission: submissionView(sub, staff),
+    history: []
   }
 })

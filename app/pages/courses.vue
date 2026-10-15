@@ -84,7 +84,7 @@ async function onAdd() {
 </script>
 
 <template>
-  <AppPage :title="t('nav.courses')">
+  <AppPage mock :title="t('nav.courses')">
     <HomeState :status="status" :has-data="!!data" @retry="refresh()">
       <div v-if="data" class="mx-auto w-full max-w-4xl space-y-8">
         <header>

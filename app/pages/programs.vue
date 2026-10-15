@@ -14,20 +14,21 @@ const { data, status, refresh } = await useFetch('/api/programs', { key: 'progra
           <p class="mt-1 text-sm text-muted">{{ t('programs.hint') }}</p>
         </header>
         <div class="divide-y divide-default rounded-lg ring-1 ring-inset ring-default">
-          <details v-for="p in data" :key="p.slug" class="group">
+          <details v-for="p in data" :key="p.id" class="group">
             <summary class="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition-colors duration-150 ease-out hover:bg-elevated [&::-webkit-details-marker]:hidden">
               <UIcon name="i-lucide-chevron-right" class="size-4 shrink-0 text-muted transition-transform duration-150 ease-out group-open:rotate-90" />
               <span class="min-w-0 flex-1 text-sm font-medium text-highlighted">{{ p.title }}</span>
-              <span class="num hidden text-xs text-muted sm:inline">{{ t('programs.modules', { n: p.modules.length }) }}</span>
+              <span v-if="p.modules.length" class="num hidden text-xs text-muted sm:inline">{{ t('programs.modules', { n: p.modules.length }) }}</span>
               <span class="num w-24 text-right text-xs text-muted">{{ t('programs.cohorts', { n: p.cohorts.length }) }}</span>
             </summary>
             <div class="grid gap-6 px-4 pb-5 pl-11 sm:grid-cols-[minmax(0,1fr)_14rem]">
-              <ol class="space-y-1.5 text-sm">
+              <ol v-if="p.modules.length" class="space-y-1.5 text-sm">
                 <li v-for="(m, i) in p.modules" :key="m" class="flex gap-3">
                   <span class="num w-5 shrink-0 text-right text-xs leading-5 text-dimmed">{{ i + 1 }}</span>
                   <span class="text-default">{{ m }}</span>
                 </li>
               </ol>
+              <p v-else class="text-sm text-muted">{{ t('programs.noModules') }}</p>
               <div>
                 <p class="text-xs font-medium text-muted">{{ t('head.cohorts') }}</p>
                 <ul v-if="p.cohorts.length" class="mt-2 space-y-1.5 text-sm">

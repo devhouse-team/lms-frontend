@@ -1,12 +1,13 @@
-import type { CohortRow } from '~~/shared/types'
+import type { components } from '~~/shared/types/api'
 
-export default defineEventHandler(async (event): Promise<CohortRow> => {
+export default defineEventHandler(async (event): Promise<{ id: string, name: string }> => {
   await requireRole(event, 'head')
-  const { name, program, startAt, totalWeeks, mentorId } = await readValidatedBody(event, cohortBody.parse)
-  assertMentor(mentorId)
-  assertUniqueCohortName(name)
-  const cohort = { id: `c-${crypto.randomUUID().slice(0, 8)}`, name, program, mentorId: mentorId || undefined, startAt: Date.parse(startAt), totalWeeks }
-  db.cohorts.push(cohort)
+  const { name, programId, startAt, totalWeeks, mentorId } = await readValidatedBody(event, cohortBody.parse)
+  const cohort = await apiFetch<components['schemas']['CohortRead']>(event, `/programs/${apiId(programId)}/cohorts`, {
+    method: 'POST',
+    body: { name, ...cohortDates(startAt, totalWeeks), status: cohortStatus(startAt) }
+  })
+  if (mentorId) await setCohortMentor(event, cohort.id, apiId(mentorId))
   setResponseStatus(event, 201)
-  return cohortRow(cohort)
+  return { id: String(cohort.id), name: cohort.name }
 })

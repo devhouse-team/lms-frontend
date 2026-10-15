@@ -67,7 +67,8 @@
     "loadError": "Could not load your data",
     "loadErrorHint": "Check your connection and try again.",
     "statusError": "Could not save the course status",
-    "mentorNone": "No mentor assigned yet. The academy will let you know."
+    "mentorNone": "No mentor assigned yet. The academy will let you know.",
+    "noCohort": "You are not in an active cohort yet. The academy will add you and let you know."
   },
   "kind": {
     "session": "Session",
@@ -98,59 +99,51 @@
   "auth": {
     "title": "Sign in to dev.house",
     "subtitle": "The academy's learning space.",
-    "telegram": "Sign in with Telegram",
-    "or": "or with email",
     "email": "Email",
     "password": "Password",
     "submit": "Sign in",
     "noAccount": "No account? Access is by invitation —",
     "contact": "message the academy",
-    "demo": "Demo accounts (development only)",
-    "demoPassword": "Password",
     "logout": "Sign out",
     "account": "Account",
     "err": {
-      "emailRequired": "Enter your email",
-      "emailInvalid": "That address looks mistyped",
       "passwordRequired": "Enter your password",
-      "invalid": "Wrong email or password.",
-      "noTelegram": "This Telegram is not linked to an account.",
-      "network": "Can't reach the server. Check your connection and try again."
+      "invalid": "Wrong username or password.",
+      "network": "Can't reach the server. Check your connection and try again.",
+      "loginRequired": "Enter your email or username",
+      "rateLimited": "Too many attempts. Wait a minute and try again."
     },
-    "contactCta": "Message the academy"
+    "contactCta": "Message the academy",
+    "login": "Email or username",
+    "switchRole": "View as",
+    "sessionExpired": "Your session expired. Please sign in again."
   },
   "invite": {
     "title": "Welcome to dev.house",
-    "subtitle": "{by} invites you to the academy. Set your name and password to get started.",
+    "subtitle": "Set your name, username and password to get started.",
     "role": "Role",
-    "program": "Program",
-    "validUntil": "Invitation valid until {date}",
     "name": "Full name",
     "nameHint": "Your mentor and cohort will see this",
     "passwordHelp": "At least 8 characters",
     "confirm": "Repeat password",
     "submit": "Create account",
     "toLogin": "Go to sign in",
-    "used": "This invitation has already been used.",
     "err": {
       "name": "Use 2 to 80 characters",
       "password": "At least 8 characters",
-      "confirm": "Passwords don't match"
+      "confirm": "Passwords don't match",
+      "username": "2 to 40 characters: letters, digits, dot, dash or underscore",
+      "email": "That address looks mistyped"
     },
     "problem": {
-      "missing": {
-        "title": "Invitation not found",
-        "text": "Check the full link or ask the academy for a new one."
-      },
-      "used": {
-        "title": "Invitation already used",
-        "text": "If that was you, just sign in. Otherwise ask for a new link."
-      },
-      "expired": {
-        "title": "Invitation expired",
-        "text": "Links are valid for a limited time. Ask the academy to send a new one."
+      "invalid": {
+        "title": "This link no longer works",
+        "text": "The invitation was already used or has expired. If your account exists, just sign in."
       }
-    }
+    },
+    "username": "Username",
+    "usernameHint": "You can sign in with it instead of email",
+    "taken": "This username or email is already taken."
   },
   "mentor": {
     "summary": "{n} submissions waiting for review",
@@ -166,7 +159,7 @@
     "week": "week {week} of {total}",
     "atRisk": "Falling behind",
     "overdueN": "{n} in review",
-    "coursesDoneLabel": "Courses done: {done} of {total}",
+    "coursesDoneLabel": "Lessons done: {done} of {total}",
     "sessions": "Upcoming sessions",
     "noSessions": "No sessions scheduled."
   },
@@ -184,9 +177,6 @@
     "invites": "Invitations",
     "expired": "Expired",
     "expiresIn": "Expires in {value}",
-    "copyLink": "Copy link for {email}",
-    "linkCopied": "Link copied",
-    "copyFailed": "Could not copy",
     "noInvites": "No pending invitations.",
     "mentorLoad": "Mentor load",
     "oldest": "Oldest submission waiting",
@@ -230,7 +220,8 @@
     "empty": {
       "open": "All assignments are accepted.",
       "done": "Nothing accepted yet."
-    }
+    },
+    "noDue": "No deadline"
   },
   "submission": {
     "submit": "Submit your work",
@@ -277,24 +268,23 @@
   },
   "inviteForm": {
     "title": "Invite to the academy",
-    "subtitle": "They get a link, set a name and password, and land in their role.",
+    "subtitle": "They get an email with a link and set a name, username and password.",
     "menteeHint": "Studies in a cohort with a mentor",
     "mentorHint": "Leads a cohort, reviews work",
-    "cohort": "Cohort",
-    "cohortPlaceholder": "Choose a cohort",
-    "programPlaceholder": "Choose a program",
     "submit": "Create invitation",
     "createdTitle": "Invitation created",
-    "createdText": "Send the link to {email}. It's valid until {date}.",
-    "copy": "Copy",
-    "sendHint": "No emails yet: send the link via Telegram or email yourself.",
+    "createdText": "We emailed a link to {email}. It is valid until {date}.",
+    "sendHint": "If it does not arrive, ask them to check their spam folder.",
     "another": "Invite another",
     "toPeople": "Back to people",
     "err": {
-      "cohort": "Choose a cohort for the student",
       "userExists": "A user with this email already exists",
-      "pending": "This email already has an active invitation"
-    }
+      "pending": "This email already has an active invitation",
+      "roleUnavailable": "This role cannot be granted by invitation yet"
+    },
+    "headHint": "Manages cohorts, people and programs",
+    "unavailable": "Not available yet: the API has no role for inviting students",
+    "role": "Role"
   },
   "careerHints": {
     "cv": "One page, program projects, GitHub links",
@@ -358,7 +348,7 @@
   "roster": {
     "mentee": "Student",
     "assignments": "Assignments",
-    "courses": "Courses",
+    "courses": "Lessons",
     "waiting": "In review",
     "flags": "Flags",
     "empty": "No students in this cohort yet.",
@@ -373,12 +363,11 @@
       "mentor": "Mentors",
       "head": "Leadership"
     },
-    "search": "Name, email or cohort",
+    "search": "Name, email, username or cohort",
     "name": "Name",
     "where": "Cohort / program",
     "noMatch": "No one matches.",
-    "revoke": "Revoke invitation for {email}",
-    "revoked": "Invitation for {email} revoked"
+    "noRole": "Not in a cohort"
   },
   "assignments": {
     "manage": "Assignments",
@@ -398,13 +387,20 @@
     "createTitle": "New assignment",
     "editTitle": "Edit assignment",
     "title": "Title",
-    "description": "Description",
-    "dueAt": "Due date and time",
+    "description": "Instructions",
     "err": {
       "title": "Enter a title (2+ characters)",
       "description": "Add a description",
-      "dueAt": "Set a due date"
-    }
+      "dueOffset": "0 to 365 days",
+      "lesson": "Choose a lesson"
+    },
+    "lesson": "Lesson",
+    "lessonPlaceholder": "Choose a lesson",
+    "noLessons": "Assignments attach to lessons of the cohort's courses. No free lessons: attach a course to the cohort or add lessons to it.",
+    "dueOffset": "Due, days after the lesson opens",
+    "dueOffsetHint": "Leave empty for no deadline",
+    "noDue": "no deadline",
+    "inLesson": "lesson “{lesson}”"
   },
   "cohorts": {
     "hint": "Open a cohort to see its students.",
@@ -434,22 +430,24 @@
     "addMentee": "Add student",
     "addTitle": "Add a student to the cohort",
     "student": "Student",
-    "addPlaceholder": "Choose a student",
-    "noOthers": "No students in other cohorts.",
+    "addPlaceholder": "Choose a person",
+    "noOthers": "No one to add: everyone is already in this cohort or on staff.",
     "add": "Add",
     "moveTo": "Move to another cohort",
     "moved": "{name} moved to {cohort}",
     "statusSaved": "Status updated",
     "status": "Status",
     "actions": "Actions for {name}",
-    "fromCohort": "from {cohort}"
+    "fromCohort": "from {cohort}",
+    "programLocked": "An existing cohort cannot change program"
   },
   "programs": {
     "hint": "Program modules and the cohorts studying them.",
     "modules": "{n} modules",
     "cohorts": "cohorts: {n}",
     "noCohorts": "No cohorts yet.",
-    "editSoon": "Program editing is coming later."
+    "editSoon": "Program editing is coming later.",
+    "noModules": "No modules recorded for this program yet."
   },
   "enrollment": {
     "active": "Active",

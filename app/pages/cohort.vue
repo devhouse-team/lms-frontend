@@ -16,7 +16,7 @@ const { data, status, refresh } = await useFetch('/api/cohorts/mine', { key: 'co
             <p class="num mt-1 text-sm text-muted">{{ c.programTitle }} · {{ t('mentor.week', { week: c.week, total: c.totalWeeks }) }} · {{ t('home.cohortMembers', { n: c.mentees.length }) }}</p>
           </header>
           <RosterTable :rows="c.mentees" />
-          <AssignmentsManager class="mt-6" :cohort-id="c.id" :assignments="c.assignments" @changed="refresh()" />
+          <AssignmentsManager class="mt-6" :assignments="c.assignments" :lessons="c.lessons" :editable="c.canEditAssignments" @changed="refresh()" />
         </section>
         <UEmpty v-if="!data.length" icon="i-lucide-users" :description="t('roster.noCohort')" />
       </div>

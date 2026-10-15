@@ -23,7 +23,7 @@ async function toggle(id: string) {
 </script>
 
 <template>
-  <AppPage :title="t('nav.career')">
+  <AppPage mock :title="t('nav.career')">
     <HomeState :status="status" :has-data="!!data" @retry="refresh()">
       <div v-if="data" class="mx-auto w-full max-w-2xl space-y-6">
         <header>

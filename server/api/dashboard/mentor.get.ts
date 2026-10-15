@@ -1,40 +1,35 @@
-import type { MentorDashboard, ReviewItem, SessionItem } from '~~/shared/types'
+import type { components } from '~~/shared/types/api'
+import type { MentorDashboard } from '~~/shared/types'
 
+/** Sessions and contest have no API yet and stay on the mock */
 export default defineEventHandler(async (event): Promise<MentorDashboard> => {
-  const mentor = await requireRole(event, 'mentor')
+  const user = await requireRole(event, 'mentor')
   const now = Date.now()
-  const cohorts = db.cohorts.filter(c => c.mentorId === mentor.id)
-  const mentees = db.users.filter(u => u.role === 'mentee' && cohorts.some(c => c.id === u.cohortId))
-
-  const reviewQueue: ReviewItem[] = db.submissions
-    .filter(s => s.status === 'waiting' && mentees.some(m => m.id === s.menteeId))
-    .sort((a, b) => a.submittedAt - b.submittedAt)
-    .map((s) => {
-      const m = mentees.find(x => x.id === s.menteeId)!
-      return {
-        id: s.id,
-        title: s.title,
-        mentee: { id: m.id, name: m.name, avatar: m.avatar },
-        cohortName: cohorts.find(c => c.id === m.cohortId)!.name,
-        submittedAt: new Date(s.submittedAt).toISOString(),
-        to: `/reviews/${s.id}`
-      }
-    })
-
-  const sessions: SessionItem[] = mentorSessions(mentor.id, now).slice(0, 4)
-
+  const [cohorts, listed, waiting] = await Promise.all([
+    apiFetch<components['schemas']['MentorCohort'][]>(event, '/dashboard/mentor'),
+    listCohorts(event),
+    myReviewItems(event, 'submitted')
+  ])
   return {
-    mentor: { name: mentor.name.split(' ')[0]! },
-    reviewQueue,
-    sessions,
-    cohorts: cohorts.map(c => ({
-      id: c.id,
-      name: c.name,
-      program: programTitle(c.program) ?? '',
-      week: cohortWeek(c, now),
-      totalWeeks: c.totalWeeks,
-      mentees: mentees.filter(m => m.cohortId === c.id).map(m => menteeProgress(m, now))
-    })),
+    mentor: { name: user.name.split(' ')[0]! },
+    reviewQueue: waiting.sort((a, b) => a.at.localeCompare(b.at)),
+    sessions: mentorSessions(user.id, now).slice(0, 4),
+    cohorts: cohorts.map((c) => {
+      const info = listed.find(x => x.id === c.cohort_id)
+      return {
+        id: String(c.cohort_id),
+        name: c.cohort_name,
+        program: info?.program_title ?? '',
+        ...(info ? cohortWeeks(info, now) : { week: 0, totalWeeks: 0 }),
+        mentees: c.mentees.map(m => ({
+          ...person(m.user),
+          coursesDone: m.completed,
+          coursesTotal: c.released_lessons,
+          overdue: waiting.filter(w => w.mentee.id === String(m.user.id) && reviewOverdue(w.submittedAt, now)).length,
+          atRisk: m.enrollment_status === 'active' && isAtRisk(m.completed, c.released_lessons)
+        }))
+      }
+    }),
     contest: { title: db.contest.title, at: new Date(db.contest.at).toISOString() }
   }
 })

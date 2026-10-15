@@ -1,6 +1,5 @@
 <script setup lang="ts">
 const { t, locale } = useI18n()
-const toast = useToast()
 const { data, status, refresh } = useFetch('/api/dashboard/head', { key: 'dashboard-head' })
 const { left, ago, stale } = useCountdown()
 
@@ -16,15 +15,6 @@ const totals = computed(() => {
   }
 })
 
-async function copyInvite(token: string) {
-  const url = `${window.location.origin}/invite/${token}`
-  try {
-    await navigator.clipboard.writeText(url)
-    toast.add({ title: t('head.linkCopied'), description: url, icon: 'i-lucide-link', color: 'neutral' })
-  } catch {
-    toast.add({ title: t('head.copyFailed'), description: url, color: 'error' })
-  }
-}
 </script>
 
 <template>
@@ -56,25 +46,12 @@ async function copyInvite(token: string) {
             <span class="num text-xs text-muted">{{ data.invites.length }}</span>
           </div>
           <ul v-if="data.invites.length" class="mt-3 space-y-3">
-            <li v-for="inv in data.invites" :key="inv.token" class="flex items-start gap-2">
-              <div class="min-w-0 flex-1">
-                <p class="truncate text-sm text-highlighted">{{ inv.email }}</p>
-                <p class="truncate text-xs text-muted">
-                  {{ t(`roles.${inv.role}`) }}<template v-if="inv.cohortName || inv.programTitle"> · {{ inv.cohortName ?? inv.programTitle }}</template>
-                </p>
-                <p class="num mt-0.5 text-xs" :class="inv.expired ? 'text-error' : 'text-dimmed'">
-                  {{ inv.expired ? t('head.expired') : t('head.expiresIn', { value: left(inv.expiresAt) }) }}
-                </p>
-              </div>
-              <UButton
-                icon="i-lucide-copy"
-                color="neutral"
-                variant="ghost"
-                size="sm"
-                :aria-label="t('head.copyLink', { email: inv.email })"
-                :disabled="inv.expired"
-                @click="copyInvite(inv.token)"
-              />
+            <li v-for="inv in data.invites" :key="inv.id" class="min-w-0">
+              <p class="truncate text-sm text-highlighted">{{ inv.email }}</p>
+              <p v-if="inv.role" class="truncate text-xs text-muted">{{ t(`roles.${inv.role}`) }}</p>
+              <p class="num mt-0.5 text-xs" :class="inv.expired ? 'text-error' : 'text-dimmed'">
+                {{ inv.expired ? t('head.expired') : t('head.expiresIn', { value: left(inv.expiresAt) }) }}
+              </p>
             </li>
           </ul>
           <p v-else class="mt-3 text-sm text-muted">{{ t('head.noInvites') }}</p>

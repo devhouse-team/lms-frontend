@@ -1,6 +1,6 @@
 <script setup lang="ts">
-/** Dashboard panel with navbar; optional back link. Page content goes in the default slot. */
-defineProps<{ title: string, back?: string }>()
+/** Dashboard panel with navbar; optional back link. `mock` marks pages still on the in-memory mock. */
+defineProps<{ title: string, back?: string, mock?: boolean }>()
 const { t } = useI18n()
 </script>
 
@@ -14,7 +14,7 @@ const { t } = useI18n()
         </template>
         <template #right>
           <slot name="right" />
-          <UBadge :label="t('common.synthetic')" color="neutral" variant="outline" size="sm" />
+          <UBadge v-if="mock" :label="t('common.synthetic')" color="neutral" variant="outline" size="sm" />
         </template>
       </UDashboardNavbar>
     </template>

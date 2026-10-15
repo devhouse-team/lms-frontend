@@ -3,7 +3,7 @@ import type { CommandPaletteGroup, DropdownMenuItem, NavigationMenuItem } from '
 import type { Role } from '~~/shared/types'
 
 const { t, locale, setLocale } = useI18n()
-const { user, role, logout } = useAuth()
+const { user, role, logout, switchRole } = useAuth()
 const open = ref(false)
 
 const navByRole: Record<Role, { key: string, icon: string, to: string }[]> = {
@@ -48,6 +48,13 @@ const groups = computed<CommandPaletteGroup[]>(() => [{
 
 const userMenu = computed<DropdownMenuItem[][]>(() => [
   [{ type: 'label', label: user.value?.email }],
+  // Several views (e.g. mentor in one cohort, student in another): switch instead of picking one
+  ...((user.value?.roles.length ?? 0) > 1
+    ? [[
+        { type: 'label' as const, label: t('auth.switchRole') },
+        ...user.value!.roles.map(r => ({ label: t(`roles.${r}`), type: 'checkbox' as const, checked: r === role.value, onSelect: () => r !== role.value && switchRole(r) }))
+      ]]
+    : []),
   [
     { label: 'Русский', type: 'checkbox', checked: locale.value === 'ru', onSelect: () => setLocale('ru') },
     { label: 'English', type: 'checkbox', checked: locale.value === 'en', onSelect: () => setLocale('en') }

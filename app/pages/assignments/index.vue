@@ -7,11 +7,11 @@ const now = useNow()
 useHead({ title: () => `${t('nav.assignments')} · dev.house` })
 
 const { data, status, refresh } = await useFetch('/api/assignments', { key: 'assignments' })
-const fmt = (iso: string) => new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'short' }).format(new Date(iso))
+const fmt = (iso?: string) => !iso ? t('assignment.noDue') : new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'short' }).format(new Date(iso))
 
 const open = computed(() => (data.value ?? []).filter(a => a.status !== 'accepted'))
 const done = computed(() => (data.value ?? []).filter(a => a.status === 'accepted'))
-const isPast = (iso: string) => new Date(iso).getTime() < now.value
+const isPast = (iso?: string) => !iso || new Date(iso).getTime() < now.value
 </script>
 
 <template>
@@ -30,8 +30,8 @@ const isPast = (iso: string) => new Date(iso).getTime() < now.value
               <NuxtLink :to="`/assignments/${a.id}`" class="group flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 transition-colors duration-150 ease-out first:rounded-t-lg last:rounded-b-lg hover:bg-elevated">
                 <span class="min-w-0 flex-1 basis-48 truncate text-sm text-highlighted">{{ a.title }}</span>
                 <StatusBadge :status="a.status" />
-                <span class="num w-24 shrink-0 text-right text-xs" :class="a.status !== 'accepted' && !isPast(a.dueAt) && urgent(a.dueAt) ? 'text-primary' : 'text-muted'">
-                  {{ a.status === 'accepted' || isPast(a.dueAt) ? fmt(a.dueAt) : left(a.dueAt) }}
+                <span class="num w-24 shrink-0 text-right text-xs" :class="a.status !== 'accepted' && !isPast(a.dueAt) && urgent(a.dueAt!) ? 'text-primary' : 'text-muted'">
+                  {{ a.status === 'accepted' || isPast(a.dueAt) ? fmt(a.dueAt) : left(a.dueAt!) }}
                 </span>
                 <UIcon name="i-lucide-chevron-right" class="size-4 shrink-0 text-dimmed transition-transform duration-150 ease-out group-hover:translate-x-0.5" />
               </NuxtLink>
