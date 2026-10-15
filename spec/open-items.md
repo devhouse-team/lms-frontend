@@ -11,7 +11,7 @@ Known gaps and undecided questions. Backend items are mirrored in `../backend/sp
 | O5 | Invites: no preview, copy-link or revoke | BE | | The token is only in the email. |
 | O6 | `GET /users/` has no roles | BE | | People roles are derived from cohort relations; non-superuser admins can't be shown as head. |
 | O7 | One API call per lesson to find assignments | BE | Large cohorts | Ask for `GET /cohorts/{c}/assignments`. |
-| O8 | `/verify-email` and `/reset-password` pages | FE | Password reset | The API emails links to them. No "forgot password" on the login page yet. |
+| O8 | ~~`/verify-email` and `/reset-password` pages~~ | FE | | Done: [account-recovery](features/account-recovery.md). |
 | O9 | At-risk rule is a placeholder | PO | | Active, 3+ lessons opened, under half completed. |
 | O10 | No course authoring UI | FE + PO | Assignments | Courses, modules, lessons and attaching courses to cohorts are API-only for now. |
 | O11 | Staff can't see earlier submission attempts | BE | | Review detail shows no history. |

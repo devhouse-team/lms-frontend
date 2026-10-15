@@ -25,6 +25,9 @@ function messageFor(e: unknown) {
   return t('auth.err.network')
 }
 
+// Carry an email over to the reset form; a username isn't something the reset flow can use
+const forgotLink = computed(() => ({ path: '/forgot-password', query: state.login.includes('@') ? { email: state.login.trim() } : {} }))
+
 async function onSubmit(e: FormSubmitEvent<{ login: string, password: string }>) {
   error.value = null
   loading.value = true
@@ -49,6 +52,9 @@ async function onSubmit(e: FormSubmitEvent<{ login: string, password: string }>)
       </UFormField>
       <UFormField :label="t('auth.password')" name="password">
         <UInput v-model="state.password" type="password" autocomplete="current-password" size="lg" class="w-full" />
+        <template #hint>
+          <NuxtLink :to="forgotLink" class="text-muted underline-offset-4 hover:text-highlighted hover:underline">{{ t('recovery.forgotLink') }}</NuxtLink>
+        </template>
       </UFormField>
 
       <UAlert v-if="error" :description="error" color="error" variant="subtle" icon="i-lucide-circle-alert" role="alert" />

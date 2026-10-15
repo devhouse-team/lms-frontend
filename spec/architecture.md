@@ -81,3 +81,5 @@ Role ids differ per database (a local one had 3 and 4): set them per environment
   `NUXT_API_BASE=http://localhost:8000/api/v1` and the local role ids on port 3123, then run
   `python3 -I scripts/e2e-smoke.py`. It seeds a program, course and lessons straight on the API and drives every role
   through Nitro. Registration is limited to 5 per hour per IP, so it can be run about 5 times an hour.
+- `python3 -I scripts/e2e-recovery.py`: password reset and email verification, reading the emails from Mailpit
+  (1 registration and 2 of the 5 hourly reset requests per run).

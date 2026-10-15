@@ -2,6 +2,21 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-10-15: account recovery
+
+- Built [features/account-recovery.md](features/account-recovery.md): "Forgot password?" on the login page,
+  `/forgot-password`, `/reset-password` and `/verify-email`, so the links the API emails now work (closes O8).
+- Passwords are checked against the API's policy in the form on `/reset-password` and `/accept-invite` (8–128
+  characters, upper and lower case, a digit, a special character); the API's own field message shows if it still refuses.
+- New check: `scripts/e2e-recovery.py`.
+
+## 2026-10-15: account recovery spec, invite username fix
+
+- New spec [features/account-recovery.md](features/account-recovery.md): forgot password, `/reset-password`,
+  `/verify-email`, with the API calls, error mapping and build steps.
+- Fixed: the invite form accepted usernames the API refuses (uppercase, `.`, `-`, up to 40 characters), so they
+  failed with a 422 after submitting. The form and the Nitro route now use the API's rule: 2–32 of `a–z 0–9 _`.
+
 ## 2026-10-15: switch to the LMS API
 
 - The app now uses `api.devhouse.kz` through Nitro (BFF) instead of the in-memory mock for auth, invites, cohorts,

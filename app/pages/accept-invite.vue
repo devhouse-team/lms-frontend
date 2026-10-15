@@ -14,17 +14,19 @@ const invalid = ref(!token.value)
 
 const schema = computed(() => z.object({
   name: z.string().trim().min(2, t('invite.err.name')).max(80, t('invite.err.name')),
-  username: z.string().trim().regex(/^[A-Za-z0-9._-]{2,40}$/, t('invite.err.username')),
-  password: z.string().min(8, t('invite.err.password')).max(128, t('invite.err.password')),
+  username: z.string().trim().regex(/^[a-z0-9_]{2,32}$/, t('invite.err.username')),
+  password: passwordSchema(t),
   confirm: z.string()
 }).refine(v => v.password === v.confirm, { message: t('invite.err.confirm'), path: ['confirm'] }))
 
 const state = reactive({ name: '', username: '', password: '', confirm: '' })
 const loading = ref(false)
 const submitError = ref<string | null>(null)
+const passwordError = ref<string>()
 
 async function onSubmit() {
   submitError.value = null
+  passwordError.value = undefined
   loading.value = true
   try {
     await $fetch('/api/invites/accept', {
@@ -33,12 +35,12 @@ async function onSubmit() {
     })
     await afterLogin()
   } catch (e) {
-    const err = e as { statusCode?: number, data?: { statusMessage?: string, message?: string } }
-    const code = err.data?.statusMessage
-    if (code === 'invite_invalid') invalid.value = true
-    // Password policy and field errors come back as 422 with an English explanation
-    else if (err.statusCode === 422) submitError.value = err.data?.message ?? t('common.saveError')
-    else if (err.statusCode === 409) submitError.value = t('invite.taken')
+    const err = apiError(e)
+    if (err.code === 'invite_invalid') invalid.value = true
+    // Password policy and field errors come back as 422 with an English explanation per field
+    else if (err.status === 422 && err.field('password')) passwordError.value = err.field('password')
+    else if (err.status === 422) submitError.value = err.message ?? t('common.saveError')
+    else if (err.status === 409) submitError.value = t('invite.taken')
     else submitError.value = t('auth.err.network')
   } finally {
     loading.value = false
@@ -69,7 +71,7 @@ async function onSubmit() {
         <UFormField :label="t('invite.username')" name="username" :hint="t('invite.usernameHint')">
           <UInput v-model="state.username" autocomplete="username" autocapitalize="none" spellcheck="false" size="lg" class="w-full" />
         </UFormField>
-        <UFormField :label="t('auth.password')" name="password" :help="t('invite.passwordHelp')">
+        <UFormField :label="t('auth.password')" name="password" :help="passwordError ? undefined : t('password.rules')" :error="passwordError">
           <UInput v-model="state.password" type="password" autocomplete="new-password" size="lg" class="w-full" />
         </UFormField>
         <UFormField :label="t('invite.confirm')" name="confirm">
