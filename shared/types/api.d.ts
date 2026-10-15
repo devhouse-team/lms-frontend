@@ -646,6 +646,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cohorts/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Visible Cohorts
+         * @description All cohorts the caller can see (admins: every cohort; others: ones they study in or staff), newest first.
+         */
+        get: operations["list_visible_cohorts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/cohorts/{cohort_id}": {
         parameters: {
             query?: never;
@@ -1370,6 +1390,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Access
+         * @description The caller's global roles, effective permissions, and cohorts (as student, mentor, or reviewer).
+         *
+         *     For showing and hiding UI. Every endpoint still enforces access itself.
+         */
+        get: operations["my_access"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -1472,6 +1514,19 @@ export interface components {
              */
             client_secret?: string | null;
         };
+        /** CohortAccess */
+        CohortAccess: {
+            /** Cohort Id */
+            cohort_id: number;
+            /** Cohort Name */
+            cohort_name: string;
+            /** Program Id */
+            program_id: number;
+            /** Relation */
+            relation: string;
+            /** Enrollment Status */
+            enrollment_status: string | null;
+        };
         /** CohortCourseAttach */
         CohortCourseAttach: {
             /**
@@ -1523,6 +1578,27 @@ export interface components {
             ends_on?: string | null;
             /** @default planned */
             status: components["schemas"]["CohortStatus"];
+        };
+        /** CohortListItem */
+        CohortListItem: {
+            /** Id */
+            id: number;
+            /** Program Id */
+            program_id: number;
+            /** Name */
+            name: string;
+            /**
+             * Starts On
+             * Format: date
+             */
+            starts_on: string;
+            /** Ends On */
+            ends_on: string | null;
+            status: components["schemas"]["CohortStatus"];
+            /** Program Title */
+            program_title: string;
+            /** Active Students */
+            active_students: number;
         };
         /** CohortRead */
         CohortRead: {
@@ -2043,6 +2119,26 @@ export interface components {
             position?: number | null;
             /** Release Offset Days */
             release_offset_days?: number | null;
+        };
+        /**
+         * MyAccess
+         * @description What the caller is, for page guards. The API still checks every call.
+         */
+        MyAccess: {
+            /** User Id */
+            user_id: number;
+            /** Username */
+            username: string;
+            /** Name */
+            name: string;
+            /** Is Superuser */
+            is_superuser: boolean;
+            /** Roles */
+            roles: string[];
+            /** Permissions */
+            permissions: string[];
+            /** Cohorts */
+            cohorts: components["schemas"]["CohortAccess"][];
         };
         /** MyEnrollment */
         MyEnrollment: {
@@ -3786,6 +3882,38 @@ export interface operations {
             };
         };
     };
+    list_visible_cohorts: {
+        parameters: {
+            query?: {
+                program_id?: number | null;
+                status?: components["schemas"]["CohortStatus"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CohortListItem"][];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_cohort: {
         parameters: {
             query?: never;
@@ -5405,6 +5533,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MentorCohort"][];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    my_access: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyAccess"];
                 };
             };
             /** @description Error envelope; translate `error.message_key` */

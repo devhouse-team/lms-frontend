@@ -1,28 +1,15 @@
 import type { ReviewListItem } from '~~/shared/types'
 
+/** The API keeps no review timestamp in the queue, so "reviewed" is ordered by submission time */
 export default defineEventHandler(async (event): Promise<{ waiting: ReviewListItem[], reviewed: ReviewListItem[] }> => {
-  const mentor = await requireRole(event, 'mentor')
-  const cohorts = db.cohorts.filter(c => c.mentorId === mentor.id)
-  const mentees = db.users.filter(u => u.role === 'mentee' && cohorts.some(c => c.id === u.cohortId))
-
-  const items = db.submissions
-    .filter(s => mentees.some(m => m.id === s.menteeId))
-    .map((s): ReviewListItem => {
-      const m = mentees.find(x => x.id === s.menteeId)!
-      return {
-        id: s.id,
-        title: s.title,
-        mentee: { id: m.id, name: m.name, avatar: m.avatar },
-        cohortName: cohorts.find(c => c.id === m.cohortId)!.name,
-        submittedAt: new Date(s.submittedAt).toISOString(),
-        to: `/reviews/${s.id}`,
-        status: s.status,
-        reviewedAt: s.reviewedAt ? new Date(s.reviewedAt).toISOString() : undefined
-      }
-    })
-
+  await requireRole(event, 'mentor')
+  const [waiting, approved, changes] = await Promise.all([
+    myReviewItems(event, 'submitted'),
+    myReviewItems(event, 'approved'),
+    myReviewItems(event, 'changes_requested')
+  ])
   return {
-    waiting: items.filter(i => i.status === 'waiting').sort((a, b) => a.submittedAt.localeCompare(b.submittedAt)),
-    reviewed: items.filter(i => i.status !== 'waiting').sort((a, b) => (b.reviewedAt ?? '').localeCompare(a.reviewedAt ?? '')).slice(0, 30)
+    waiting: waiting.sort((a, b) => a.at.localeCompare(b.at)),
+    reviewed: [...approved, ...changes].sort((a, b) => b.at.localeCompare(a.at)).slice(0, 30)
   }
 })

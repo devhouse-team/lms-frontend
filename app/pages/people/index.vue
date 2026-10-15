@@ -4,7 +4,6 @@ import type { Role } from '~~/shared/types'
 definePageMeta({ roles: ['head'] })
 
 const { t } = useI18n()
-const toast = useToast()
 const { left } = useCountdown()
 useHead({ title: () => `${t('nav.people')} · dev.house` })
 
@@ -22,29 +21,8 @@ const rows = computed(() => {
   const needle = q.value.trim().toLowerCase()
   return (data.value?.people ?? []).filter(p =>
     (filter.value === 'all' || p.role === filter.value)
-    && (!needle || p.name.toLowerCase().includes(needle) || p.email.toLowerCase().includes(needle) || p.cohortName?.toLowerCase().includes(needle)))
+    && (!needle || [p.name, p.email, p.username, p.cohortName].some(v => v?.toLowerCase().includes(needle))))
 })
-
-async function copy(token: string) {
-  const url = `${window.location.origin}/invite/${token}`
-  try {
-    await navigator.clipboard.writeText(url)
-    toast.add({ title: t('head.linkCopied'), description: url, icon: 'i-lucide-link', color: 'neutral' })
-  } catch {
-    toast.add({ title: t('head.copyFailed'), description: url, color: 'error' })
-  }
-}
-
-async function revoke(token: string, email: string) {
-  try {
-    await $fetch(`/api/invites/${token}`, { method: 'DELETE' })
-    if (data.value) data.value.invites = data.value.invites.filter(i => i.token !== token)
-    clearNuxtData('dashboard-head')
-    toast.add({ title: t('people.revoked', { email }), icon: 'i-lucide-link-2-off', color: 'neutral' })
-  } catch {
-    toast.add({ title: t('common.saveError'), color: 'error', icon: 'i-lucide-circle-alert' })
-  }
-}
 </script>
 
 <template>
@@ -79,7 +57,7 @@ async function revoke(token: string, email: string) {
                       </div>
                     </div>
                   </td>
-                  <td class="px-3 py-2.5 text-muted">{{ t(`roles.${p.role}`) }}</td>
+                  <td class="px-3 py-2.5" :class="p.role ? 'text-muted' : 'text-dimmed'">{{ p.role ? t(`roles.${p.role}`) : t('people.noRole') }}</td>
                   <td class="px-4 py-2.5">
                     <p v-if="p.cohortName" class="num text-highlighted">{{ p.cohortName }}</p>
                     <p v-if="p.programTitle" class="truncate text-xs text-muted">{{ p.programTitle }}</p>
@@ -101,14 +79,10 @@ async function revoke(token: string, email: string) {
               <span class="num text-xs text-muted">{{ data.invites.length }}</span>
             </div>
             <ul v-if="data.invites.length" class="mt-3 space-y-3">
-              <li v-for="inv in data.invites" :key="inv.token" class="flex items-start gap-1">
-                <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm text-highlighted">{{ inv.email }}</p>
-                  <p class="truncate text-xs text-muted">{{ t(`roles.${inv.role}`) }}<template v-if="inv.cohortName || inv.programTitle"> · {{ inv.cohortName ?? inv.programTitle }}</template></p>
-                  <p class="num mt-0.5 text-xs" :class="inv.expired ? 'text-error' : 'text-dimmed'">{{ inv.expired ? t('head.expired') : t('head.expiresIn', { value: left(inv.expiresAt) }) }}</p>
-                </div>
-                <UButton icon="i-lucide-copy" color="neutral" variant="ghost" size="sm" :aria-label="t('head.copyLink', { email: inv.email })" :disabled="inv.expired" @click="copy(inv.token)" />
-                <UButton icon="i-lucide-x" color="neutral" variant="ghost" size="sm" :aria-label="t('people.revoke', { email: inv.email })" @click="revoke(inv.token, inv.email)" />
+              <li v-for="inv in data.invites" :key="inv.id" class="min-w-0">
+                <p class="truncate text-sm text-highlighted">{{ inv.email }}</p>
+                <p v-if="inv.role" class="truncate text-xs text-muted">{{ t(`roles.${inv.role}`) }}</p>
+                <p class="num mt-0.5 text-xs" :class="inv.expired ? 'text-error' : 'text-dimmed'">{{ inv.expired ? t('head.expired') : t('head.expiresIn', { value: left(inv.expiresAt) }) }}</p>
               </li>
             </ul>
             <p v-else class="mt-3 text-sm text-muted">{{ t('head.noInvites') }}</p>

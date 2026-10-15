@@ -10,7 +10,7 @@ const fmt = (iso: string) => new Intl.DateTimeFormat(locale.value, { weekday: 'l
 </script>
 
 <template>
-  <AppPage :title="t('nav.mentor')">
+  <AppPage mock :title="t('nav.mentor')">
     <HomeState :status="status" :has-data="!!data" @retry="refresh()">
       <div v-if="data" class="mx-auto w-full max-w-2xl space-y-8">
         <header v-if="data.mentor" class="flex items-center gap-4">

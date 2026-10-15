@@ -14,7 +14,7 @@ useHead({ title: () => `${data.value?.title ?? t('nav.assignments')} · dev.hous
 
 const fmt = (iso: string) => new Intl.DateTimeFormat(locale.value, { weekday: 'short', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
 const canSubmit = computed(() => data.value && (data.value.status === 'not_submitted' || data.value.status === 'changes'))
-const pastDue = computed(() => data.value && new Date(data.value.dueAt).getTime() < Date.now())
+const pastDue = computed(() => !!data.value?.dueAt && new Date(data.value.dueAt).getTime() < Date.now())
 
 const schema = computed(() => z.object({
   url: z.string().trim().min(1, t('submission.err.urlRequired')).url(t('submission.err.url')).refine(u => /^https?:\/\//i.test(u), t('submission.err.url')),
@@ -93,10 +93,13 @@ async function onSubmit() {
         <HomeRail>
           <section class="p-4" aria-labelledby="due-title">
             <h2 id="due-title" class="text-sm font-semibold text-highlighted">{{ t('assignment.due') }}</h2>
-            <p class="num mt-3 text-sm text-highlighted">{{ fmt(data!.dueAt) }}</p>
-            <p class="num mt-1 text-xs" :class="pastDue ? 'text-muted' : urgent(data!.dueAt) ? 'text-primary' : 'text-muted'">
-              {{ pastDue ? t('assignment.pastDue') : t('time.in', { value: left(data!.dueAt) }) }}
-            </p>
+            <template v-if="data!.dueAt">
+              <p class="num mt-3 text-sm text-highlighted">{{ fmt(data!.dueAt) }}</p>
+              <p class="num mt-1 text-xs" :class="pastDue ? 'text-muted' : urgent(data!.dueAt) ? 'text-primary' : 'text-muted'">
+                {{ pastDue ? t('assignment.pastDue') : t('time.in', { value: left(data!.dueAt) }) }}
+              </p>
+            </template>
+            <p v-else class="mt-3 text-sm text-muted">{{ t('assignment.noDue') }}</p>
           </section>
           <section class="p-4" aria-labelledby="who-title">
             <h2 id="who-title" class="text-sm font-semibold text-highlighted">{{ t('assignment.reviewer') }}</h2>

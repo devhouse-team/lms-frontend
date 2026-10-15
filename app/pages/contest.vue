@@ -32,7 +32,7 @@ async function toggle() {
 </script>
 
 <template>
-  <AppPage :title="t('nav.contest')">
+  <AppPage mock :title="t('nav.contest')">
     <HomeState :status="status" :has-data="!!data" @retry="refresh()">
       <div v-if="data" class="mx-auto w-full max-w-4xl space-y-8">
         <section v-if="data.current" aria-labelledby="cur-title" class="rounded-lg bg-elevated p-5 ring-1 ring-inset ring-default sm:p-6">

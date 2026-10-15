@@ -2,7 +2,8 @@ export type Role = 'mentee' | 'mentor' | 'head'
 export type ProgramSlug = 'frontend' | 'backend' | 'mobile' | 'ml' | 'algorithms'
 
 export interface Program {
-  slug: ProgramSlug
+  id: string
+  slug: string
   title: string
   months: number
   modules: string[]
@@ -21,7 +22,8 @@ export type QueueKind = 'session' | 'assignment' | 'quiz' | 'feedback' | 'contes
 
 export interface Mentor extends Person {
   role: string
-  nextSessionAt: string
+  /** Absent until mentoring sessions exist in the backend */
+  nextSessionAt?: string
 }
 
 export interface CohortInfo {
@@ -69,7 +71,8 @@ export interface CareerStep {
 export interface StudentDashboard {
   student: { name: string }
   mentor: Mentor | null
-  cohort: CohortInfo
+  /** Null when the student has no active cohort (not enrolled yet, paused, finished) */
+  cohort: CohortInfo | null
   nextUp: QueueItem | null
   queue: QueueItem[]
   courses: ExternalCourse[]
@@ -115,25 +118,24 @@ export interface MentorDashboard {
 export interface CohortRow {
   id: string
   name: string
-  program: ProgramSlug
+  programId: string
   programTitle: string
   mentor: Person | null
   mentees: number
   week: number
   totalWeeks: number
-  /** 0..1 share of external courses done across the cohort */
+  /** 0..1 share of released lessons completed across the cohort */
   progress: number
   atRisk: number
   backlog: number
 }
 
+/** A pending invite. The link itself is only in the invitee's email. */
 export interface InvitePublic {
-  token: string
+  id: string
   email: string
-  role: Role
-  cohortName?: string
-  programTitle?: string
-  invitedBy: string
+  /** Absent when the backend role has no UI equivalent */
+  role?: Role
   expiresAt: string
   expired: boolean
 }
@@ -168,9 +170,10 @@ export interface SubmissionView {
 }
 
 export interface AssignmentListItem {
+  /** `${cohortId}-${lessonId}` */
   id: string
   title: string
-  dueAt: string
+  dueAt?: string
   status: AssignmentStatus
   lastSubmittedAt?: string
 }
@@ -179,7 +182,7 @@ export interface AssignmentDetail {
   id: string
   title: string
   description: string
-  dueAt: string
+  dueAt?: string
   cohortName: string
   mentor: Person | null
   status: AssignmentStatus
@@ -194,7 +197,7 @@ export interface ReviewListItem extends ReviewItem {
 
 export interface ReviewDetail {
   id: string
-  assignment: { id: string, title: string, description: string, dueAt: string }
+  assignment: { id: string, title: string, description: string, dueAt?: string }
   mentee: Person
   cohortName: string
   submission: SubmissionView
@@ -214,7 +217,8 @@ export type EnrollmentStatus = 'active' | 'paused' | 'completed' | 'dropped'
 export const ENROLLMENT_STATUSES: EnrollmentStatus[] = ['active', 'paused', 'completed', 'dropped']
 
 export interface CohortRosterRow extends Person {
-  email: string
+  enrollmentId: string
+  username: string
   enrollment: EnrollmentStatus
   coursesDone: number
   coursesTotal: number
@@ -225,30 +229,48 @@ export interface CohortRosterRow extends Person {
   atRisk: boolean
 }
 
+/** An assignment attached to a lesson; `id` is the lesson id */
 export interface ManagedAssignment {
   id: string
+  lessonTitle: string
   title: string
   description: string
-  dueAt: string
+  /** Days after the lesson opens */
+  dueOffsetDays: number | null
+  /** For this cohort: lesson release + offset */
+  dueAt?: string
   submissions: number
+}
+
+export interface CohortLesson {
+  id: string
+  title: string
+  courseTitle: string
+  hasAssignment: boolean
 }
 
 export interface CohortRoster {
   id: string
   name: string
-  program: ProgramSlug
+  programId: string
   programTitle: string
   mentor: Person | null
   week: number
   totalWeeks: number
   startAt: string
   assignments: ManagedAssignment[]
+  /** Lessons of the cohort's courses, for attaching assignments */
+  lessons: CohortLesson[]
+  /** Whether this user may add, edit and delete assignments (course.update) */
+  canEditAssignments: boolean
   mentees: CohortRosterRow[]
 }
 
 export interface PersonRow extends Person {
   email: string
-  role: Role
+  username: string
+  /** Derived from cohort relations; absent for accounts not placed anywhere yet */
+  role?: Role
   cohortId?: string
   cohortName?: string
   programTitle?: string
@@ -303,16 +325,15 @@ export interface MentorProfile {
 /** Body for creating / editing a cohort. startAt is a YYYY-MM-DD date. */
 export interface CohortInput {
   name: string
-  program: ProgramSlug
+  programId: string
   startAt: string
   totalWeeks: number
   mentorId?: string | null
 }
 
-/** Body for PATCH /api/enrollments/:menteeId; at least one field. */
+/** Body for PATCH /api/enrollments/:enrollmentId */
 export interface EnrollmentUpdate {
-  cohortId?: string
-  status?: EnrollmentStatus
+  status: EnrollmentStatus
 }
 
 export interface OkResponse {
@@ -321,6 +342,13 @@ export interface OkResponse {
 
 export interface AuthResponse {
   role: Role
+}
+
+export interface InviteAcceptInput {
+  token: string
+  name: string
+  username: string
+  password: string
 }
 
 export interface CourseStatusUpdate {

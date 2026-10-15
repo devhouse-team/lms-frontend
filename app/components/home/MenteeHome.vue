@@ -35,7 +35,7 @@ async function onContest() {
             {{ t('home.greeting', { name: data.student.name }) }}
           </h1>
           <p class="num mt-1 text-sm text-muted">
-            {{ t('home.summary', { week: data.cohort.week, total: data.cohort.totalWeeks, cohort: data.cohort.name }) }}
+            {{ data.cohort ? t('home.summary', { week: data.cohort.week, total: data.cohort.totalWeeks, cohort: data.cohort.name }) : t('home.noCohort') }}
           </p>
         </header>
 
@@ -64,15 +64,15 @@ async function onContest() {
               <UAvatar :src="data.mentor.avatar" :alt="data.mentor.name" size="lg" />
               <div class="min-w-0">
                 <p class="truncate text-sm font-medium text-highlighted">{{ data.mentor.name }}</p>
-                <p class="truncate text-xs text-muted">{{ data.mentor.role }}</p>
+                <p v-if="data.mentor.role" class="truncate text-xs text-muted">{{ data.mentor.role }}</p>
               </div>
             </div>
             <dl class="mt-4 space-y-2 text-sm">
-              <div class="flex justify-between gap-3">
+              <div v-if="data.mentor.nextSessionAt" class="flex justify-between gap-3">
                 <dt class="text-muted">{{ t('home.mentorNext') }}</dt>
                 <dd class="num text-highlighted">{{ fmtDate(data.mentor.nextSessionAt, { weekday: 'short', hour: '2-digit', minute: '2-digit' }) }}</dd>
               </div>
-              <div class="flex justify-between gap-3">
+              <div v-if="data.cohort" class="flex justify-between gap-3">
                 <dt class="text-muted">{{ t('home.cohort') }}</dt>
                 <dd class="num text-highlighted">{{ data.cohort.name }} · {{ t('home.cohortMembers', { n: data.cohort.members }) }}</dd>
               </div>

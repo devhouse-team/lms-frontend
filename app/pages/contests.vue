@@ -46,7 +46,7 @@ const shown = computed(() => data.value?.past[selected.value])
 </script>
 
 <template>
-  <AppPage :title="t('nav.contests')">
+  <AppPage mock :title="t('nav.contests')">
     <HomeState :status="status" :has-data="!!data" @retry="refresh()">
       <div v-if="data" class="mx-auto w-full max-w-4xl space-y-10">
         <section v-if="data.current" aria-labelledby="cur-title">

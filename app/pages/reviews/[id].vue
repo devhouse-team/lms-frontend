@@ -111,7 +111,7 @@ async function decide(verdict: 'accepted' | 'changes') {
           <section class="p-4" aria-labelledby="task-title">
             <h2 id="task-title" class="text-sm font-semibold text-highlighted">{{ t('review.task') }}</h2>
             <p class="mt-3 whitespace-pre-line text-sm text-default">{{ data.assignment.description }}</p>
-            <p class="num mt-3 text-xs text-muted">{{ t('review.due', { date: fmt(data.assignment.dueAt) }) }}</p>
+            <p v-if="data.assignment.dueAt" class="num mt-3 text-xs text-muted">{{ t('review.due', { date: fmt(data.assignment.dueAt) }) }}</p>
           </section>
         </HomeRail>
       </div>

@@ -1,11 +1,11 @@
 import { z } from 'zod'
-import type { ManagedAssignment } from '~~/shared/types'
+import type { OkResponse } from '~~/shared/types'
 
-export default defineEventHandler(async (event): Promise<ManagedAssignment> => {
-  const { cohortId, ...body } = await readValidatedBody(event, assignmentBody.extend({ cohortId: z.string() }).parse)
-  await requireAssignmentAccess(event, cohortId)
-  const a = { id: `a-${crypto.randomUUID().slice(0, 8)}`, cohortId, ...body, dueAt: Date.parse(body.dueAt) }
-  db.assignments.push(a)
+/** Attach an assignment to a lesson. The API checks the caller may edit that course. */
+export default defineEventHandler(async (event): Promise<OkResponse> => {
+  await requireUserSession(event)
+  const { lessonId, ...body } = await readValidatedBody(event, assignmentBody.extend({ lessonId: z.string() }).parse)
+  await apiFetch(event, `/lessons/${apiId(lessonId)}/assignment`, { method: 'PUT', body: toAssignmentWrite(body) })
   setResponseStatus(event, 201)
-  return { ...body, id: a.id, submissions: 0 }
+  return { ok: true }
 })

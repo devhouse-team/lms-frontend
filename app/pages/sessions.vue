@@ -22,7 +22,7 @@ const days = computed(() => {
 </script>
 
 <template>
-  <AppPage :title="t('nav.sessions')">
+  <AppPage mock :title="t('nav.sessions')">
     <HomeState :status="status" :has-data="!!data" @retry="refresh()">
       <div v-if="data" class="mx-auto w-full max-w-3xl space-y-8">
         <header>

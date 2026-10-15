@@ -1,7 +1,8 @@
 import type { CohortRoster } from '~~/shared/types'
 
+/** Cohorts the mentor staffs */
 export default defineEventHandler(async (event): Promise<CohortRoster[]> => {
-  const mentor = await requireRole(event, 'mentor')
+  await requireRole(event, 'mentor')
   const now = Date.now()
-  return db.cohorts.filter(c => c.mentorId === mentor.id).map(c => cohortRoster(c, now))
+  return Promise.all((await staffedCohortIds(event)).map(id => cohortRoster(event, id, now)))
 })

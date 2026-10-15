@@ -5,17 +5,14 @@ export function useAuth() {
 
   async function afterLogin() {
     await refreshSession()
+    clearNuxtData()
     const next = useRoute().query.next
     await navigateTo(typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') ? next : '/')
   }
 
-  async function login(email: string, password: string) {
-    await $fetch('/api/auth/login', { method: 'POST', body: { email, password } })
-    await afterLogin()
-  }
-
-  async function loginWithTelegram() {
-    await $fetch('/api/auth/telegram', { method: 'POST' })
+  /** `login` is an email or a username */
+  async function login(login: string, password: string) {
+    await $fetch('/api/auth/login', { method: 'POST', body: { login, password } })
     await afterLogin()
   }
 
@@ -26,7 +23,15 @@ export function useAuth() {
     await navigateTo('/login')
   }
 
+  /** Accounts with several views (mentor in one cohort, student in another) switch here */
+  async function switchRole(next: Role) {
+    await $fetch('/api/auth/role', { method: 'POST', body: { role: next } })
+    await refreshSession()
+    clearNuxtData()
+    await navigateTo('/')
+  }
+
   const role = computed<Role | undefined>(() => user.value?.role)
 
-  return { user, role, loggedIn, login, loginWithTelegram, logout, afterLogin }
+  return { user, role, loggedIn, login, logout, switchRole, afterLogin }
 }

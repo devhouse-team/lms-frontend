@@ -1,15 +1,12 @@
-import type { CohortRoster } from '~~/shared/types'
+import type { OkResponse } from '~~/shared/types'
 
-export default defineEventHandler(async (event): Promise<CohortRoster> => {
+/** Program can't change: cohorts belong to the program they were created in */
+export default defineEventHandler(async (event): Promise<OkResponse> => {
   await requireRole(event, 'head')
-  const id = await requireIdParam(event)
-  const cohort = db.cohorts.find(c => c.id === id)
-  if (!cohort) throw createError({ statusCode: 404, statusMessage: 'Cohort not found' })
-  const { startAt, mentorId, ...rest } = await readValidatedBody(event, cohortBody.partial().parse)
-  if (mentorId !== undefined) assertMentor(mentorId)
-  if (rest.name) assertUniqueCohortName(rest.name, id)
-  Object.assign(cohort, rest)
-  if (startAt) cohort.startAt = Date.parse(startAt)
-  if (mentorId !== undefined) cohort.mentorId = mentorId || undefined
-  return cohortRoster(cohort)
+  const id = apiId(getRouterParam(event, 'id'))
+  const { name, startAt, totalWeeks, mentorId } = await readValidatedBody(event, cohortBody.omit({ programId: true }).partial().parse)
+  const dates = startAt && totalWeeks ? cohortDates(startAt, totalWeeks) : startAt ? { starts_on: startAt } : {}
+  await apiFetch(event, `/cohorts/${id}`, { method: 'PATCH', body: { name, ...dates } })
+  if (mentorId !== undefined) await setCohortMentor(event, id, mentorId ? apiId(mentorId) : null)
+  return { ok: true }
 })

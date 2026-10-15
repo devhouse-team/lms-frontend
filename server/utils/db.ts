@@ -1,7 +1,8 @@
 /**
- * In-memory mock backend. Everything here is synthetic except mentor names,
- * credentials and photos (from devhouse-client) and program modules.
- * State resets when the server restarts. Replace with the real API later.
+ * In-memory mock for features the LMS API doesn't have yet: external courses,
+ * contests, career steps and mentoring sessions (see backend spec/open-items.md).
+ * Keyed by the real user id; state resets on restart and isn't shared between
+ * server instances. Everything else goes through server/utils/api.ts.
  */
 import type { CourseStatus, EnrollmentStatus, ProgramSlug, Role, SubmissionStatus } from '~~/shared/types'
 import { programs } from '../data/programs'
@@ -11,8 +12,6 @@ const DAY = 24 * HOUR
 const WEEK = 7 * DAY
 
 export const DEMO_PASSWORD = 'devhouse'
-/** Shared test-account password. Override per environment with NUXT_TEST_PASSWORD. */
-const TEST_PASSWORD = useRuntimeConfig().testPassword || DEMO_PASSWORD
 
 export interface DbUser {
   id: string
@@ -89,11 +88,10 @@ const mentors: DbUser[] = [
   { id: 'm-yedige', role: 'mentor', name: 'Едиге Аширбек', email: 'yedige@demo.devhouse.kz', password: DEMO_PASSWORD, avatar: '/mentors/yedige-ashirbek.jpg', title: 'Ex iOS intern @Yandex' },
   { id: 'm-daulet', role: 'mentor', name: 'Даулет Дандыкулов', email: 'daulet@demo.devhouse.kz', password: DEMO_PASSWORD, avatar: '/mentors/daulet-dandykulov.jpg', title: 'ML Engineer' },
   { id: 'm-abdurroshid', role: 'mentor', name: 'Абдуррошид Жаңаберген', email: 'abdurroshid@demo.devhouse.kz', password: DEMO_PASSWORD, avatar: '/mentors/abdurroshid-zhanabergen.jpg', title: 'ICPC 2x semifinalist' },
-  { id: 'm-test', role: 'mentor', name: 'Test Mentor', email: 'test.mentor@devhouse.kz', password: TEST_PASSWORD, title: 'QA test account' }
+  { id: 'm-test', role: 'mentor', name: 'Test Mentor', email: 'test.mentor@devhouse.kz', password: DEMO_PASSWORD, title: 'QA test account' }
 ]
 
 const head: DbUser = { id: 'h-1', role: 'head', name: 'Сауле Ахметова', email: 'head@demo.devhouse.kz', password: DEMO_PASSWORD }
-const testHead: DbUser = { id: 'h-test', role: 'head', name: 'Test Head', email: 'test.head@devhouse.kz', password: TEST_PASSWORD }
 
 const cohorts: DbCohort[] = [
   { id: 'c-fe7', name: 'FE-7', program: 'frontend', mentorId: 'm-nurzhan', startAt: now - 5 * WEEK - 2 * DAY, totalWeeks: 26 },
@@ -130,7 +128,7 @@ const seededMentees: DbUser[] = Object.entries(menteeNames).flatMap(([cohortId, 
 
 const mentees: DbUser[] = [
   ...seededMentees,
-  { id: 's-test', role: 'mentee', name: 'Test Student', email: 'test.mentee@devhouse.kz', password: TEST_PASSWORD, cohortId: 'c-fe7' }
+  { id: 's-test', role: 'mentee', name: 'Test Student', email: 'test.mentee@devhouse.kz', password: DEMO_PASSWORD, cohortId: 'c-fe7' }
 ]
 
 const courseCatalog: Record<ProgramSlug, Omit<DbCourse, 'id' | 'userId' | 'status'>[]> = {
@@ -292,7 +290,7 @@ const contests: DbContest[] = [
 export const db = {
   now,
   programs,
-  users: [head, testHead, ...mentors, ...mentees],
+  users: [head, ...mentors, ...mentees],
   cohorts,
   courses,
   assignments,
@@ -310,14 +308,6 @@ export const HOUR_MS = HOUR
 
 export function cohortWeek(c: DbCohort, at = Date.now()) {
   return Math.min(c.totalWeeks, Math.max(0, Math.floor((at - c.startAt) / WEEK) + 1))
-}
-
-export function findUserByEmail(email: string) {
-  return db.users.find(u => u.email.toLowerCase() === email.trim().toLowerCase())
-}
-
-export function toSessionUser(u: DbUser) {
-  return { id: u.id, role: u.role, name: u.name, email: u.email, avatar: u.avatar }
 }
 
 export function programTitle(slug?: ProgramSlug) {

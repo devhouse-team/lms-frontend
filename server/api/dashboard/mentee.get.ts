@@ -1,47 +1,39 @@
+import type { components } from '~~/shared/types/api'
 import type { QueueItem, StudentDashboard } from '~~/shared/types'
 
+type S = components['schemas']
+
+/** Cohort, mentor and deadlines come from the API; external courses, contest and career stay on the mock */
 export default defineEventHandler(async (event): Promise<StudentDashboard> => {
   const user = await requireRole(event, 'mentee')
-  const now = Date.now()
-  const cohort = db.cohorts.find(c => c.id === user.cohortId)
-  if (!cohort) throw createError({ statusCode: 409, statusMessage: 'Mentee has no cohort' })
+  const [cohorts, listed] = await Promise.all([
+    apiFetch<S['StudentCohort'][]>(event, '/dashboard/student'),
+    listCohorts(event)
+  ])
+  const c = cohorts[0]
+  const info = listed.find(x => x.id === c?.cohort_id)
+  const mentor = c ? await studentMentor(event, c.cohort_id, user.id) : undefined
 
-  const mentor = db.users.find(u => u.id === cohort.mentorId)
-  const nextSession = menteeSessions(user.id, now)[0]
-  const nextSessionAt = nextSession?.at ?? new Date(now + DAY_MS).toISOString()
-
-  const reviewedCount = db.submissions.filter(s => s.menteeId === user.id && s.status !== 'waiting' && s.reviewedAt && now - s.reviewedAt < 3 * DAY_MS).length
-  const upcoming = db.assignments
-    .filter(a => a.cohortId === cohort.id && a.dueAt > now)
-    .sort((a, b) => a.dueAt - b.dueAt)
-
-  const [first, ...rest] = upcoming
-  const nextUp: QueueItem | null = first
-    ? { id: first.id, kind: 'assignment', title: first.title, at: new Date(first.dueAt).toISOString(), to: `/assignments/${first.id}` }
-    : null
-
-  const queue: QueueItem[] = [
-    ...(nextSession ? [{ id: 'session', kind: 'session' as const, title: '', titleKey: `queue.session.${nextSession.kind}`, at: nextSession.at, to: '/mentor' }] : []),
-    ...rest.slice(0, 2).map(a => ({ id: a.id, kind: 'assignment' as const, title: a.title, at: new Date(a.dueAt).toISOString(), to: `/assignments/${a.id}` })),
-    ...(reviewedCount ? [{ id: 'feedback', kind: 'feedback' as const, title: '', titleKey: 'queue.feedback', count: reviewedCount, to: '/assignments' }] : [])
-  ].sort((a, b) => (a.at ? new Date(a.at).getTime() : Infinity) - (b.at ? new Date(b.at).getTime() : Infinity))
+  // Open work first: not submitted yet or sent back; waiting-for-review and approved need nothing from the student
+  const todo = (c?.deadlines ?? [])
+    .filter(d => d.status === null || d.status === 'changes_requested')
+    .sort((a, b) => a.due_on.localeCompare(b.due_on))
+    .map((d): QueueItem => ({ id: String(d.lesson_id), kind: 'assignment', title: d.assignment_title, at: dueAt(d.due_on), to: `/assignments/${assignmentKey(c!.cohort_id, d.lesson_id)}` }))
+  const [first, ...rest] = todo
+  const feedback = c?.recent_feedback.length ?? 0
 
   return {
     student: { name: user.name.split(' ')[0]! },
-    mentor: mentor
-      ? { id: mentor.id, name: mentor.name, avatar: mentor.avatar, role: mentor.title ?? '', nextSessionAt }
+    mentor: mentor ? { ...person(mentor), role: '' } : null,
+    cohort: c
+      ? { id: String(c.cohort_id), name: c.cohort_name, program: c.program_title, ...(info ? cohortWeeks(info) : { week: 0, totalWeeks: 0 }), members: info?.active_students ?? 0 }
       : null,
-    cohort: {
-      id: cohort.id,
-      name: cohort.name,
-      program: programTitle(cohort.program) ?? '',
-      week: cohortWeek(cohort, now),
-      totalWeeks: cohort.totalWeeks,
-      members: db.users.filter(u => u.cohortId === cohort.id).length
-    },
-    nextUp,
-    queue,
-    courses: db.courses.filter(c => c.userId === user.id).map(({ id, title, source, url, status }) => ({ id, title, source, url, status })),
+    nextUp: first ?? null,
+    queue: [
+      ...rest.slice(0, 3),
+      ...(feedback ? [{ id: 'feedback', kind: 'feedback' as const, title: '', titleKey: 'queue.feedback', count: feedback, to: '/assignments' }] : [])
+    ],
+    courses: db.courses.filter(k => k.userId === user.id).map(({ id, title, source, url, status }) => ({ id, title, source, url, status })),
     contest: { title: db.contest.title, at: new Date(db.contest.at).toISOString(), registered: db.contestRegistrations.has(user.id) },
     career: CAREER_STEPS.map(id => ({ id, done: db.career.get(user.id)?.has(id) ?? false }))
   }

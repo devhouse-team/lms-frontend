@@ -12,9 +12,9 @@ const moveTargets = computed(() => options.value.filter(c => c.id !== route.para
 const editing = ref(false)
 const adding = ref(false)
 
-async function update(m: CohortRosterRow, body: { status?: EnrollmentStatus, cohortId?: string }, ok: string) {
+async function update(action: () => Promise<unknown>, ok: string) {
   try {
-    await $fetch(`/api/enrollments/${m.id}`, { method: 'PATCH', body })
+    await action()
     clearNuxtData(['cohorts', 'programs', 'people', 'dashboard-head', 'cohorts-mine'])
     await refresh()
     toast.add({ title: ok, icon: 'i-lucide-check', color: 'success' })
@@ -23,8 +23,14 @@ async function update(m: CohortRosterRow, body: { status?: EnrollmentStatus, coh
     await refresh() // reset to the server value
   }
 }
-const setStatus = (m: CohortRosterRow, status: EnrollmentStatus) => update(m, { status }, t('cohorts.statusSaved'))
-const moveTo = (m: CohortRosterRow, c: CohortOption) => update(m, { cohortId: c.id }, t('cohorts.moved', { name: m.name, cohort: c.name }))
+const setStatus = (m: CohortRosterRow, status: EnrollmentStatus) => update(
+  () => $fetch(`/api/enrollments/${m.enrollmentId}`, { method: 'PATCH', body: { status } }),
+  t('cohorts.statusSaved'))
+// A move is a new enrollment there and this one marked dropped, so the history stays
+const moveTo = (m: CohortRosterRow, c: CohortOption) => update(async () => {
+  await $fetch(`/api/cohorts/${c.id}/enrollments`, { method: 'POST', body: { userId: m.id } })
+  if (m.enrollment !== 'dropped') await $fetch(`/api/enrollments/${m.enrollmentId}`, { method: 'PATCH', body: { status: 'dropped' } })
+}, t('cohorts.moved', { name: m.name, cohort: c.name }))
 const fmt = (iso: string) => new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso))
 </script>
 
@@ -59,7 +65,7 @@ const fmt = (iso: string) => new Intl.DateTimeFormat(locale.value, { day: 'numer
           </div>
           <RosterTable :rows="data.mentees" :move-targets="moveTargets" @status="setStatus" @move="moveTo" />
         </section>
-        <AssignmentsManager :cohort-id="data.id" :assignments="data.assignments" @changed="refresh()" />
+        <AssignmentsManager :assignments="data.assignments" :lessons="data.lessons" :editable="data.canEditAssignments" @changed="refresh()" />
       </div>
     </HomeState>
   </AppPage>

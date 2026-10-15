@@ -1,25 +1,28 @@
-import type { CohortRow, HeadDashboard, MentorLoad } from '~~/shared/types'
+import type { HeadDashboard, MentorLoad } from '~~/shared/types'
 
+/** No admin dashboard in the API yet (Phase 5), so this one is assembled from cohort data; contest stays mock */
 export default defineEventHandler(async (event): Promise<HeadDashboard> => {
   const head = await requireRole(event, 'head')
   const now = Date.now()
-  const pending = db.submissions.filter(s => s.status === 'waiting')
+  const [stats, invites] = await Promise.all([
+    listCohorts(event).then(list => Promise.all(list.map(c => cohortStats(event, c, now)))),
+    pendingInvites(event)
+  ])
 
-  const cohorts: CohortRow[] = db.cohorts.map(c => cohortRow(c, now))
-
-  const mentorLoad: MentorLoad[] = db.users.filter(u => u.role === 'mentor').map((m) => {
-    const cohortIds = new Set(db.cohorts.filter(c => c.mentorId === m.id).map(c => c.id))
-    const menteeIds = new Set(db.users.filter(u => u.cohortId && cohortIds.has(u.cohortId) && isCounted(u)).map(u => u.id))
-    const waiting = pending.filter(s => menteeIds.has(s.menteeId))
-    const oldest = waiting.reduce<number | undefined>((min, s) => (min === undefined || s.submittedAt < min ? s.submittedAt : min), undefined)
-    return { id: m.id, name: m.name, avatar: m.avatar, waiting: waiting.length, oldestAt: oldest ? new Date(oldest).toISOString() : undefined }
-  }).sort((a, b) => b.waiting - a.waiting)
+  const load = new Map<number, MentorLoad>()
+  for (const { mentor, waiting } of stats) {
+    if (!mentor) continue
+    const m = load.get(mentor.id) ?? { ...person(mentor), waiting: 0 }
+    m.waiting += waiting.length
+    for (const w of waiting) if (!m.oldestAt || w.submitted_at < m.oldestAt) m.oldestAt = w.submitted_at
+    load.set(mentor.id, m)
+  }
 
   return {
     head: { name: head.name },
-    cohorts,
-    invites: db.invites.filter(i => !i.acceptedAt).map(toInvitePublic),
-    mentorLoad,
+    cohorts: stats.map(s => s.row),
+    invites,
+    mentorLoad: [...load.values()].sort((a, b) => b.waiting - a.waiting),
     contest: { title: db.contest.title, at: new Date(db.contest.at).toISOString(), registered: db.contestRegistrations.size }
   }
 })

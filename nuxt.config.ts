@@ -17,7 +17,14 @@ export default defineNuxtConfig({
     nodeTsConfig: { compilerOptions: STRICT_FLAGS }
   },
   nitro: { typescript: { tsConfig: { compilerOptions: STRICT_FLAGS } } },
-  runtimeConfig: { testPassword: '' },
+  runtimeConfig: {
+    /** Backend base URL; override with NUXT_API_BASE (e.g. http://localhost:8000/api/v1) */
+    apiBase: 'https://api.devhouse.kz/api/v1',
+    public: {
+      /** Backend role ids that invites grant (no roles endpoint yet); NUXT_PUBLIC_ROLE_IDS_<ROLE>. 0 = can't invite */
+      roleIds: { head: 1, mentor: 2, mentee: 0 }
+    }
+  },
   colorMode: { preference: 'dark', fallback: 'dark' },
   fonts: {
     families: [
