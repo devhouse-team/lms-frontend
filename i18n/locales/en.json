@@ -124,15 +124,13 @@
     "role": "Role",
     "name": "Full name",
     "nameHint": "Your mentor and cohort will see this",
-    "passwordHelp": "At least 8 characters",
     "confirm": "Repeat password",
     "submit": "Create account",
     "toLogin": "Go to sign in",
     "err": {
       "name": "Use 2 to 80 characters",
-      "password": "At least 8 characters",
       "confirm": "Passwords don't match",
-      "username": "2 to 40 characters: letters, digits, dot, dash or underscore",
+      "username": "2 to 32 characters: lowercase Latin letters, digits or underscore",
       "email": "That address looks mistyped"
     },
     "problem": {
@@ -454,5 +452,43 @@
     "paused": "Paused",
     "completed": "Completed",
     "dropped": "Dropped"
+  },
+  "recovery": {
+    "forgotLink": "Forgot password?",
+    "forgotTitle": "Reset your password",
+    "forgotSubtitle": "Enter your account email and we'll send a link to set a new password.",
+    "send": "Send link",
+    "sentTitle": "Check your email",
+    "sentText": "If an account exists for {email}, we sent a link. It works for 1 hour.",
+    "sentHint": "Nothing yet? Check your spam folder, or try again in a few minutes.",
+    "resetTitle": "Set a new password",
+    "resetSubtitle": "Choose a new password. You'll be signed out on every device.",
+    "newPassword": "New password",
+    "resetSubmit": "Change password",
+    "doneTitle": "Password changed",
+    "doneText": "Sign in with your new password.",
+    "requestNew": "Request a new link",
+    "verifying": "Confirming your email…",
+    "verifiedTitle": "Email confirmed",
+    "verifiedText": "Thanks, you're all set.",
+    "continue": "Continue",
+    "invalid": {
+      "title": "This link no longer works",
+      "text": "It was already used or has expired."
+    },
+    "rateLimited": "Too many requests. Try again later.",
+    "err": {
+      "email": "That address looks mistyped"
+    }
+  },
+  "password": {
+    "rules": "8–128 characters with an uppercase and a lowercase letter, a digit and a special character",
+    "err": {
+      "length": "Use 8 to 128 characters",
+      "upper": "Add an uppercase letter",
+      "lower": "Add a lowercase letter",
+      "digit": "Add a digit",
+      "special": "Add a special character, like ! or #"
+    }
   }
 }

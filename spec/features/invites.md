@@ -19,8 +19,8 @@ the invitee sets a name, username and password and is signed in.
   has a student role (O2); students are then added to a cohort on the cohort page.
 - An invite carries no cohort or program: placement happens after the account exists.
 - The token never reaches the frontend except in the emailed link, so there is no copy-link and no revoke (O5).
-- Username: 2–40 of `A–Z a–z 0–9 . _ -`. Password: 8–128 characters; the API's password policy may reject more,
-  and its message is shown as is.
+- Username: 2–32 of `a–z 0–9 _` (the API's `USERNAME_PATTERN`; uppercase, dots and dashes are refused). Password: the API's policy, checked in the form
+  (`app/utils/password.ts`, shared with password reset); the API's own message for the field is shown if it still refuses.
 - Errors: `user_exists` → "a user with this email already exists"; `invite_invalid` → invalid-link state; taken
   username → "this username or email is already taken".
 
@@ -39,6 +39,7 @@ the invitee sets a name, username and password and is signed in.
 - [x] A used token is rejected with the invalid-link state.
 - [x] A student invite is refused while no student role id is configured, and the option is disabled.
 - [x] An accepted invite no longer shows as pending.
+- [x] A username with uppercase letters, dots or dashes is refused in the form, before calling the API.
 
 ## Known gaps
 

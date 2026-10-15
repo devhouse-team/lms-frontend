@@ -4,7 +4,7 @@ import type { AuthResponse } from '~~/shared/types'
 const body = z.object({
   token: z.string().min(1).max(200),
   name: z.string().trim().min(2).max(80),
-  username: z.string().trim().min(2).max(40),
+  username: z.string().trim().regex(/^[a-z0-9_]{2,32}$/),
   password: z.string().min(8).max(128)
 })
 

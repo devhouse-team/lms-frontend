@@ -47,4 +47,4 @@ Sign in, stay signed in for a working week, and land in the right view. One acco
 
 ## Known gaps
 
-[O3](../open-items.md) login lockout per IP · [O8](../open-items.md) password reset and email verification pages
+[O3](../open-items.md) login lockout per IP. Password reset and email verification: [account-recovery](account-recovery.md).
