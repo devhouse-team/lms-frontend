@@ -2722,6 +2722,11 @@ export interface components {
             /** Active Students */
             active_students: number;
             /**
+             * Course Count
+             * @description Courses in the curriculum
+             */
+            course_count: number;
+            /**
              * Created At
              * Format: date-time
              */
@@ -2761,6 +2766,11 @@ export interface components {
             cohorts: components["schemas"]["ProgramCohortCounts"];
             /** Active Students */
             active_students: number;
+            /**
+             * Course Count
+             * @description Courses in the curriculum
+             */
+            course_count: number;
             /**
              * Created At
              * Format: date-time

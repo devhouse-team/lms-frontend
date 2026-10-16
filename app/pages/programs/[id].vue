@@ -84,9 +84,9 @@ async function confirmDialog() {
     if (kind === 'delete') {
       await $fetch(`/api/programs/${p.id}`, { method: 'DELETE' })
       dialog.value = undefined
-      invalidatePrograms()
       toast.add({ title: t('programs.done.delete'), icon: 'i-lucide-check', color: 'success' })
-      return navigateTo('/programs')
+      await navigateTo('/programs')
+      return invalidatePrograms('programs')
     }
     await $fetch(`/api/programs/${p.id}/${kind === 'restore' ? 'activate' : kind}`, { method: 'POST' })
     toast.add({ title: t(`programs.done.${kind}`), icon: 'i-lucide-check', color: 'success' })
@@ -110,7 +110,7 @@ const onSaved = () => refresh()
       <div v-if="data" class="mx-auto w-full max-w-5xl space-y-10">
         <ProgramFormModal v-if="data.can.edit" v-model:open="editing" :program="data" :can-manage="data.can.manage" @saved="onSaved" />
         <CohortFormModal
-          v-if="data.can.createCohort"
+          v-if="data.can.edit"
           v-model:open="creatingCohort"
           :program="{ id: data.id, title: data.title, durationWeeks: data.durationWeeks }"
           @saved="cid => navigateTo(`/cohorts/${cid}`)"

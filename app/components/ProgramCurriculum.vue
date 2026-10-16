@@ -60,11 +60,13 @@ function openStart(c: ProgramCourse, open: boolean) {
   editing.value = open ? c.courseId : undefined
   if (open) ({ w: week.value, d: day.value } = split(c.startOffsetDays))
 }
+const validStart = computed(() => Number.isInteger(week.value) && week.value >= 1 && week.value <= 104 && Number.isInteger(day.value) && day.value >= 1 && day.value <= 7)
 function saveStart(c: ProgramCourse) {
+  if (!validStart.value) return
   editing.value = undefined
   const offset = (week.value - 1) * 7 + (day.value - 1)
   if (offset === c.startOffsetDays) return
-  run(() => $fetch(`/api/programs/${props.programId}/courses/${c.courseId}`, { method: 'PUT', body: { startOffsetDays: offset, position: c.position } }), t('programs.curriculum.startSaved'))
+  run(() => $fetch(`/api/programs/${props.programId}/courses/${c.courseId}`, { method: 'PUT', body: { startOffsetDays: offset } }), t('programs.curriculum.startSaved'))
 }
 
 // ---- remove ---------------------------------------------------------------------
@@ -131,7 +133,7 @@ const length = computed(() => {
                 <UFormField :label="t('programs.curriculum.startDay')">
                   <UInputNumber v-model="day" :min="1" :max="7" class="w-20" />
                 </UFormField>
-                <UButton type="submit" :label="t('common.save')" size="sm" />
+                <UButton type="submit" :label="t('common.save')" size="sm" :disabled="!validStart" />
               </form>
             </template>
           </UPopover>

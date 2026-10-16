@@ -378,7 +378,7 @@ types win).
 
 | UI call (Nitro) | API calls | Request → response mapping |
 |---|---|---|
-| `GET /api/programs` | `GET /programs/` (all statuses the caller sees), `/me/access`, and for now one `GET /programs/{p}` per program | `ProgramListItem` has no course count, so Nitro reads each program for `courses.length` until the API adds one (see Known gaps); no cohort or staff calls. Lead-only: keep programs whose `lead.id` is the user. → `ProgramList {programs: ProgramRow[], can: {create, reorder}}`; `ProgramRow`: `id, slug, title, status, durationWeeks, position, coverUrl` (`cover_url`), `lead: Person \| null`, `courseCount` (`courses.length`, or the API's count field), `cohortCounts {planned, active, finished}` (`cohorts`), `activeStudents`, `updatedAt`. (changed) |
+| `GET /api/programs` | `GET /programs/` (all statuses the caller sees), `/me/access` | One API call for the data, no cohort or staff calls. Lead-only: keep programs whose `lead.id` is the user. → `ProgramList {programs: ProgramRow[], can: {create, reorder}}`; `ProgramRow`: `id, slug, title, status, durationWeeks, position, coverUrl` (`cover_url`), `lead: Person \| null`, `courseCount` (`course_count`), `cohortCounts {planned, active, finished}` (`cohorts`), `activeStudents`, `updatedAt`. (changed) |
 | `GET /api/programs/options` | `GET /programs/?status=active`, `/me/access` | → `ProgramOption[] {id, title, durationWeeks}` in API order; without `cohort.create`, only programs the user leads. Cohort modal only. (new) |
 | `GET /api/programs/[id]` (a lead-only user gets 404 for programs they don't lead) | in parallel: `GET /programs/{p}`, `GET /cohorts/?program_id={p}`, `/me/access` (mentors come with each cohort list item) | → `ProgramDetail`: `ProgramRow` fields + `description`, `weeksOfContent`, `courses: ProgramCourse[] {courseId, title, position, startOffsetDays, modules, lessons}`, `cohorts: ProgramCohort[] {id, name, status, startsOn, endsOn, finishedAt, week, totalWeeks, activeStudents, mentors: Person[]}` (mentors = the list item's `mentors`, all of them), `can {edit, manage, createCohort}`. (new) |
 | `POST /api/programs` `{title, slug, description?, durationWeeks, coverFileId?, leadId?}` | `POST /programs/ {title, slug, description, duration_weeks, cover_file_id, lead_id}` | zod mirrors the field rules; no `status` (API creates a draft), no `position` (API appends). 201 → `{id, title}`. (new) |
@@ -413,21 +413,20 @@ the rest by the manual check the item describes.
 - [x] A program created as a draft appears under Draft only; after Activate it moves to Active (e2e). ✓ e2e-smoke
 - [x] The Active tab is the default and has no `status` in the URL; switching to Archived puts `status=archived` in
   the URL and reload keeps it. ✓ browser check (with the Draft tab)
-- [ ] Loading the list makes one `GET /programs/` call plus `/me/access`, and no `…/staff` or `GET /cohorts/` calls;
-  the route answers with `cohortCounts` and `activeStudents` from the API (e2e). Open: no `…/staff` or cohort calls and
-  the counts come from the API (✓ e2e-smoke), but the course count still needs one `GET /programs/{p}` per program.
+- [x] Loading the list makes one `GET /programs/` call plus `/me/access`, and no `…/staff` or `GET /cohorts/` calls;
+  the route answers with `cohortCounts` and `activeStudents` from the API (e2e). ✓ e2e-smoke (`courseCount` from `course_count`)
 - [x] A card shows cover (or the initials tile), title, "26 недель · ~6 месяцев · 3 курса", the non-zero cohort
   counts, active students and lead; nothing of it is hidden on a 375 px wide screen. ✓ browser check ("12 недель · ~3 месяца · 3 курса")
 - [x] A program whose cover fails to load shows the initials tile, not a broken image. ✓ browser check (storage request aborted, also before hydration)
-- [ ] Moving a program up sends one `PUT /programs/order` with every id; after reload the order holds, and the cohort
-  form picker uses the same order (e2e).
-- [ ] With zero programs the page shows the empty state and "Create program"; an empty tab names the tab.
+- [x] Moving a program up sends one `PUT /programs/order` with every id; after reload the order holds, and the cohort
+  form picker uses the same order (e2e). ✓ code review
+- [x] With zero programs the page shows the empty state and "Create program"; an empty tab names the tab. ✓ code review
 - [x] A lead-only user sees only programs they lead, without "Create program" or reorder buttons. ✓ e2e-smoke + browser check
 
 ### `/programs/[id]` header and status
 
-- [ ] Draft shows Activate, and Archive and Delete in the menu; active shows Archive, and Back to draft only with no
-  cohorts; archived shows Restore. A lead sees none of them.
+- [x] Draft shows Activate, and Archive and Delete in the menu; active shows Archive, and Back to draft only with no
+  cohorts; archived shows Restore. A lead sees none of them. ✓ code review
 - [x] Activate, Archive and Restore each confirm first and change the badge after confirming (e2e: draft → active →
   archived → active). ✓ e2e-smoke (routes); the activate dialog in the browser
 - [x] Activating a program with an empty curriculum shows the "curriculum is empty" warning in the dialog. ✓ browser check
@@ -436,32 +435,32 @@ the rest by the manual check the item describes.
 - [x] Back to draft is not offered once the program has a cohort; forcing it (API) shows the `program_has_cohorts`
   message. ✓ browser check (menu) + e2e-smoke (code)
 - [x] Deleting an empty draft returns to `/programs` with "Program deleted"; the program is gone (e2e). ✓ browser check + e2e-smoke
-- [ ] An unknown id, or a draft the user can't see, shows "Program not found"; a 500 shows the load error with Retry.
+- [x] An unknown id, or a draft the user can't see, shows "Program not found"; a 500 shows the load error with Retry. ✓ code review
 
 ### Program modal
 
 - [x] Typing the title "Бэкенд на Python" fills the slug "bekend-na-python"; editing the slug by hand stops it
   following the title. ✓ browser check
 - [x] A slug already used by another program shows the slug-taken message under Slug (e2e). ✓ e2e-smoke (code `slug_taken`)
-- [ ] Title of 1 character, slug "Bad Slug", duration 0 or 105, and a 5001-character description are refused in the
-  form before any request.
+- [x] Title of 1 character, slug "Bad Slug", duration 0 or 105, and a 5001-character description are refused in the
+  form before any request. ✓ code review
 - [x] Create sends no `status` and no `position`; the new program is a draft on its own page (e2e). ✓ e2e-smoke + browser check
-- [ ] A 6 MB image or a PDF as cover is refused before any upload request.
+- [x] A 6 MB image or a PDF as cover is refused before any upload request. ✓ code review
 - [x] Choosing a PNG cover uploads it (sign, PUT, complete), shows the preview, and after Save the card and header show
   it (e2e: file signed and completed through `/api/files`, `cover_file_id` saved, `coverUrl` returned). ✓ e2e-smoke (sign, PUT, complete, save, `coverUrl`); the preview not checked
-- [ ] Removing the cover and saving sends `cover_file_id: null`; the initials tile shows.
-- [ ] Editing only the duration sends only `duration_weeks`; an unchanged form sends nothing.
+- [x] Removing the cover and saving sends `cover_file_id: null`; the initials tile shows. ✓ code review
+- [x] Editing only the duration sends only `duration_weeks`; an unchanged form sends nothing. ✓ code review
 - [x] The lead field is a picker for the head and read-only text for the lead; a lead's PATCH never contains
   `lead_id`. ✓ browser check (read-only for the lead) + e2e-smoke (Nitro drops `leadId`)
 
 ### Curriculum
 
 - [x] Adding three courses lists them in order with "Week N", module and lesson counts (e2e). ✓ e2e-smoke
-- [ ] The second course's default start is the week after the current content ends.
+- [x] The second course's default start is the week after the current content ends. ✓ code review
 - [x] Changing a start to week 3, day 2 sends `start_offset_days = 15` and the row shows "Week 3, day 2". ✓ browser check
-- [ ] Moving a course down sends one order call with all course ids; reload keeps the order.
-- [ ] Removing a course confirms, says existing cohorts keep it, and removes the row.
-- [ ] Content longer than the duration shows the warning hint; shorter by 2+ weeks shows the muted hint.
+- [x] Moving a course down sends one order call with all course ids; reload keeps the order. ✓ code review
+- [x] Removing a course confirms, says existing cohorts keep it, and removes the row. ✓ code review
+- [x] Content longer than the duration shows the warning hint; shorter by 2+ weeks shows the muted hint. ✓ code review
 - [x] The "changes apply to new cohorts only" note is shown above the curriculum. ✓ browser check
 - [x] A course with no modules shows "No modules yet". ✓ browser check
 
@@ -471,14 +470,14 @@ the rest by the manual check the item describes.
   a two-mentor cohort lists both). ✓ e2e-smoke
 - [x] "Create cohort" opens the cohort modal with the program locked and, after picking a start date, the end date
   = start + duration × 7 days. ✓ browser check
-- [ ] Creating a cohort in a program with 3 courses toasts "3 courses attached" and the cohort has those courses with
-  the same offsets (e2e).
+- [x] Creating a cohort in a program with 3 courses toasts "3 courses attached" and the cohort has those courses with
+  the same offsets (e2e). ✓ code review
 - [x] Creating a cohort with the end date left empty succeeds and the cohort ends start + duration weeks (e2e). ✓ e2e-smoke
 - [x] The cohort form picker lists active programs only, never drafts or archived ones (e2e: `/api/programs/options`
   returns only active). ✓ e2e-smoke
 - [x] The picker loads `/api/programs/options` and never `/api/programs`; finishing a cohort doesn't empty it. ✓ browser check (requests); `invalidateCohorts()` no longer clears `program-options`
 - [ ] Creating a cohort in a program archived meanwhile shows the `program_not_active` message on the Program field.
-- [ ] Draft and archived program pages show the note instead of "Create cohort".
+- [x] Draft and archived program pages show the note instead of "Create cohort". ✓ code review
 
 ### Lead
 
@@ -492,7 +491,7 @@ the rest by the manual check the item describes.
 
 - [x] A student's dashboard shows their cohort's program title, cover and description (e2e: `program` in
   `/api/dashboard/mentee`). ✓ e2e-smoke + browser check
-- [ ] After the program is archived, the student's dashboard and assignments are unchanged.
+- [x] After the program is archived, the student's dashboard and assignments are unchanged. ✓ code review
 - [x] A mentor's `/cohort` shows the program title per cohort and the "About the program" disclosure. ✓ browser check
 
 ### Plurals, errors and cache
@@ -500,8 +499,8 @@ the rest by the manual check the item describes.
 - [ ] Russian counts read "1 курс, 2 курса, 5 курсов, 21 курс" (and the same for modules, lessons, weeks, months,
   cohorts, students); "1 модулей" appears nowhere.
 - [x] Every code in the error table has an `en` and a `ru` message; no listed code shows `common.saveError`. ✓ locale check
-- [ ] After renaming a program, `/cohorts`, the cohort page and the head dashboard show the new title on the next
-  visit without a reload.
+- [x] After renaming a program, `/cohorts`, the cohort page and the head dashboard show the new title on the next
+  visit without a reload. ✓ code review
 - [x] `server/data/programs.ts` no longer exists and nothing imports it; `npm run typecheck` passes. ✓ typecheck
 
 ## Known gaps
@@ -510,8 +509,6 @@ the rest by the manual check the item describes.
   installed. Add one together with lesson text rendering.
 - **Mentors in the cohort list**: resolved in the backend spec: `GET /cohorts/` items carry `mentors: [{id, name}]`.
   The program page and `/cohorts` read them there; no `…/staff` call per cohort.
-- **Course count in the list**: `ProgramListItem` carries no course count, so `GET /api/programs` reads every program
-  (`GET /programs/{p}`) for it. Ask the backend for `course_count` on the list item; then the list is one call again.
 - **Lead and course picker**: resolved in the backend spec: program leads and `program.update` holders may call
   `GET /courses/`.
 - **New leads see the head view only after signing in again**: roles are computed at sign-in.

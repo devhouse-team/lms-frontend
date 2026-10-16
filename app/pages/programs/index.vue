@@ -64,7 +64,7 @@ const BADGE = { draft: { color: 'neutral', variant: 'outline' }, archived: { col
   <AppPage :title="t('nav.programs')">
     <HomeState :status="status" :has-data="!!data" @retry="refresh()">
       <div v-if="data" class="mx-auto w-full max-w-5xl space-y-6">
-        <ProgramFormModal v-if="data.can.create" v-model:open="creating" can-manage />
+        <ProgramFormModal v-if="data.can.create" v-model:open="creating" :can-manage="data.can.reorder" />
 
         <header class="flex flex-wrap items-end justify-between gap-4">
           <div>
