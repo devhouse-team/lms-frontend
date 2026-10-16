@@ -72,14 +72,16 @@ async function run(action: () => Promise<unknown>, done: string, names: Record<s
 /** One bulk call for any number of students; "No mentor" is one unassign per student that has one */
 function assign(rows: CohortRosterRow[], mentorId: string) {
   const mentor = props.mentors.find(m => m.id === mentorId)
+  const had = rows.filter(r => r.mentor)
+  if (mentorId === NO_MENTOR && !had.length) return (selected.value = new Set())
   return run(async () => {
     if (mentorId === NO_MENTOR) {
-      await Promise.all(rows.filter(r => r.mentor).map(r => $fetch(`/api/cohorts/${props.cohortId}/mentors/${r.id}`, { method: 'DELETE' })))
+      await Promise.all(had.map(r => $fetch(`/api/cohorts/${props.cohortId}/mentors/${r.id}`, { method: 'DELETE' })))
     } else {
       await $fetch(`/api/cohorts/${props.cohortId}/mentors`, { method: 'PUT', body: { mentorId, menteeIds: rows.map(r => r.id) } })
     }
     selected.value = new Set()
-  }, mentorId === NO_MENTOR ? t('roster.unassigned', { n: rows.length }) : t('roster.assigned', { n: rows.length, mentor: mentor?.name ?? '' }), { name: mentor?.name ?? '' })
+  }, mentorId === NO_MENTOR ? t('roster.unassigned', { n: had.length }) : t('roster.assigned', { n: rows.length, mentor: mentor?.name ?? '' }), { name: mentor?.name ?? '' })
 }
 const bulkMentor = ref<string>()
 watch(bulkMentor, (id) => {
@@ -97,7 +99,8 @@ function autoAssign() {
       invalidateCohorts()
     })
     .catch((e) => {
-      toastError(e)
+      if (code(e) === 'not_a_mentor') toast.add({ title: t('roster.autoNoMentors'), color: 'error', icon: 'i-lucide-circle-alert' })
+      else toastError(e)
       if (['cohort_finished', 'not_a_mentor'].includes(code(e) ?? '')) emit('stale')
     })
     .finally(() => {
@@ -204,15 +207,18 @@ const absolute = (iso: string) => new Intl.DateTimeFormat(locale.value, { dateSt
       </h2>
       <div v-if="manage" class="flex flex-wrap items-center gap-2">
         <UTooltip :text="autoDisabled" :disabled="!autoDisabled">
-          <UButton
-            :label="t('roster.auto', { n: unassigned })"
-            icon="i-lucide-shuffle"
-            color="neutral"
-            variant="outline"
-            size="sm"
-            :disabled="!!autoDisabled || busy"
-            @click="autoAssign"
-          />
+          <!-- A disabled button swallows pointer events: the focusable span carries the tooltip -->
+          <span :tabindex="autoDisabled ? 0 : undefined" class="inline-flex">
+            <UButton
+              :label="t('roster.auto', { n: unassigned })"
+              icon="i-lucide-shuffle"
+              color="neutral"
+              variant="outline"
+              size="sm"
+              :disabled="!!autoDisabled || busy"
+              @click="autoAssign"
+            />
+          </span>
         </UTooltip>
         <UButton :label="t('roster.addStudents')" icon="i-lucide-user-plus" color="neutral" variant="outline" size="sm" @click="emit('add')" />
       </div>

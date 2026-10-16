@@ -16,7 +16,10 @@ const byDue = (a: AssignmentListItem, b: AssignmentListItem) => (a.dueAt ?? '~')
 /** Current work from active enrollments; one read-only archive group per finished cohort the student completed */
 export default defineEventHandler(async (event): Promise<AssignmentsResponse> => {
   await requireRole(event, 'mentee')
-  const [active, completed, listed] = await Promise.all([activeStudentCohorts(event), completedStudentCohorts(event), listCohorts(event)])
+  const [access, listed] = await Promise.all([myAccess(event), listCohorts(event)])
+  const mine = access.cohorts.filter(c => c.relation === 'student')
+  const active = mine.filter(c => c.enrollment_status === 'active')
+  const completed = mine.filter(c => c.enrollment_status === 'completed')
   const finished = listed.filter(c => c.status === 'finished' && completed.some(e => e.cohort_id === c.id))
   const [current, archive] = await Promise.all([
     Promise.all(active.map(async c => (await myCohortAssignments(event, c.cohort_id)).map(item(c.cohort_id)))),

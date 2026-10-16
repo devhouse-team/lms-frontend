@@ -8,6 +8,8 @@ export function useCohortErrors() {
 
   function message(e: unknown, params: Record<string, string | number> = {}) {
     const { code, message } = apiError(e)
+    // The cohort is gone: every mutation error goes through here, so one redirect covers them all
+    if (code === 'cohort_not_found') navigateTo('/cohorts')
     if (code && te(`cohorts.err.${code}`)) return t(`cohorts.err.${code}`, params)
     if (code === 'validation_error' && message) return message
     return t('common.saveError')

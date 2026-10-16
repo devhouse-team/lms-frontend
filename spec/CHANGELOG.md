@@ -2,6 +2,38 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-10-16: programs v2 spec (not built yet)
+
+- [features/programs.md](features/programs.md) rewritten: programs as course templates; status tabs (draft / active /
+  archived) with confirm-guarded actions; create/edit modal (slug from title, duration, cover upload, lead); curriculum
+  editor over existing courses (order, start week/day, length hint, "applies to new cohorts only"); cohorts section
+  with all mentors; scoped program-lead view; read-only program info for students and mentors; error table; split
+  cache keys (`programs` / `program:<id>` / `program-options`); Russian plural rules. The static syllabus
+  `server/data/programs.ts` and the per-cohort `…/staff` calls go away.
+- [features/cohorts.md](features/cohorts.md): the program picker lists active programs only; the end date defaults
+  from the program duration and is optional on create; the create toast reports attached courses;
+  `program_not_active`.
+- [features/dashboards.md](features/dashboards.md): students and mentors see their cohort's program (cover, title,
+  description), read-only; a lead-only head dashboard hides invites.
+- Backend counterpart: `../backend/spec/domain.md` (Programs v2, also spec only).
+
+## 2026-10-16: cohort logic v2
+
+- Cohorts follow the API's lifecycle: status and week come from the API; `/cohorts` has a status filter (Active and
+  Planned by default, Finished optional); Finish, Cancel and Delete are offered by status; a finished cohort is
+  read-only everywhere.
+- Several mentors and reviewers per cohort (staff section) with a mentor per student: inline select, bulk assign and
+  Auto-assign.
+- The roster loads from `GET /cohorts/{c}/roster` (one call); only the transitions the API allows are offered; Move is
+  atomic; dropped students can be re-added.
+- CSV import shows a report (enrolled, re-added, already enrolled, unknown, staff); each API error code has its own
+  message in en and ru; cache keys follow the cohort id.
+- Review fixes: `cohort_not_found` toasts and returns to `/cohorts` from any mutation; Auto-assign with no mentors
+  and bulk "No mentor" report correctly; the move text says when earlier progress comes back; finished cohorts fall
+  back to the end date when `finished_at` is missing; the roster route is head-only; `/api/assignments` calls
+  `/me/access` once; Nitro CSV errors are translated; the disabled Auto-assign shows its tooltip; copy aligned with
+  the spec ("{n} students", "Assigned {n} students", "Week N of M").
+
 ## 2026-10-16: cohorts table fills its box
 
 - Fixed: the cohorts table (head home and `/cohorts`) was narrower than its bordered wrapper, leaving a gap on the

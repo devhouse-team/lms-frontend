@@ -19,7 +19,7 @@ export default defineEventHandler(async (event): Promise<AssignmentDetail> => {
     description: a.instructions,
     dueAt: dueAt(a.due_on),
     cohortName: cohort.name,
-    cohort: { status: cohort.status, startsOn: cohort.starts_on, finishedAt: cohort.finished_at },
+    cohort: { status: cohort.status, startsOn: cohort.starts_on, endsOn: cohort.ends_on, finishedAt: cohort.finished_at },
     mentor: mentor ? person(mentor) : null,
     status: submissions[0] ? toUiStatus(submissions[0].status) : 'not_submitted',
     submissions: submissions.map(s => submissionView(s, staff))
