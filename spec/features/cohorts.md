@@ -346,7 +346,7 @@ checks still apply. Pages call only these routes.
 
 | UI call (Nitro) | API calls | Request → response mapping |
 |---|---|---|
-| `GET /api/cohorts?status=active&status=planned` | `GET /cohorts/?status=…` (repeatable); per cohort `GET /cohorts/{c}/roster` (with programs v2, `mentors` come with the list item; until then also `GET /cohorts/{c}/staff`) | `status`: list of `planned\|active\|finished`, none = all. → `CohortRow[]`: `status`, `startsOn`, `endsOn`, `finishedAt`, `week`, `totalWeeks`, `mentees` = `active_students`, `studentsTotal`, `mentors` = staff with role mentor, `unassigned` = active/paused roster rows without mentor, `progress`, `atRisk`, `backlog` = Σ `submissions.submitted`. Replaces the per-cohort `…/progress` + `…/submissions` calls. |
+| `GET /api/cohorts?status=active&status=planned` | `GET /cohorts/?status=…` (repeatable); per cohort `GET /cohorts/{c}/roster`; `mentors` come with the list item (programs v2), no `…/staff` call | `status`: list of `planned\|active\|finished`, none = all. → `CohortRow[]`: `status`, `startsOn`, `endsOn`, `finishedAt`, `week`, `totalWeeks`, `mentees` = `active_students`, `studentsTotal`, `mentors` = staff with role mentor, `unassigned` = active/paused roster rows without mentor, `progress`, `atRisk`, `backlog` = Σ `submissions.submitted`. Replaces the per-cohort `…/progress` + `…/submissions` calls. |
 | `GET /api/cohorts/options` | `GET /cohorts/?status=planned&status=active` | → `CohortOption[]` with `status`. Move dialog only. |
 | `POST /api/cohorts` `{name, programId, startsOn, endsOn?}` | `POST /programs/{p}/cohorts {name, starts_on, ends_on?}` | No `status`, no mentor calls; `ends_on` sent only when given (the API defaults it from the program's duration). 201 → `{id, name, coursesAttached}` (the API's count of courses copied from the program; field name per generated types). |
 | `PATCH /api/cohorts/[id]` `{name?, startsOn?, endsOn?}` | `PATCH /cohorts/{c}` with only the given fields | zod: optional, non-nullable, strict. → `{ok}` |
@@ -397,9 +397,10 @@ marked (e2e); the rest by the manual check the item describes.
 - [x] Editing an active cohort shows the start date disabled with its help text; changing only the end date sends only `ends_on`. ✓ browser check
 - [x] Saving an unchanged form sends no request. ✓ browser check
 - [x] The modal has no mentor or status field and doesn't request `/api/people`. ✓ browser check
-- [ ] The program picker lists only active programs, from `/api/programs/options` (e2e).
-- [ ] Picking a start date fills the end date from the program's duration; creating with the end date empty succeeds
-  and the toast names the attached courses (e2e).
+- [x] The program picker lists only active programs, from `/api/programs/options` (e2e). ✓ e2e-smoke + browser check
+- [x] Picking a start date fills the end date from the program's duration; creating with the end date empty succeeds
+  and the toast names the attached courses (e2e). ✓ browser check (end date) + e2e-smoke (`coursesAttached`); the toast
+  text not checked
 
 ### `/cohorts/[id]` header and actions
 
@@ -474,6 +475,4 @@ marked (e2e); the rest by the manual check the item describes.
 - At-risk rule is a placeholder ([O9](../open-items.md)).
 - The people picker can't tell mentors from others (no roles in `GET /users/`, [O6](../open-items.md)) and no longer
   shows "from {other cohort}".
-- `/programs` shows one mentor name per cohort (`cohortMentor`) until programs v2 ships; the program page then lists
-  every mentor ([programs](programs.md)).
 - The `enrollment_created` notification links to `/`; there is no notifications UI yet ([O14](../open-items.md)).

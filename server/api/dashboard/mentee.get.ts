@@ -18,7 +18,10 @@ export default defineEventHandler(async (event): Promise<StudentDashboard> => {
   const statusOf = (id: number) => listed.find(x => x.id === id)?.status
   const c = cohorts.find(x => statusOf(x.cohort_id) === 'active') ?? cohorts.find(x => statusOf(x.cohort_id) === 'planned')
   const info = listed.find(x => x.id === c?.cohort_id)
-  const mentor = c ? await studentMentor(event, c.cohort_id, user.id) : undefined
+  const [mentor, programs] = await Promise.all([
+    c ? studentMentor(event, c.cohort_id, user.id) : undefined,
+    programSummaries(event, c ? [c.program_id] : [])
+  ])
   const pastCohorts = listed
     .filter(x => x.status === 'finished' && completed.some(e => e.cohort_id === x.id))
     .sort((a, b) => (b.finished_at ?? '').localeCompare(a.finished_at ?? ''))
@@ -36,7 +39,7 @@ export default defineEventHandler(async (event): Promise<StudentDashboard> => {
     student: { name: user.name.split(' ')[0]! },
     mentor: mentor ? { ...person(mentor), role: '' } : null,
     cohort: c && info
-      ? { id: String(c.cohort_id), name: c.cohort_name, program: c.program_title, ...cohortTiming(info), members: info.active_students }
+      ? { id: String(c.cohort_id), name: c.cohort_name, program: programs.get(c.program_id)!, ...cohortTiming(info), members: info.active_students }
       : null,
     pastCohorts,
     nextUp: first ?? null,

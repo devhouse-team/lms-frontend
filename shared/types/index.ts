@@ -1,14 +1,6 @@
 export type Role = 'mentee' | 'mentor' | 'head'
 export type ProgramSlug = 'frontend' | 'backend' | 'mobile' | 'ml' | 'algorithms'
 
-export interface Program {
-  id: string
-  slug: string
-  title: string
-  months: number
-  modules: string[]
-}
-
 export interface Person {
   id: string
   name: string
@@ -43,7 +35,7 @@ export interface CohortTiming {
 export interface CohortInfo extends CohortTiming {
   id: string
   name: string
-  program: string
+  program: ProgramSummary
   members: number
 }
 
@@ -323,6 +315,7 @@ export interface CohortDetail extends CohortTiming {
 /** A staffed cohort on the mentor's page */
 export interface MentorCohort extends CohortDetail {
   roster: CohortRosterRow[]
+  program: ProgramSummary
 }
 
 /** Light user list for pickers */
@@ -355,8 +348,95 @@ export interface PeopleResponse {
   invites: InvitePublic[]
 }
 
-export interface ProgramView extends Program {
-  cohorts: { id: string, name: string, mentees: number, mentor?: string }[]
+/* ---------- programs ---------- */
+
+export type ProgramStatus = 'draft' | 'active' | 'archived'
+
+/** One program card on /programs */
+export interface ProgramRow {
+  id: string
+  slug: string
+  title: string
+  status: ProgramStatus
+  durationWeeks: number
+  position: number
+  /** Short-lived download URL (5 min): never store it */
+  coverUrl: string | null
+  lead: Person | null
+  courseCount: number
+  cohortCounts: { planned: number, active: number, finished: number }
+  activeStudents: number
+  updatedAt: string | null
+}
+
+export interface ProgramList {
+  programs: ProgramRow[]
+  can: { create: boolean, reorder: boolean }
+}
+
+/** One course of a program's curriculum */
+export interface ProgramCourse {
+  courseId: string
+  title: string
+  published: boolean
+  position: number
+  startOffsetDays: number
+  modules: number
+  lessons: number
+}
+
+export interface ProgramCohort extends CohortTiming {
+  id: string
+  name: string
+  activeStudents: number
+  /** Every staff mentor */
+  mentors: Person[]
+}
+
+export interface ProgramDetail extends ProgramRow {
+  description: string
+  /** The last week any content of the curriculum opens */
+  weeksOfContent: number
+  courses: ProgramCourse[]
+  cohorts: ProgramCohort[]
+  can: { edit: boolean, manage: boolean, createCohort: boolean }
+}
+
+/** Cohort form picker: active programs only */
+export interface ProgramOption {
+  id: string
+  title: string
+  durationWeeks: number
+}
+
+/** Read-only program block for students and mentors */
+export interface ProgramSummary {
+  id: string
+  title: string
+  description: string
+  coverUrl: string | null
+}
+
+export interface CourseOption {
+  id: string
+  title: string
+  published: boolean
+}
+
+/** Body for creating a program; PATCH sends only the changed fields (`null` clears cover and lead) */
+export interface ProgramInput {
+  title: string
+  slug: string
+  description: string
+  durationWeeks: number
+  coverFileId?: string | null
+  leadId?: string | null
+}
+
+export interface FileTicket {
+  fileId: string
+  uploadUrl: string
+  headers: Record<string, string>
 }
 
 export interface ContestResultRow {
@@ -401,7 +481,8 @@ export interface CohortInput {
   name: string
   programId: string
   startsOn: string
-  endsOn: string
+  /** Create: optional, the API defaults it from the program's duration */
+  endsOn?: string
 }
 
 /** Body for PATCH /api/enrollments/:enrollmentId */

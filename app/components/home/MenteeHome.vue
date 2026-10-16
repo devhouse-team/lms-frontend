@@ -57,6 +57,11 @@ async function onContest() {
 
         <NextUp v-if="data.nextUp" :item="data.nextUp" />
 
+        <section v-if="data.cohort" aria-labelledby="program-title">
+          <h2 id="program-title" class="mb-3 text-sm font-semibold text-highlighted">{{ t('home.program') }}</h2>
+          <ProgramAbout :program="data.cohort.program" />
+        </section>
+
         <section aria-labelledby="queue-title">
           <h2 id="queue-title" class="mb-3 text-sm font-semibold text-highlighted">{{ t('home.queue') }}</h2>
           <QueueList :items="data.queue" />
@@ -90,7 +95,7 @@ async function onContest() {
               </div>
               <div v-if="data.cohort" class="flex justify-between gap-3">
                 <dt class="text-muted">{{ t('home.cohort') }}</dt>
-                <dd class="num text-highlighted">{{ data.cohort.name }} · {{ t('home.cohortMembers', { n: data.cohort.members }) }}</dd>
+                <dd class="num text-highlighted">{{ data.cohort.name }} · {{ t('home.cohortMembers', data.cohort.members) }}</dd>
               </div>
             </dl>
           </template>

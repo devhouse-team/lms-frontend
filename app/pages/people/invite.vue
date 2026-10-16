@@ -2,7 +2,7 @@
 import { z } from 'zod'
 import type { InvitePublic, Role } from '~~/shared/types'
 
-definePageMeta({ roles: ['head'] })
+definePageMeta({ roles: ['head'], headScope: 'all' })
 
 const { t, locale } = useI18n()
 const toast = useToast()

@@ -60,7 +60,7 @@ API: no admin dashboard yet (backend Phase 5); assembled from the cohort rows an
 - [ ] A student without an assigned mentor sees "Mentor not assigned yet", even when the cohort has mentors.
 - [ ] The mentor dashboard leaves out finished cohorts and counts only active and paused students; the waiting queue
   still lists a finished cohort's submissions.
-- [ ] A student's dashboard shows their cohort's program cover, title and description, also after the program is
-  archived (e2e).
-- [ ] A mentor's `/cohort` shows "About the program" per cohort, collapsed.
+- [x] A student's dashboard shows their cohort's program cover, title and description, also after the program is
+  archived (e2e). ✓ e2e-smoke + browser check
+- [x] A mentor's `/cohort` shows "About the program" per cohort, collapsed. ✓ browser check
 - [x] Head mentor load lists each mentor of a two-mentor cohort with their own students' waiting work. ✓ e2e-smoke (per-mentor waiting from roster rows)

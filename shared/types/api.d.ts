@@ -16,8 +16,9 @@ export interface paths {
          * @description Retrieves a paginated list of all users in the system.
          *
          *                Requires the `user.read` permission, which a role grants; superusers
-         *                always pass. The results include basic profile information for each
-         *                user.
+         *                always pass. Leads of a program may also list users, for the
+         *                staff and student pickers. The results include basic profile
+         *                information for each user.
          *
          *                For security reasons, sensitive information like passwords is never included
          *                in the response.
@@ -595,12 +596,37 @@ export interface paths {
         };
         /**
          * List Programs
-         * @description Published programs; editors also see drafts. Public.
+         * @description Programs the caller sees, by ``position``: drafts only for ``program.update`` holders and the program's lead.
+         *
+         *     ``status`` can repeat to match several statuses; omit it for all. ``?status=active`` is the cohort-creation picker.
          */
         get: operations["list_programs"];
         put?: never;
-        /** Create Program */
+        /**
+         * Create Program
+         * @description A new program is a ``draft`` placed last. ``lead_id`` needs ``program.update``.
+         */
         post: operations["create_program"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/programs/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Order Programs
+         * @description Set the list order: every program id exactly once. Returns the list in the new order.
+         */
+        put: operations["order_programs"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -618,11 +644,144 @@ export interface paths {
         get: operations["get_program"];
         put?: never;
         post?: never;
+        /**
+         * Delete Program
+         * @description Drafts only (they have no cohorts); the curriculum goes with it.
+         */
+        delete: operations["delete_program"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Program
+         * @description ``program.update`` or the lead; ``lead_id`` needs ``program.update``. ``null`` clears the cover and the lead.
+         */
+        patch: operations["update_program"];
+        trace?: never;
+    };
+    "/api/v1/programs/{program_id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Activate Program
+         * @description draft or archived -> active. Already active: nothing changes.
+         */
+        post: operations["activate_program"];
         delete?: never;
         options?: never;
         head?: never;
-        /** Update Program */
-        patch: operations["update_program"];
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/programs/{program_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Archive Program
+         * @description draft or active -> archived. Existing cohorts carry on untouched.
+         */
+        post: operations["archive_program"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/programs/{program_id}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Draft Program
+         * @description active or archived -> draft, only while the program has no cohorts.
+         */
+        post: operations["draft_program"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/programs/{program_id}/courses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Program Courses
+         * @description The program's curriculum, by position.
+         */
+        get: operations["list_program_courses"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/programs/{program_id}/courses/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Order Program Courses
+         * @description Reorder the curriculum: every current course id exactly once. ``program.update`` or the lead.
+         */
+        put: operations["order_program_courses"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/programs/{program_id}/courses/{course_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Program Course
+         * @description Add a course to the curriculum or change its offset or position; returns the whole curriculum.
+         *
+         *     Applies to cohorts created afterwards only. ``program.update`` or the lead.
+         */
+        put: operations["put_program_course"];
+        post?: never;
+        /**
+         * Remove Program Course
+         * @description ``program.update`` or the lead. Existing cohorts keep their courses.
+         */
+        delete: operations["remove_program_course"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/programs/{program_id}/cohorts": {
@@ -640,7 +799,10 @@ export interface paths {
         put?: never;
         /**
          * Create Cohort
-         * @description ``status`` is derived: planned if ``starts_on`` is in the future, otherwise active.
+         * @description ``cohort.create`` or the program's lead; the program must be active.
+         *
+         *     ``status`` is derived: planned if ``starts_on`` is in the future, otherwise active. ``ends_on`` defaults to
+         *     ``starts_on`` + the program's ``duration_weeks``. The program's curriculum is copied into the cohort.
          */
         post: operations["create_cohort"];
         delete?: never;
@@ -996,7 +1158,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Courses */
+        /**
+         * List Courses
+         * @description For the curriculum picker: ``course.update``, ``program.update`` or leading a program.
+         */
         get: operations["list_courses"];
         put?: never;
         /** Create Course */
@@ -1681,9 +1846,50 @@ export interface components {
             starts_on: string;
             /**
              * Ends On
+             * @description Default: starts_on + the program's duration_weeks
+             */
+            ends_on?: string | null;
+        };
+        /** CohortCreated */
+        CohortCreated: {
+            /** Id */
+            id: number;
+            /** Program Id */
+            program_id: number;
+            /** Name */
+            name: string;
+            /**
+             * Starts On
+             * Format: date
+             */
+            starts_on: string;
+            /**
+             * Ends On
              * Format: date
              */
             ends_on: string;
+            status: components["schemas"]["CohortStatus"];
+            /** Finished At */
+            finished_at: string | null;
+            /** Active Students */
+            active_students: number;
+            /**
+             * Students Total
+             * @description Enrollments that aren't dropped
+             */
+            students_total: number;
+            /**
+             * Week
+             * @description Current week of the cohort; 0 before it starts
+             */
+            week: number;
+            /** Total Weeks */
+            total_weeks: number;
+            /**
+             * Courses Attached
+             * @description Curriculum courses copied into the new cohort
+             */
+            courses_attached: number;
         };
         /** CohortListItem */
         CohortListItem: {
@@ -1722,6 +1928,8 @@ export interface components {
             total_weeks: number;
             /** Program Title */
             program_title: string;
+            /** Mentors */
+            mentors: components["schemas"]["PersonRef"][];
         };
         /** CohortRead */
         CohortRead: {
@@ -2216,6 +2424,12 @@ export interface components {
             cohort_id: number;
             /** Cohort Name */
             cohort_name: string;
+            /** Program Id */
+            program_id: number;
+            /** Program Title */
+            program_title: string;
+            /** Program Cover Url */
+            program_cover_url: string | null;
             /** Role */
             role: string;
             /** Released Lessons */
@@ -2296,6 +2510,8 @@ export interface components {
             permissions: string[];
             /** Cohorts */
             cohorts: components["schemas"]["CohortAccess"][];
+            /** Programs */
+            programs: components["schemas"]["ProgramAccess"][];
         };
         /** MyEnrollment */
         MyEnrollment: {
@@ -2317,7 +2533,7 @@ export interface components {
              */
             created_at: string;
             cohort: components["schemas"]["CohortRead"];
-            program: components["schemas"]["ProgramRead"];
+            program: components["schemas"]["ProgramSummary"];
         };
         /** MyProgress */
         MyProgress: {
@@ -2384,11 +2600,80 @@ export interface components {
             /** Items Per Page */
             items_per_page?: number | null;
         };
+        /** PersonRef */
+        PersonRef: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+        };
         /** Preference */
         Preference: {
             type: components["schemas"]["NotificationType"];
             /** Email */
             email: boolean;
+        };
+        /** ProgramAccess */
+        ProgramAccess: {
+            /** Program Id */
+            program_id: number;
+            /** Title */
+            title: string;
+            status: components["schemas"]["ProgramStatus"];
+            /** Relation */
+            relation: string;
+        };
+        /** ProgramCohortCounts */
+        ProgramCohortCounts: {
+            /** Planned */
+            planned: number;
+            /** Active */
+            active: number;
+            /** Finished */
+            finished: number;
+        };
+        /** ProgramCourseOrder */
+        ProgramCourseOrder: {
+            /**
+             * Course Ids
+             * @description Exactly the current courses, once each
+             */
+            course_ids: number[];
+        };
+        /** ProgramCourseRead */
+        ProgramCourseRead: {
+            /** Course Id */
+            course_id: number;
+            /** Title */
+            title: string;
+            /** Slug */
+            slug: string;
+            /** Is Published */
+            is_published: boolean;
+            /** Position */
+            position: number;
+            /** Start Offset Days */
+            start_offset_days: number;
+            /** Modules */
+            modules: number;
+            /**
+             * Lessons
+             * @description Published lessons
+             */
+            lessons: number;
+        };
+        /** ProgramCourseSet */
+        ProgramCourseSet: {
+            /**
+             * Start Offset Days
+             * @default 0
+             */
+            start_offset_days: number;
+            /**
+             * Position
+             * @description Clamped to the curriculum's range; default: the end
+             */
+            position?: number | null;
         };
         /** ProgramCreate */
         ProgramCreate: {
@@ -2398,14 +2683,59 @@ export interface components {
             slug: string;
             /**
              * Description
+             * @description Markdown, stored as sent
              * @default
              */
             description: string;
             /**
-             * Is Published
-             * @default false
+             * Duration Weeks
+             * @default 26
              */
-            is_published: boolean;
+            duration_weeks: number;
+            /** Cover File Id */
+            cover_file_id?: number | null;
+            /** Lead Id */
+            lead_id?: number | null;
+        };
+        /** ProgramListItem */
+        ProgramListItem: {
+            /** Id */
+            id: number;
+            /** Title */
+            title: string;
+            /** Slug */
+            slug: string;
+            /** Description */
+            description: string;
+            status: components["schemas"]["ProgramStatus"];
+            /** Duration Weeks */
+            duration_weeks: number;
+            /** Position */
+            position: number;
+            /**
+             * Cover Url
+             * @description Presigned, valid 5 minutes; fetch again instead of storing
+             */
+            cover_url: string | null;
+            lead: components["schemas"]["PersonRef"] | null;
+            cohorts: components["schemas"]["ProgramCohortCounts"];
+            /** Active Students */
+            active_students: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Updated At */
+            updated_at: string | null;
+        };
+        /** ProgramOrder */
+        ProgramOrder: {
+            /**
+             * Ids
+             * @description Every program id, once, in the new order
+             */
+            ids: number[];
         };
         /** ProgramRead */
         ProgramRead: {
@@ -2417,13 +2747,53 @@ export interface components {
             slug: string;
             /** Description */
             description: string;
-            /** Is Published */
-            is_published: boolean;
+            status: components["schemas"]["ProgramStatus"];
+            /** Duration Weeks */
+            duration_weeks: number;
+            /** Position */
+            position: number;
+            /**
+             * Cover Url
+             * @description Presigned, valid 5 minutes; fetch again instead of storing
+             */
+            cover_url: string | null;
+            lead: components["schemas"]["PersonRef"] | null;
+            cohorts: components["schemas"]["ProgramCohortCounts"];
+            /** Active Students */
+            active_students: number;
             /**
              * Created At
              * Format: date-time
              */
             created_at: string;
+            /** Updated At */
+            updated_at: string | null;
+            /** Cover File Id */
+            cover_file_id: number | null;
+            /** Courses */
+            courses: components["schemas"]["ProgramCourseRead"][];
+            /**
+             * Weeks Of Content
+             * @description Cohort week in which the last module of the curriculum opens; 0 if none
+             */
+            weeks_of_content: number;
+        };
+        /**
+         * ProgramStatus
+         * @enum {string}
+         */
+        ProgramStatus: "draft" | "active" | "archived";
+        /** ProgramSummary */
+        ProgramSummary: {
+            /** Id */
+            id: number;
+            /** Title */
+            title: string;
+            /** Slug */
+            slug: string;
+            status: components["schemas"]["ProgramStatus"];
+            /** Cover Url */
+            cover_url: string | null;
         };
         /** ProgramUpdate */
         ProgramUpdate: {
@@ -2433,8 +2803,18 @@ export interface components {
             slug?: string | null;
             /** Description */
             description?: string | null;
-            /** Is Published */
-            is_published?: boolean | null;
+            /** Duration Weeks */
+            duration_weeks?: number | null;
+            /**
+             * Cover File Id
+             * @description null removes the cover
+             */
+            cover_file_id?: number | null;
+            /**
+             * Lead Id
+             * @description null removes the lead; needs program.update
+             */
+            lead_id?: number | null;
         };
         /** QueueItem */
         QueueItem: {
@@ -2696,8 +3076,12 @@ export interface components {
             cohort_id: number;
             /** Cohort Name */
             cohort_name: string;
+            /** Program Id */
+            program_id: number;
             /** Program Title */
             program_title: string;
+            /** Program Cover Url */
+            program_cover_url: string | null;
             /** Completed */
             completed: number;
             /** Released Lessons */
@@ -3059,7 +3443,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Not authorized - requires the user.read permission */
+            /** @description Not authorized - requires the user.read permission or leading a program */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -3919,7 +4303,9 @@ export interface operations {
     };
     list_programs: {
         parameters: {
-            query?: never;
+            query?: {
+                status?: components["schemas"]["ProgramStatus"][] | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3932,7 +4318,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProgramRead"][];
+                    "application/json": components["schemas"]["ProgramListItem"][];
                 };
             };
             /** @description Error envelope; translate `error.message_key` */
@@ -3979,6 +4365,39 @@ export interface operations {
             };
         };
     };
+    order_programs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProgramOrder"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramListItem"][];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_program: {
         parameters: {
             query?: never;
@@ -3998,6 +4417,35 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ProgramRead"];
                 };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    delete_program: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                program_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error envelope; translate `error.message_key` */
             "4XX": {
@@ -4033,6 +4481,231 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ProgramRead"];
                 };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    activate_program: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                program_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramRead"];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    archive_program: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                program_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramRead"];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    draft_program: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                program_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramRead"];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_program_courses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                program_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramCourseRead"][];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    order_program_courses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                program_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProgramCourseOrder"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramCourseRead"][];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    put_program_course: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                program_id: number;
+                course_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProgramCourseSet"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramCourseRead"][];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    remove_program_course: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                program_id: number;
+                course_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error envelope; translate `error.message_key` */
             "4XX": {
@@ -4097,7 +4770,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CohortRead"];
+                    "application/json": components["schemas"]["CohortCreated"];
                 };
             };
             /** @description Error envelope; translate `error.message_key` */

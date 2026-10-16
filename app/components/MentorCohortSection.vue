@@ -27,11 +27,17 @@ const scopes = computed(() => [{ value: 'mine', label: t('cohort.mine') }, { val
           <UBadge v-bind="statusBadge(c.status)" />
         </div>
         <p class="num mt-1 text-sm text-muted">
-          {{ c.programTitle }} · {{ range(c.startsOn, c.endsOn) }} · {{ weekLine(c) }} · {{ t('home.cohortMembers', { n: students }) }}
+          {{ c.programTitle }} · {{ range(c.startsOn, c.endsOn) }} · {{ weekLine(c) }} · {{ t('home.cohortMembers', students) }}
         </p>
       </div>
       <UTabs v-if="mine.length" v-model="scope" :items="scopes" :content="false" size="xs" color="neutral" />
     </header>
+    <UCollapsible>
+      <UButton :label="t('programs.about')" color="neutral" variant="ghost" size="sm" trailing-icon="i-lucide-chevron-down" class="-ms-2.5" :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform' }" />
+      <template #content>
+        <ProgramAbout :program="c.program" class="pt-3" />
+      </template>
+    </UCollapsible>
     <CohortRoster :cohort-id="c.id" :rows="rows" :mentors="[]" :assignments-total="c.assignments.length" :manage="false" />
     <AssignmentsManager :assignments="c.assignments" :lessons="c.lessons" :editable="c.canEditAssignments && c.status !== 'finished'" @changed="emit('changed')" />
   </section>

@@ -5,7 +5,7 @@ const statuses = z.enum(['planned', 'active', 'finished'])
 /** `?status=active&status=planned`; none means every status */
 const query = z.object({ status: z.union([statuses, z.array(statuses)]).optional() })
 
-/** 1 + 2 × N API calls: the list, then each cohort's roster and staff */
+/** 1 + N API calls: the list (with mentors), then each cohort's roster */
 export default defineEventHandler(async (event): Promise<CohortRow[]> => {
   await requireRole(event, 'head')
   const { status } = await getValidatedQuery(event, query.parse)

@@ -4,7 +4,7 @@ End-to-end smoke test for the acceptance criteria in spec/features/.
 Needs a LOCAL backend (../backend: docker compose up, migrations, first superuser) and this app running against it:
   NUXT_API_BASE=http://localhost:8000/api/v1 NUXT_PUBLIC_ROLE_IDS_HEAD=<admin id> NUXT_PUBLIC_ROLE_IDS_MENTOR=<mentor id> npx nuxi dev --port 3123
 Then: python3 -I scripts/e2e-smoke.py
-Seeds a program, course and lessons straight on the API (no UI for them yet) and drives every role through Nitro.
+Seeds courses and lessons straight on the API (no UI for them yet), builds the program through Nitro and drives every role through Nitro.
 Creates data on every run; never point it at production.
 """
 import json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
@@ -77,8 +77,6 @@ assert s == 200, (s, tok)
 H = {'Authorization': 'Bearer ' + tok['access_token']}
 api = lambda p, m='GET', b=None: req(API + p, m, b, H)
 
-s, prog = api('/programs/', 'POST', {'title': f'Frontend {RUN}', 'slug': f'frontend-{RUN}', 'description': 'e2e', 'is_published': True})
-assert s == 201, prog
 s, course = api('/courses/', 'POST', {'title': f'React {RUN}', 'slug': f'react-{RUN}', 'description': '', 'is_published': True})
 assert s == 201, course
 s, mod = api(f"/courses/{course['id']}/modules", 'POST', {'title': 'Week 1', 'position': 1, 'release_offset_days': 0})
@@ -88,6 +86,11 @@ for i in range(3):
     s, l = api(f"/modules/{mod['id']}/lessons", 'POST', {'title': f'Lesson {i + 1}', 'content': {'type': 'text', 'body': 'x'}, 'position': i + 1, 'is_published': True})
     assert s == 201, l
     lessons.append(l)
+extra = []
+for name in ('Algorithms', 'Career'):
+    s, c_ = api('/courses/', 'POST', {'title': f'{name} {RUN}', 'slug': f'{name.lower()}-{RUN}', 'description': '', 'is_published': False})
+    assert s == 201, c_
+    extra.append(str(c_['id']))
 
 # Student self-registers (no student invite role yet)
 student_u = f'stud{RUN}'
@@ -143,13 +146,66 @@ uid = {p['username']: p['id'] for p in people}
 A, B, S1 = uid[f'ment{RUN}'], uid[f'mentb{RUN}'], uid[student_u]
 S2, S3, S4, S5 = (uid[f'stud{i}x{RUN}'] for i in range(2, 6))
 
-s, programs = head('/api/programs')
-ok(s == 200 and any(p['id'] == str(prog['id']) for p in programs), 'programs list', programs)
-pid = str(prog['id'])
+# --- programs v2 (spec programs.md) -------------------------------------------------------
+s, r = head('/api/programs', 'POST', {'title': f'Frontend {RUN}', 'slug': f'frontend-{RUN}', 'description': 'Line one\nLine two', 'durationWeeks': 12})
+ok(s == 201, 'create program through Nitro (no status, no position)', r)
+pid = r['id']
+s, pd = head(f'/api/programs/{pid}')
+ok(s == 200 and pd['status'] == 'draft' and pd['can']['manage'] and not pd['can']['createCohort'], 'new program is a draft on its page', pd)
+s, r = head('/api/programs', 'POST', {'title': 'Dup', 'slug': f'frontend-{RUN}', 'durationWeeks': 4})
+ok(r.get('statusMessage') == 'slug_taken', 'slug taken', r)
+s, lst = head('/api/programs')
+row = next((x for x in lst['programs'] if x['id'] == pid), None)
+ok(s == 200 and row and row['status'] == 'draft' and row['cohortCounts'] == {'planned': 0, 'active': 0, 'finished': 0} and lst['can'] == {'create': True, 'reorder': True}, 'list row with counts from the API', row)
+s, opts = head('/api/programs/options')
+ok(s == 200 and all(o['id'] != pid for o in opts), 'picker leaves out drafts', opts)
+s, r = head('/api/cohorts', 'POST', {'name': f'Nope-{RUN}', 'programId': pid, 'startsOn': day(1)})
+ok(r.get('statusMessage') == 'program_not_active', 'no cohorts in a draft program', r)
+
+s, cos = head('/api/programs/course-options')
+ok(s == 200 and any(c_['id'] == extra[0] and not c_['published'] for c_ in cos), 'course options with published flag', len(cos) if isinstance(cos, list) else cos)
+s1, _ = head(f"/api/programs/{pid}/courses/{course['id']}", 'PUT', {'startOffsetDays': 0})
+s2, _ = head(f'/api/programs/{pid}/courses/{extra[0]}', 'PUT', {'startOffsetDays': 15})
+s3, _ = head(f'/api/programs/{pid}/courses/{extra[1]}', 'PUT', {'startOffsetDays': 21})
+s, pd = head(f'/api/programs/{pid}')
+ok((s1, s2, s3) == (200, 200, 200) and [c_['courseId'] for c_ in pd['courses']] == [str(course['id'])] + extra and pd['courses'][0]['lessons'] == 3 and pd['courses'][1]['startOffsetDays'] == 15, 'three courses in order with offsets and counts', pd['courses'])
+s, _ = head(f'/api/programs/{pid}/courses/order', 'PUT', {'courseIds': [str(course['id']), extra[1], extra[0]]})
+s, pd = head(f'/api/programs/{pid}')
+ok(s == 200 and [c_['courseId'] for c_ in pd['courses']] == [str(course['id']), extra[1], extra[0]], 'curriculum reorder', [c_['courseId'] for c_ in pd['courses']])
+s, _ = head(f'/api/programs/{pid}/courses/{extra[1]}', 'DELETE')
+s, pd = head(f'/api/programs/{pid}')
+ok(s == 200 and len(pd['courses']) == 2 and pd['courseCount'] == 2, 'remove a course from the curriculum', pd['courses'])
+
+# Cover: sign, PUT straight to storage, complete, save
+png = bytes.fromhex('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c63000100000500010d0a2db40000000049454e44ae426082')
+s, ticket = head('/api/files', 'POST', {'filename': 'cover.png', 'contentType': 'image/png', 'size': len(png)})
+put = urllib.request.urlopen(urllib.request.Request(ticket['uploadUrl'], data=png, method='PUT', headers=ticket['headers'])).status
+s2, done = head(f"/api/files/{ticket['fileId']}/complete", 'POST')
+s3, _ = head(f'/api/programs/{pid}', 'PATCH', {'coverFileId': ticket['fileId']})
+s4, pd = head(f'/api/programs/{pid}')
+ok(s == 200 and put == 200 and s2 == 200 and s3 == 200 and pd['coverUrl'], 'cover upload: signed, stored, completed, saved', (s, put, s2, s3, pd.get('coverUrl')))
+s, r = head('/api/files', 'POST', {'filename': 'x.pdf', 'contentType': 'application/pdf', 'size': 10})
+ok(s == 400, 'Nitro refuses a non-image cover', s)
+
+s, r = head(f'/api/programs/{pid}/activate', 'POST')
+s2, opts = head('/api/programs/options')
+ok(s == 200 and r['status'] == 'active' and any(o['id'] == pid and o['durationWeeks'] == 12 for o in opts), 'activate: offered in the picker', r)
+s, lst = head('/api/programs')
+ids = [x['id'] for x in lst['programs']]
+s, r = head('/api/programs/order', 'PUT', {'ids': [pid] + [i for i in ids if i != pid]})
+s2, lst = head('/api/programs')
+s3, opts = head('/api/programs/options')
+ok(s == 200 and lst['programs'][0]['id'] == pid and opts[0]['id'] == pid, 'program order: list and picker follow it', (r, opts[:1]))
+
+s, scratch = head('/api/programs', 'POST', {'title': f'Scratch {RUN}', 'slug': f'scratch-{RUN}', 'durationWeeks': 4})
+s, r = head(f"/api/programs/{scratch['id']}", 'DELETE')
+s2, r2 = head(f"/api/programs/{scratch['id']}")
+ok(s == 200 and s2 == 404 and r2['statusMessage'] == 'program_not_found', 'empty draft deleted; then not found', (r, r2))
 
 # --- cohort create, status from dates ---------------------------------------------------
-s, c = head('/api/cohorts', 'POST', {'name': f'FE-{RUN}', 'programId': pid, 'startsOn': day(-8), 'endsOn': day(76)})
-ok(s == 201, 'create active cohort (no status sent)', c)
+s, c = head('/api/cohorts', 'POST', {'name': f'FE-{RUN}', 'programId': pid, 'startsOn': day(-8)})
+s2, apic = api(f"/cohorts/{c['id']}")
+ok(s == 201 and c['coursesAttached'] == 2 and apic['ends_on'] == day(-8 + 12 * 7), 'create active cohort: no end date → program duration, curriculum copied', (c, apic.get('ends_on')))
 cid = c['id']
 s, p_ = head('/api/cohorts', 'POST', {'name': f'FE-plan-{RUN}', 'programId': pid, 'startsOn': day(1), 'endsOn': day(90)})
 ok(s == 201, 'create planned cohort', p_)
@@ -175,6 +231,11 @@ s2, r2 = head(f'/api/cohorts/{cid}/staff/{B}', 'PUT', {'role': 'mentor'})
 ok(s == 200 and s2 == 200 and r['unassignedMentees'] == 0, 'add two mentors', (r, r2))
 s, det = head(f'/api/cohorts/{cid}')
 ok(sorted(m['role'] for m in det['staff']) == ['mentor', 'mentor'], 'staff lists both with roles', det['staff'])
+s, pd = head(f'/api/programs/{pid}')
+pc = next(x for x in pd['cohorts'] if x['id'] == cid)
+ok(s == 200 and sorted(m['id'] for m in pc['mentors']) == sorted([A, B]) and pd['cohortCounts']['active'] == 1, 'program page lists every mentor of a cohort', pc)
+s, r = head(f'/api/programs/{pid}/draft', 'POST')
+ok(r.get('statusMessage') == 'program_has_cohorts', 'back to draft refused once a cohort exists', r)
 
 # --- enroll, auto-assign, bulk ------------------------------------------------------------
 for u in (S1, S2, S3, S4):
@@ -242,9 +303,8 @@ s, opts = head('/api/cohorts/options')
 ok(s == 200 and any(o['id'] == pcid for o in opts) and all(o['status'] != 'finished' for o in opts), 'move targets: planned and active only', opts)
 
 # --- assignments and reviews -------------------------------------------------------------
-s, r = api(f"/cohorts/{cid}/courses/{course['id']}", 'PUT', {'start_offset_days': 0})
-ok(s in (200, 201), 'attach course (API)', r)
 s, det = head(f'/api/cohorts/{cid}')
+ok(len(det['lessons']) == 3, 'cohort got the curriculum course and its lessons', len(det['lessons']))
 s, r = head('/api/assignments', 'POST', {'lessonId': det['lessons'][0]['id'], 'title': 'Todo app', 'description': 'Build it', 'dueOffsetDays': 30})
 ok(s == 201, 'attach assignment to a lesson', r)
 
@@ -253,6 +313,14 @@ s, r = stud('/api/auth/login', 'POST', {'login': f'{student_u}@example.com', 'pa
 ok(s == 200 and r['role'] == 'mentee', 'student login by email', r)
 s, d = stud('/api/dashboard/mentee')
 ok(s == 200 and d['cohort']['name'] == f'FE-{RUN}' and d['cohort']['status'] == 'active' and d['mentor']['name'] == 'Nurzhan Mentor', 'student dashboard: active cohort, own mentor', d)
+ok(d['cohort']['program']['title'] == f'Frontend {RUN}' and d['cohort']['program']['description'] == 'Line one\nLine two' and d['cohort']['program']['coverUrl'], 'student dashboard: program title, description, cover', d['cohort'].get('program'))
+s, r = head(f'/api/programs/{pid}/archive', 'POST')
+s2, d2 = stud('/api/dashboard/mentee')
+s3, opts = head('/api/programs/options')
+s4, crow = head(f'/api/cohorts/{cid}')
+ok(r['status'] == 'archived' and d2['cohort']['program']['title'] == d['cohort']['program']['title'] and all(o['id'] != pid for o in opts) and crow['status'] == 'active', 'archive: cohort runs on, student unchanged, gone from the picker', r)
+s, r = head(f'/api/programs/{pid}/activate', 'POST')
+ok(r['status'] == 'active', 'restore', r)
 s, lst = stud('/api/assignments')
 ok(s == 200 and len(lst['current']) == 1 and lst['archive'] == [], 'student assignment list', lst)
 aid = lst['current'][0]['id']
@@ -288,6 +356,31 @@ s, rv = mentor('/api/reviews')
 ok(s == 200 and len(rv['waiting']) == 1, 'mentor can still review after the end', rv)
 s, mine = mentor('/api/cohorts/mine')
 ok(s == 200 and any(x['id'] == cid and x['status'] == 'finished' for x in mine), 'mentor page lists the finished cohort', [x['status'] for x in mine])
+ok(all(x['program']['title'] for x in mine), 'mentor page: program per cohort', [x.get('program') for x in mine])
+
+# --- program lead without admin rights ---------------------------------------------------------
+lead = invite_user(f'lead{RUN}@example.com', f'lead{RUN}', 'Dana Lead')
+s, people = head('/api/people/options')
+LEAD = next(p['id'] for p in people if p['username'] == f'lead{RUN}')
+s, r = head(f'/api/programs/{pid}', 'PATCH', {'leadId': LEAD})
+lead = Bff()
+s2, r2 = lead('/api/auth/login', 'POST', {'login': f'lead{RUN}', 'password': 'Str0ng-pass-123!'})
+s3, sess = lead('/api/_auth/session')
+ok(s == 200 and r2['role'] == 'head' and sess['user']['headScope'] == 'programs', 'lead signs in to the scoped head view', sess.get('user'))
+s, lst = lead('/api/programs')
+ok(s == 200 and [x['id'] for x in lst['programs']] == [pid] and lst['can'] == {'create': False, 'reorder': False}, 'lead sees only their program, no create or reorder', lst)
+s, pd = lead(f'/api/programs/{pid}')
+ok(s == 200 and pd['can'] == {'edit': True, 'manage': False, 'createCohort': True}, 'lead: edit and create cohort, no status actions', pd.get('can'))
+s, r = lead(f'/api/programs/{pid}', 'PATCH', {'description': 'By the lead', 'leadId': None})
+s2, pd = head(f'/api/programs/{pid}')
+ok(s == 200 and pd['description'] == 'By the lead' and pd['lead']['id'] == LEAD, "lead edits the description; their leadId is dropped", (r, pd.get('lead')))
+s, r = lead(f'/api/programs/{pid}/courses/{extra[1]}', 'PUT', {'startOffsetDays': 28})
+ok(s == 200, 'lead edits the curriculum', r)
+s, opts = lead('/api/programs/options')
+s2, lc = lead('/api/cohorts', 'POST', {'name': f'Lead-{RUN}', 'programId': pid, 'startsOn': day(10)})
+ok([o['id'] for o in opts] == [pid] and s2 == 201 and lc['coursesAttached'] == 3, 'lead picker: own active programs; lead creates a cohort', (opts, lc))
+s, dash = lead('/api/dashboard/head')
+ok(s == 200 and dash['invites'] == [] and all(x['programId'] == pid for x in dash['cohorts']), 'lead dashboard: own cohorts, no invites', [x['programId'] for x in dash.get('cohorts', [])])
 
 s, r = stud('/api/auth/logout', 'POST')
 s, r = stud('/api/dashboard/mentee')

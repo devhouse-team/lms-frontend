@@ -4,6 +4,8 @@ declare module '#app' {
   interface PageMeta {
     /** Roles allowed on this page. Omit for any signed-in user. */
     roles?: Role[]
+    /** 'all': head pages a program lead without admin rights can't open (people, contests) */
+    headScope?: 'all'
     /** Page is reachable without a session (login, invite). */
     public?: boolean
   }
@@ -20,6 +22,9 @@ export default defineNuxtRouteMiddleware((to) => {
     return navigateTo({ path: '/login', query: to.fullPath !== '/' ? { next: to.fullPath } : undefined })
   }
   if (to.meta.roles && user.value && !to.meta.roles.includes(user.value.role)) {
+    throw createError({ statusCode: 403, statusMessage: 'Forbidden', fatal: true })
+  }
+  if (to.meta.headScope === 'all' && user.value?.headScope === 'programs') {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden', fatal: true })
   }
 })
