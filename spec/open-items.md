@@ -21,6 +21,6 @@ Known gaps and undecided questions. Backend items are mirrored in `../backend/sp
 | O15 | No cohort capacity, timezone or reopening finished cohorts | PO | | Deliberately out of v2 (backend D5 for timezone). |
 | O16 | ~~`/programs` shows one mentor per cohort~~ | FE | | Programs v2 spec lists all mentors (from the cohort list item's `mentors`). |
 | O17 | No student lesson screen | FE | | "Mark complete" in a finished cohort has no UI to disable yet. |
-| O18 | Program leads picking people | PO + BE | Lead runs cohorts | Programs v2 lets leads call `GET /users/` (emails included); awaiting backend D11. If refused, leads add students by CSV only. |
+| O18 | ~~Program leads picking people~~ | PO + BE | | Decided 2026-10-16 (backend D11): leads may call `GET /users/`; built in the API. |
 | O19 | Program description is markdown but shown as plain text | FE | | No markdown renderer installed; add one together with lesson text rendering. |
 | O20 | Orphan cover uploads | BE | | A cover uploaded then cancelled stays in storage (backend H2). |

@@ -20,7 +20,7 @@ contract is `../backend/openapi.json` (types in `shared/types/api.d.ts`).
 | [Password reset and email verification](features/account-recovery.md) | everyone | API |
 | [Cohorts](features/cohorts.md) | head, mentor, student | API |
 | [People](features/people.md) | head | API |
-| [Programs](features/programs.md) | head, program lead; student and mentor read-only | API (v2 specified, not built) |
+| [Programs](features/programs.md) | head, program lead; student and mentor read-only | API (v2 built in the backend; UI not yet) |
 | [Assignments](features/assignments.md) | head, mentor, student | API |
 | [Reviews](features/reviews.md) | mentor, student | API |
 | [Home dashboards](features/dashboards.md) | everyone | API + mock widgets |

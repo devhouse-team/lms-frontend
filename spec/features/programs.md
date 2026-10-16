@@ -233,9 +233,8 @@ Owned by [cohorts](cohorts.md#cohort-modal-create--edit); summary:
 - Head dashboard for a lead: the same widgets over the cohorts the API returns (their programs' cohorts); the pending
   invites block is hidden.
 - `/cohorts`, `/cohorts/[id]`: unchanged screens; the API scopes the data and the lead has manager rights on their
-  programs' cohorts. People pickers (Add staff, Add students "One person") use `GET /users/`, which the backend opens to
-  program leads (pending PO decision D11 in backend open-items). If D11 goes the other way the API answers 403: the
-  picker then shows "Only the head can pick people here for now. Use CSV import to add students by email."
+  programs' cohorts. People pickers (Add staff, Add students "One person") use `GET /users/`, which the API opens to
+  program leads (D11, decided).
 - On program pages the lead gets `can.edit` and `can.createCohort` (when active) but not `can.manage`: no status
   actions, no delete, no lead field, no reorder.
 
@@ -509,8 +508,6 @@ the rest by the manual check the item describes.
   installed. Add one together with lesson text rendering.
 - **Mentors in the cohort list**: resolved in the backend spec: `GET /cohorts/` items carry `mentors: [{id, name}]`.
   The program page and `/cohorts` read them there; no `…/staff` call per cohort.
-- **Lead and people pickers**: the backend spec lets program leads call `GET /users/`; awaiting PO decision D11
-  (backend open-items). The lead picker itself is head-only (`program.update`).
 - **Lead and course picker**: resolved in the backend spec: program leads and `program.update` holders may call
   `GET /courses/`.
 - **New leads see the head view only after signing in again**: roles are computed at sign-in.
