@@ -2,6 +2,21 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-10-16: programs v2 spec (not built yet)
+
+- [features/programs.md](features/programs.md) rewritten: programs as course templates; status tabs (draft / active /
+  archived) with confirm-guarded actions; create/edit modal (slug from title, duration, cover upload, lead); curriculum
+  editor over existing courses (order, start week/day, length hint, "applies to new cohorts only"); cohorts section
+  with all mentors; scoped program-lead view; read-only program info for students and mentors; error table; split
+  cache keys (`programs` / `program:<id>` / `program-options`); Russian plural rules. The static syllabus
+  `server/data/programs.ts` and the per-cohort `…/staff` calls go away.
+- [features/cohorts.md](features/cohorts.md): the program picker lists active programs only; the end date defaults
+  from the program duration and is optional on create; the create toast reports attached courses;
+  `program_not_active`.
+- [features/dashboards.md](features/dashboards.md): students and mentors see their cohort's program (cover, title,
+  description), read-only; a lead-only head dashboard hides invites.
+- Backend counterpart: `../backend/spec/domain.md` (Programs v2, also spec only).
+
 ## 2026-10-16: cohort logic v2
 
 - Cohorts follow the API's lifecycle: status and week come from the API; `/cohorts` has a status filter (Active and

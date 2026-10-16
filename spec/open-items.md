@@ -19,5 +19,8 @@ Known gaps and undecided questions. Backend items are mirrored in `../backend/sp
 | O13 | ~~One mentor per cohort in the UI~~ | PO | | Decided 2026-10-16: several mentors and reviewers, a mentor per student. See [cohorts](features/cohorts.md). |
 | O14 | Notification links point at paths that don't exist | FE + BE | Notifications | Backend sends `/mentor/submissions/{id}`, `/app/cohorts/…`; the app has `/reviews/{id}`, `/assignments/{c}-{l}`. No notifications UI yet. |
 | O15 | No cohort capacity, timezone or reopening finished cohorts | PO | | Deliberately out of v2 (backend D5 for timezone). |
-| O16 | `/programs` shows one mentor per cohort (`cohortMentor`) | FE | | List all mentors. |
+| O16 | ~~`/programs` shows one mentor per cohort~~ | FE | | Programs v2 spec lists all mentors (from the cohort list item's `mentors`). |
 | O17 | No student lesson screen | FE | | "Mark complete" in a finished cohort has no UI to disable yet. |
+| O18 | Program leads picking people | PO + BE | Lead runs cohorts | Programs v2 lets leads call `GET /users/` (emails included); awaiting backend D11. If refused, leads add students by CSV only. |
+| O19 | Program description is markdown but shown as plain text | FE | | No markdown renderer installed; add one together with lesson text rendering. |
+| O20 | Orphan cover uploads | BE | | A cover uploaded then cancelled stays in storage (backend H2). |
