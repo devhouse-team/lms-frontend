@@ -638,7 +638,10 @@ export interface paths {
          */
         get: operations["list_cohorts"];
         put?: never;
-        /** Create Cohort */
+        /**
+         * Create Cohort
+         * @description ``status`` is derived: planned if ``starts_on`` is in the future, otherwise active.
+         */
         post: operations["create_cohort"];
         delete?: never;
         options?: never;
@@ -656,6 +659,8 @@ export interface paths {
         /**
          * List Visible Cohorts
          * @description All cohorts the caller can see (admins: every cohort; others: ones they study in or staff), newest first.
+         *
+         *     ``status`` can repeat to match several statuses; omit it for all.
          */
         get: operations["list_visible_cohorts"];
         put?: never;
@@ -677,11 +682,38 @@ export interface paths {
         get: operations["get_cohort"];
         put?: never;
         post?: never;
+        /**
+         * Delete Cohort
+         * @description Only a planned cohort with no enrollments.
+         */
+        delete: operations["delete_cohort"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Cohort
+         * @description Name always (until finished); ``starts_on`` only while planned; ``ends_on`` until finished.
+         */
+        patch: operations["update_cohort"];
+        trace?: never;
+    };
+    "/api/v1/cohorts/{cohort_id}/finish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Finish Cohort
+         * @description End the cohort now (planned: cancel). Active and paused students become completed. Irreversible.
+         */
+        post: operations["finish_cohort"];
         delete?: never;
         options?: never;
         head?: never;
-        /** Update Cohort */
-        patch: operations["update_cohort"];
+        patch?: never;
         trace?: never;
     };
     "/api/v1/cohorts/{cohort_id}/staff": {
@@ -712,6 +744,8 @@ export interface paths {
         /**
          * Assign Staff
          * @description Make a user a mentor or reviewer of this cohort (or change their role).
+         *
+         *     Students of the cohort can't be staff. Leaving the mentor role unassigns that user's mentees.
          */
         put: operations["assign_staff"];
         post?: never;
@@ -735,7 +769,10 @@ export interface paths {
          */
         get: operations["list_roster"];
         put?: never;
-        /** Enroll */
+        /**
+         * Enroll
+         * @description Enroll a student (201), or reactivate their dropped enrollment (200).
+         */
         post: operations["enroll"];
         delete?: never;
         options?: never;
@@ -754,7 +791,9 @@ export interface paths {
         put?: never;
         /**
          * Import Enrollments
-         * @description Enroll existing users from a CSV with an ``email`` column. Unknown emails are reported, not created.
+         * @description Enroll existing users from a CSV with an ``email`` column (case-insensitive, at most 2000 rows).
+         *
+         *     Unknown emails are reported, not created; dropped students are reactivated; staff are skipped.
          */
         post: operations["import_enrollments"];
         delete?: never;
@@ -772,11 +811,35 @@ export interface paths {
         };
         /**
          * List Mentor Assignments
-         * @description Who mentors whom in this cohort.
+         * @description Who mentors whom in this cohort. Students see only their own mentor.
          */
         get: operations["list_mentor_assignments"];
-        put?: never;
+        /**
+         * Assign Mentor Bulk
+         * @description Give several students the same mentor at once; all or nothing.
+         */
+        put: operations["assign_mentor_bulk"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cohorts/{cohort_id}/mentors/auto": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Auto Assign Mentors
+         * @description Spread students who have no mentor over the cohort's mentors by current load. Returns what was assigned.
+         */
+        post: operations["auto_assign_mentors"];
         delete?: never;
         options?: never;
         head?: never;
@@ -793,7 +856,7 @@ export interface paths {
         get?: never;
         /**
          * Assign Mentor
-         * @description Give an enrolled student a mentor (who must be staffed as ``mentor`` in the cohort).
+         * @description Give an active or paused student a mentor (who must be staffed as ``mentor`` in the cohort).
          */
         put: operations["assign_mentor"];
         post?: never;
@@ -842,6 +905,28 @@ export interface paths {
          * @description Move an enrollment along: active ⇄ paused, active → completed, active/paused → dropped, dropped → active.
          */
         patch: operations["change_status"];
+        trace?: never;
+    };
+    "/api/v1/enrollments/{enrollment_id}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Move Enrollment
+         * @description Drop the student here and enroll them in another cohort atomically; returns the new enrollment.
+         *
+         *     Progress and submissions stay with the old enrollment, and the old mentor assignment is removed.
+         */
+        post: operations["move_enrollment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/files/": {
@@ -1145,6 +1230,26 @@ export interface paths {
          * @description Per-student completed lessons vs. lessons released so far. Staff and admins.
          */
         get: operations["cohort_progress"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cohorts/{cohort_id}/roster": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cohort Roster
+         * @description Per student: enrollment, mentor, progress, submission counts, last activity. Staff and admins.
+         */
+        get: operations["cohort_roster"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1574,10 +1679,11 @@ export interface components {
              * Format: date
              */
             starts_on: string;
-            /** Ends On */
-            ends_on?: string | null;
-            /** @default planned */
-            status: components["schemas"]["CohortStatus"];
+            /**
+             * Ends On
+             * Format: date
+             */
+            ends_on: string;
         };
         /** CohortListItem */
         CohortListItem: {
@@ -1592,13 +1698,30 @@ export interface components {
              * Format: date
              */
             starts_on: string;
-            /** Ends On */
-            ends_on: string | null;
+            /**
+             * Ends On
+             * Format: date
+             */
+            ends_on: string;
             status: components["schemas"]["CohortStatus"];
-            /** Program Title */
-            program_title: string;
+            /** Finished At */
+            finished_at: string | null;
             /** Active Students */
             active_students: number;
+            /**
+             * Students Total
+             * @description Enrollments that aren't dropped
+             */
+            students_total: number;
+            /**
+             * Week
+             * @description Current week of the cohort; 0 before it starts
+             */
+            week: number;
+            /** Total Weeks */
+            total_weeks: number;
+            /** Program Title */
+            program_title: string;
         };
         /** CohortRead */
         CohortRead: {
@@ -1613,9 +1736,28 @@ export interface components {
              * Format: date
              */
             starts_on: string;
-            /** Ends On */
-            ends_on: string | null;
+            /**
+             * Ends On
+             * Format: date
+             */
+            ends_on: string;
             status: components["schemas"]["CohortStatus"];
+            /** Finished At */
+            finished_at: string | null;
+            /** Active Students */
+            active_students: number;
+            /**
+             * Students Total
+             * @description Enrollments that aren't dropped
+             */
+            students_total: number;
+            /**
+             * Week
+             * @description Current week of the cohort; 0 before it starts
+             */
+            week: number;
+            /** Total Weeks */
+            total_weeks: number;
         };
         /**
          * CohortStatus
@@ -1630,7 +1772,6 @@ export interface components {
             starts_on?: string | null;
             /** Ends On */
             ends_on?: string | null;
-            status?: components["schemas"]["CohortStatus"] | null;
         };
         /** CourseCreate */
         CourseCreate: {
@@ -1706,6 +1847,11 @@ export interface components {
         EnrollmentCreate: {
             /** User Id */
             user_id: number;
+        };
+        /** EnrollmentMove */
+        EnrollmentMove: {
+            /** Cohort Id */
+            cohort_id: number;
         };
         /** EnrollmentRead */
         EnrollmentRead: {
@@ -1863,6 +2009,10 @@ export interface components {
             already_enrolled: string[];
             /** Unknown */
             unknown: string[];
+            /** Reactivated */
+            reactivated: string[];
+            /** Skipped Staff */
+            skipped_staff: string[];
         };
         /** InviteAccept */
         InviteAccept: {
@@ -2053,6 +2203,13 @@ export interface components {
             mentee: components["schemas"]["UserSummary"];
             mentor: components["schemas"]["UserSummary"];
         };
+        /** MentorBulkAssign */
+        MentorBulkAssign: {
+            /** Mentor Id */
+            mentor_id: number;
+            /** Mentee Ids */
+            mentee_ids: number[];
+        };
         /** MentorCohort */
         MentorCohort: {
             /** Cohort Id */
@@ -2213,7 +2370,7 @@ export interface components {
          * NotificationType
          * @enum {string}
          */
-        NotificationType: "submission_created" | "review_completed" | "lesson_released" | "deadline_soon";
+        NotificationType: "submission_created" | "review_completed" | "lesson_released" | "deadline_soon" | "enrollment_created";
         /** PaginatedListResponse[UserRead] */
         PaginatedListResponse_UserRead_: {
             /** Data */
@@ -2400,6 +2557,18 @@ export interface components {
              */
             created_at: string;
         };
+        /** RosterEnrollment */
+        RosterEnrollment: {
+            /** Id */
+            id: number;
+            /** Status */
+            status: string;
+            /**
+             * Status Changed At
+             * Format: date-time
+             */
+            status_changed_at: string;
+        };
         /** RosterEntry */
         RosterEntry: {
             /** Id */
@@ -2421,9 +2590,69 @@ export interface components {
             created_at: string;
             user: components["schemas"]["UserSummary"];
         };
+        /** RosterMentor */
+        RosterMentor: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+        };
+        /** RosterProgress */
+        RosterProgress: {
+            /** Completed */
+            completed: number;
+            /** Released Lessons */
+            released_lessons: number;
+        };
+        /** RosterStudent */
+        RosterStudent: {
+            enrollment: components["schemas"]["RosterEnrollment"];
+            user: components["schemas"]["RosterUser"];
+            mentor: components["schemas"]["RosterMentor"] | null;
+            progress: components["schemas"]["RosterProgress"];
+            submissions: components["schemas"]["RosterSubmissions"];
+            /** Last Activity At */
+            last_activity_at: string | null;
+        };
+        /** RosterSubmissions */
+        RosterSubmissions: {
+            /** Submitted */
+            submitted: number;
+            /** Approved */
+            approved: number;
+            /** Changes Requested */
+            changes_requested: number;
+            /**
+             * Overdue Submitted
+             * @default 0
+             */
+            overdue_submitted: number;
+        };
+        /** RosterUser */
+        RosterUser: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Username */
+            username: string;
+            /** Email */
+            email: string;
+        };
         /** StaffAssign */
         StaffAssign: {
             role: components["schemas"]["StaffRole"];
+        };
+        /** StaffAssigned */
+        StaffAssigned: {
+            /** Cohort Id */
+            cohort_id: number;
+            /** User Id */
+            user_id: number;
+            role: components["schemas"]["StaffRole"];
+            user: components["schemas"]["UserSummary"];
+            /** Unassigned Mentees */
+            unassigned_mentees: number;
         };
         /** StaffRead */
         StaffRead: {
@@ -3886,7 +4115,7 @@ export interface operations {
         parameters: {
             query?: {
                 program_id?: number | null;
-                status?: components["schemas"]["CohortStatus"] | null;
+                status?: components["schemas"]["CohortStatus"][] | null;
             };
             header?: never;
             path?: never;
@@ -3945,6 +4174,35 @@ export interface operations {
             };
         };
     };
+    delete_cohort: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cohort_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     update_cohort: {
         parameters: {
             query?: never;
@@ -3959,6 +4217,37 @@ export interface operations {
                 "application/json": components["schemas"]["CohortUpdate"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CohortRead"];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    finish_cohort: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cohort_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -4033,7 +4322,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["StaffRead"];
+                    "application/json": components["schemas"]["StaffAssigned"];
                 };
             };
             /** @description Error envelope; translate `error.message_key` */
@@ -4123,6 +4412,15 @@ export interface operations {
             };
         };
         responses: {
+            /** @description A dropped enrollment was reactivated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnrollmentRead"];
+                };
+            };
             /** @description Successful Response */
             201: {
                 headers: {
@@ -4179,6 +4477,72 @@ export interface operations {
         };
     };
     list_mentor_assignments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cohort_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MentorAssignmentRead"][];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    assign_mentor_bulk: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cohort_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MentorBulkAssign"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MentorAssignmentRead"][];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    auto_assign_mentors: {
         parameters: {
             query?: never;
             header?: never;
@@ -4316,6 +4680,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["EnrollmentStatusUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnrollmentRead"];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    move_enrollment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                enrollment_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnrollmentMove"];
             };
         };
         responses: {
@@ -5061,6 +5460,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StudentProgress"][];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    cohort_roster: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cohort_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RosterStudent"][];
                 };
             };
             /** @description Error envelope; translate `error.message_key` */

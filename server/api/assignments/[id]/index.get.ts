@@ -10,7 +10,8 @@ export default defineEventHandler(async (event): Promise<AssignmentDetail> => {
     listStaff(event, cohortId),
     apiFetch<components['schemas']['MentorAssignmentRead'][]>(event, `/cohorts/${cohortId}/mentors`)
   ])
-  const mentor = mentors.find(m => String(m.mentee.id) === user.id)?.mentor ?? cohortMentor(staff)
+  // The student's own mentor only (v2: no cohort-wide mentor to fall back to)
+  const mentor = mentors.find(m => String(m.mentee.id) === user.id)?.mentor
   const submissions = [...a.submissions].sort(byVersionDesc)
   return {
     id: assignmentKey(cohortId, lessonId),
@@ -18,6 +19,7 @@ export default defineEventHandler(async (event): Promise<AssignmentDetail> => {
     description: a.instructions,
     dueAt: dueAt(a.due_on),
     cohortName: cohort.name,
+    cohort: { status: cohort.status, startsOn: cohort.starts_on, finishedAt: cohort.finished_at },
     mentor: mentor ? person(mentor) : null,
     status: submissions[0] ? toUiStatus(submissions[0].status) : 'not_submitted',
     submissions: submissions.map(s => submissionView(s, staff))

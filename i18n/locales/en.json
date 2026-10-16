@@ -69,7 +69,8 @@
     "statusError": "Could not save the course status",
     "mentorNone": "No mentor assigned yet. The academy will let you know.",
     "noCohort": "You are not in an active cohort yet. The academy will add you and let you know.",
-    "summaryOpen": "Week {week} · cohort {cohort}"
+    "summaryPlanned": "Starts {date} · cohort {cohort}",
+    "pastCohort": "{cohort} · finished {date}"
   },
   "kind": {
     "session": "Session",
@@ -160,8 +161,7 @@
     "overdueN": "{n} in review",
     "coursesDoneLabel": "Lessons done: {done} of {total}",
     "sessions": "Upcoming sessions",
-    "noSessions": "No sessions scheduled.",
-    "weekOpen": "week {week}"
+    "noSessions": "No sessions scheduled."
   },
   "head": {
     "title": "Academy",
@@ -191,7 +191,8 @@
       "progress": "Lessons",
       "atRisk": "Behind",
       "backlog": "Reviews"
-    }
+    },
+    "overdueN": "> 48h: {n}"
   },
   "errors": {
     "forbidden": "No access",
@@ -221,7 +222,10 @@
       "open": "All assignments are accepted.",
       "done": "Nothing accepted yet."
     },
-    "noDue": "No deadline"
+    "noDue": "No deadline",
+    "archive": "Archive · {cohort}",
+    "archiveEmpty": "No assignments in this cohort.",
+    "noCurrent": "No current assignments."
   },
   "submission": {
     "submit": "Submit your work",
@@ -241,7 +245,9 @@
       "url": "Use a link starting with http:// or https://",
       "note": "2000 characters max",
       "conflict": "This work is already in review or accepted"
-    }
+    },
+    "closedFinished": "This cohort finished on {date}. Submissions are closed; your mentor can still review work you already sent.",
+    "closedPlanned": "Submissions open when the cohort starts: {date}"
   },
   "review": {
     "notFound": "Submission not found",
@@ -354,7 +360,52 @@
     "empty": "No students in this cohort yet.",
     "noCohort": "You don't have a cohort assigned yet.",
     "students": "Students",
-    "actions": "Actions: {name}"
+    "actions": "Actions: {name}",
+    "mentor": "Mentor",
+    "lastActivity": "Last activity",
+    "noMentor": "No mentor",
+    "mentorFor": "Mentor for {name}",
+    "plusInactive": "+ {n} inactive",
+    "showInactive": "Show inactive students ({n})",
+    "hideInactive": "Hide inactive students",
+    "noCurrent": "No current students.",
+    "loadError": "Couldn't load the roster.",
+    "addStudents": "Add students",
+    "auto": "Auto-assign mentors ({n})",
+    "autoAllSet": "Everyone has a mentor",
+    "autoNoMentors": "Add a mentor first",
+    "autoDone": "Students assigned: {n}",
+    "bulk": "Selected students",
+    "selected": "Selected: {n}",
+    "assignMentor": "Assign mentor",
+    "clear": "Clear",
+    "selectAll": "Select all current students",
+    "select": "Select {name}",
+    "assigned": "{mentor} now mentors {n} more",
+    "unassigned": "Mentor removed for {n}",
+    "pause": "Pause",
+    "resume": "Resume",
+    "complete": "Mark completed",
+    "drop": "Drop",
+    "reactivate": "Re-activate",
+    "move": "Move to another cohort…",
+    "dropTitle": "Drop student?",
+    "completeTitle": "Mark as completed?",
+    "dropConfirm": "Drop {name}? Their mentor assignment is removed. You can re-activate them later.",
+    "completeConfirm": "Mark {name} as completed? Their mentor assignment is removed and this can't be undone here.",
+    "statusDone": {
+      "active": "{name} is active again",
+      "paused": "{name} paused",
+      "completed": "{name} marked completed",
+      "dropped": "{name} dropped"
+    },
+    "moveTitle": "Move {name}",
+    "moveTarget": "Target cohort",
+    "moveTargetPlaceholder": "Choose a cohort",
+    "moveText": "{name} will be enrolled in {target} and dropped here. {warning}: they stay with this cohort, and {name} starts {target} from zero. Their mentor here is removed; assign one in {target}.",
+    "moveWarning": "Progress and submissions don't carry over",
+    "moveConfirm": "Move",
+    "openTarget": "Open cohort"
   },
   "people": {
     "all": "All",
@@ -406,7 +457,7 @@
     "hint": "Open a cohort to see its students.",
     "notFound": "Cohort not found",
     "toList": "Back to cohorts",
-    "startsOn": "starts {date}",
+    "startsOn": "Start date",
     "create": "Create cohort",
     "edit": "Edit",
     "createTitle": "New cohort",
@@ -414,32 +465,62 @@
     "name": "Name",
     "program": "Program",
     "programPlaceholder": "Choose a program",
-    "startAt": "Start date",
-    "totalWeeks": "Duration, weeks",
-    "mentor": "Mentor",
-    "mentorPlaceholder": "No mentor",
     "created": "Cohort \"{name}\" created",
     "saved": "Changes saved",
     "err": {
-      "name": "Enter a name (2+ characters)",
+      "name": "Use 2 to 200 characters",
       "program": "Choose a program",
-      "startAt": "Enter a start date",
-      "totalWeeks": "1 to 104 weeks",
-      "nameTaken": "A cohort with this name already exists"
+      "startsOn": "Pick a start date",
+      "endsOn": "Pick an end date",
+      "endBeforeStart": "The end date must be after the start date.",
+      "cohort_name_taken": "This program already has a cohort with this name.",
+      "cohort_started": "The cohort has started; its start date can't change.",
+      "cohort_ends_in_past": "The end date is in the past.",
+      "cohort_finished": "This cohort has finished and is read-only.",
+      "cohort_not_deletable": "Only a planned cohort with no students can be deleted.",
+      "cohort_not_active": "This cohort isn't running, so submissions are closed.",
+      "enrollment_exists": "{name} is already in this cohort.",
+      "enrollmentExistsTarget": "{name} is already in {target}.",
+      "invalid_transition": "That change isn't possible any more; the list was refreshed.",
+      "staff_cannot_enroll": "{name} is on this cohort's staff. Remove them from staff first.",
+      "student_cannot_be_staff": "{name} is a student in this cohort. Drop them first.",
+      "not_a_mentor": "{name} isn't a mentor of this cohort any more.",
+      "not_enrolled": "Only active or paused students can have a mentor.",
+      "import_too_large": "The file has more than 2000 rows. Split it and import the parts.",
+      "cohort_not_found": "This cohort no longer exists."
     },
-    "addMentee": "Add student",
-    "addTitle": "Add a student to the cohort",
-    "student": "Student",
     "addPlaceholder": "Choose a person",
-    "noOthers": "No one to add: everyone is already in this cohort or on staff.",
     "add": "Add",
-    "moveTo": "Move to another cohort",
     "moved": "{name} moved to {cohort}",
-    "statusSaved": "Status updated",
-    "status": "Status",
-    "actions": "Actions for {name}",
-    "fromCohort": "from {cohort}",
-    "programLocked": "An existing cohort cannot change program"
+    "programLocked": "An existing cohort cannot change program",
+    "col": {
+      "status": "Status",
+      "mentors": "Mentors"
+    },
+    "filter": "Cohort status",
+    "or": "or",
+    "emptyFiltered": "No {list} cohorts.",
+    "withoutMentor": "{n} without a mentor",
+    "endsOn": "End date",
+    "startLocked": "The cohort has started; its start date is fixed.",
+    "startHint": {
+      "now": "Starts immediately: the cohort will be active.",
+      "onSave": "Saving starts the cohort now. Its start date is then fixed."
+    },
+    "plannedNote": "Lessons open from {date}.",
+    "finish": "Finish cohort",
+    "cancel": "Cancel cohort",
+    "keepRunning": "Keep running",
+    "finishTitle": "Finish \"{name}\"?",
+    "cancelTitle": "Cancel \"{name}\"?",
+    "deleteTitle": "Delete \"{name}\"?",
+    "finishConfirm": "Finish \"{name}\" now? {n} active and paused students become completed and the cohort becomes read-only: no edits, enrolling, status changes, staff or mentor changes. Students keep read access to released lessons but can't complete lessons or submit work. Mentors can still review the {m} submissions waiting. This can't be undone.",
+    "cancelConfirm": "Cancel \"{name}\"? It is marked finished and can't be reopened. {n} enrolled students become completed. To run it later, change its dates instead.",
+    "deleteConfirm": "Delete \"{name}\"? This can't be undone.",
+    "finished": "\"{name}\" finished",
+    "cancelled": "\"{name}\" cancelled",
+    "deleted": "Cohort deleted",
+    "finishedBanner": "This cohort finished on {date}. It is read-only. Mentors can still review submissions sent before the end."
   },
   "programs": {
     "hint": "Program modules and the cohorts studying them.",
@@ -492,5 +573,83 @@
       "digit": "Add a digit",
       "special": "Add a special character, like ! or #"
     }
+  },
+  "cohortStatus": {
+    "planned": "Planned",
+    "active": "Active",
+    "finished": "Finished",
+    "adjective": {
+      "planned": "planned",
+      "active": "active",
+      "finished": "finished"
+    },
+    "startsOn": "starts {date}",
+    "finishedOn": "finished {date}"
+  },
+  "staff": {
+    "title": "Staff",
+    "hint": "Mentors review their own students; reviewers review everyone.",
+    "add": "Add staff",
+    "addTitle": "Add to staff",
+    "person": "Person",
+    "personPlaceholder": "Choose a person",
+    "roleLabel": "Role",
+    "role": {
+      "mentor": "Mentor",
+      "reviewer": "Reviewer"
+    },
+    "roleHint": {
+      "mentor": "Has their own students and reviews their work",
+      "reviewer": "Reviews work from every student in the cohort"
+    },
+    "load": "students: {n}",
+    "empty": "No staff yet. Add a mentor so students get feedback.",
+    "makeReviewer": "Make reviewer",
+    "makeMentor": "Make mentor",
+    "remove": "Remove from staff",
+    "added": "{name} added as {role}",
+    "removed": "{name} removed from staff",
+    "removedUnassigned": "{name} removed. Students without a mentor now: {k}",
+    "roleChanged": "{name} is now: {role}",
+    "roleUnassigned": "{name} is now a reviewer. Students without a mentor now: {k}",
+    "confirmRemoveTitle": "Remove from staff?",
+    "confirmReviewerTitle": "Make reviewer?",
+    "confirmUnassign": "{name} mentors {k} students. They'll have no mentor until you assign one."
+  },
+  "addStudents": {
+    "title": "Add students",
+    "one": "One person",
+    "csv": "CSV file",
+    "person": "Person",
+    "oneHint": "Everyone with an account, except this cohort's staff and current students.",
+    "droppedSuffix": "(dropped, re-add)",
+    "added": "{name} added",
+    "readded": "{name} re-added",
+    "file": "File",
+    "fileDrop": "Drop a CSV here or choose a file",
+    "fileHelp": "UTF-8. One email per line, or a column named \"email\". Up to 2000 rows. Only people who already have an account are added.",
+    "import": "Import",
+    "another": "Import another file",
+    "done": "Done",
+    "copyEmails": "Copy emails",
+    "copied": "Emails copied",
+    "err": {
+      "noFile": "Choose a CSV file.",
+      "tooBig": "The file is larger than 1 MB."
+    },
+    "report": {
+      "enrolled": "Added: {n}",
+      "reactivated": "Re-added (were dropped): {n}",
+      "alreadyEnrolled": "Already in this cohort: {n}",
+      "unknown": "No account with this email: {n}",
+      "skippedStaff": "Skipped, on this cohort's staff: {n}",
+      "unknownHint": "These people need an account first.",
+      "empty": "The file had no emails."
+    }
+  },
+  "cohort": {
+    "mine": "My students",
+    "everyone": "Everyone",
+    "finished": "Finished cohorts ({n})"
   }
 }
