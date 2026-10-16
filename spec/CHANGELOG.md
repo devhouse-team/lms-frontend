@@ -2,7 +2,18 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
-## 2026-10-16: programs v2 spec (not built yet)
+## 2026-10-16: programs v2
+
+- Built per [features/programs.md](features/programs.md): `/programs` with Active / Draft / Archived tabs, cards and
+  up/down reorder; `/programs/[id]` with status actions and confirms, overview, curriculum editor and cohorts with all
+  mentors; program modal (slug from title with ru/kz transliteration, cover upload via storage, lead picker); cohort
+  form lists active programs only, end date from the program duration (optional on create), "N courses attached"
+  toast; program-lead view (own programs only; Home, Cohorts, Programs; `/people` and `/contests` answer 403);
+  read-only program block for students (home) and mentors (`/cohort`); ru plurals with three forms.
+- Removed: `server/data/programs.ts` and the old programs page.
+- **To do on build:** `npm run api:types` (backend migration `a7c3e9d51b20` is live). e2e smoke: 83 checks.
+
+## 2026-10-16: programs v2 spec
 
 - [features/programs.md](features/programs.md) rewritten: programs as course templates; status tabs (draft / active /
   archived) with confirm-guarded actions; create/edit modal (slug from title, duration, cover upload, lead); curriculum
