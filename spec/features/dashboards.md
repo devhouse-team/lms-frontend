@@ -45,9 +45,9 @@ API: no admin dashboard yet (backend Phase 5); assembled from the cohort rows an
 - [x] Student dashboard shows the cohort and mentor after enrollment.
 - [x] Mentor dashboard lists a new submission and the cohort's students.
 - [x] Head dashboard shows mentor load; accepted invites are gone.
-- [ ] A student without an active cohort sees the "not in an active cohort" line (typechecked, not run).
-- [ ] After their cohort finishes, a student sees it under past cohorts, not as current.
+- [x] A student without an active cohort sees the "not in an active cohort" line (typechecked, not run). ✓ screenshot
+- [x] After their cohort finishes, a student sees it under past cohorts, not as current. ✓ e2e-smoke + screenshot
 - [ ] A student without an assigned mentor sees "Mentor not assigned yet", even when the cohort has mentors.
 - [ ] The mentor dashboard leaves out finished cohorts and counts only active and paused students; the waiting queue
   still lists a finished cohort's submissions.
-- [ ] Head mentor load lists each mentor of a two-mentor cohort with their own students' waiting work.
+- [x] Head mentor load lists each mentor of a two-mentor cohort with their own students' waiting work. ✓ e2e-smoke (per-mentor waiting from roster rows)

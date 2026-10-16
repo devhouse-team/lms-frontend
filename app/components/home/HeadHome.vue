@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const { t, locale } = useI18n()
 const { data, status, refresh } = useFetch('/api/dashboard/head', { key: 'dashboard-head' })
-const { left, ago, stale } = useCountdown()
+const { left } = useCountdown()
 
 const fmtDate = (iso: string, opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale.value, opts).format(new Date(iso))
 
@@ -35,7 +35,7 @@ const totals = computed(() => {
 
         <section aria-labelledby="cohorts-title">
           <h2 id="cohorts-title" class="mb-3 text-sm font-semibold text-highlighted">{{ t('head.cohorts') }}</h2>
-          <CohortsTable :rows="data.cohorts" />
+          <CohortsTable :rows="data.cohorts" compact />
         </section>
       </div>
 
@@ -61,9 +61,11 @@ const totals = computed(() => {
           <h2 id="load-title" class="text-sm font-semibold text-highlighted">{{ t('head.mentorLoad') }}</h2>
           <ul class="mt-3 space-y-2.5">
             <li v-for="m in data.mentorLoad" :key="m.id" class="flex items-center gap-2.5 text-sm">
-              <UAvatar :src="m.avatar" :alt="m.name" size="xs" />
-              <span class="min-w-0 flex-1 truncate text-highlighted">{{ m.name }}</span>
-              <span v-if="m.oldestAt" class="num shrink-0 text-xs" :class="stale(m.oldestAt) ? 'text-primary' : 'text-dimmed'" :title="t('head.oldest')">{{ ago(m.oldestAt) }}</span>
+              <!-- 'none' collects waiting work of students who have no mentor -->
+              <UAvatar v-if="m.id !== 'none'" :src="m.avatar" :alt="m.name" size="xs" />
+              <UIcon v-else name="i-lucide-user-x" class="size-5 shrink-0 text-warning" />
+              <span class="min-w-0 flex-1 truncate" :class="m.id === 'none' ? 'text-warning' : 'text-highlighted'">{{ m.id === 'none' ? t('head.noMentor') : m.name }}</span>
+              <UBadge v-if="m.overdue" :label="t('head.overdueN', { n: m.overdue })" color="primary" variant="subtle" size="sm" class="shrink-0" />
               <span class="num w-6 shrink-0 text-right" :class="m.waiting ? 'text-highlighted' : 'text-dimmed'" :aria-label="t('head.waitingLabel', { n: m.waiting })">{{ m.waiting }}</span>
             </li>
           </ul>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const { t, locale } = useI18n()
-const weekLabel = useWeekLabel()
+const { weekLine } = useCohortFormat()
 const { data, status, refresh } = useFetch('/api/dashboard/mentor', { key: 'dashboard-mentor' })
 const { ago, left, stale } = useCountdown()
 
@@ -56,7 +56,7 @@ const overdueCount = computed(() => data.value?.reviewQueue.filter(r => stale(r.
             <h2 :id="`cohort-${c.id}`" class="text-sm font-semibold text-highlighted">
               {{ t('mentor.cohort', { name: c.name }) }}
             </h2>
-            <p class="num text-xs text-muted">{{ c.program }} · {{ weekLabel(c.week, c.totalWeeks) }}</p>
+            <p class="num text-xs text-muted">{{ c.program }} · {{ weekLine(c) }}</p>
           </div>
           <ul class="divide-y divide-default rounded-lg ring-1 ring-inset ring-default">
             <li v-for="m in c.mentees" :key="m.id" class="flex items-center gap-3 px-4 py-2.5">
@@ -64,8 +64,8 @@ const overdueCount = computed(() => data.value?.reviewQueue.filter(r => stale(r.
               <span class="min-w-0 flex-1 truncate text-sm text-highlighted">{{ m.name }}</span>
               <UBadge v-if="m.atRisk" :label="t('mentor.atRisk')" color="error" variant="subtle" size="sm" />
               <span v-if="m.overdue" class="num shrink-0 text-xs text-primary">{{ t('mentor.overdueN', { n: m.overdue }) }}</span>
-              <span class="num w-16 shrink-0 text-right text-xs text-muted" :aria-label="t('mentor.coursesDoneLabel', { done: m.coursesDone, total: m.coursesTotal })">
-                {{ m.coursesDone }}/{{ m.coursesTotal }}
+              <span class="num w-16 shrink-0 text-right text-xs text-muted" :aria-label="t('mentor.coursesDoneLabel', { done: m.lessonsDone, total: m.lessonsReleased })">
+                {{ m.lessonsDone }}/{{ m.lessonsReleased }}
               </span>
             </li>
           </ul>

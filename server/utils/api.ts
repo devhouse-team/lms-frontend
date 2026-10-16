@@ -10,7 +10,8 @@ import type { components } from '~~/shared/types/api'
 
 type Schemas = components['schemas']
 type Tokens = { accessToken: string, refreshToken: string }
-type Query = Record<string, string | number | boolean | null | undefined>
+/** Arrays repeat the key (`status=a&status=b`), as the API's repeatable filters expect */
+type Query = Record<string, string | number | boolean | null | undefined | (string | number)[]>
 export interface ApiOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   query?: Query
@@ -89,17 +90,13 @@ function refreshOnce(event: H3Event, tokens: Tokens): Promise<Tokens> {
   return event.context.apiRefresh as Promise<Tokens>
 }
 
-/** Authenticated API call as the session's user. Refreshes the access token once on expiry or 401. */
-export async function apiFetch<T>(event: H3Event, path: string, opts: ApiOptions = {}): Promise<T> {
+/** Runs `send` with the session's access token; refreshes it once on expiry or 401 */
+async function authed<R>(event: H3Event, send: (accessToken: string) => Promise<R>): Promise<R> {
   let tokens = (await getUserSession(event)).secure
   if (!tokens) throw createError({ statusCode: 401, statusMessage: 'unauthorized' })
   if (expiresSoon(tokens.accessToken)) tokens = await refreshOnce(event, tokens)
 
-  const call = (t: Tokens) => ofetch<T>(path, {
-    ...opts,
-    baseURL: baseURL(),
-    headers: { Authorization: `Bearer ${t.accessToken}`, ...forwarded(event) }
-  })
+  const call = (t: Tokens) => send(t.accessToken)
   try {
     return await call(tokens)
   } catch (e) {
@@ -111,6 +108,25 @@ export async function apiFetch<T>(event: H3Event, path: string, opts: ApiOptions
     if ((e as { statusCode?: number }).statusCode === 401 && !(e instanceof FetchError)) throw e
     toH3Error(e)
   }
+}
+
+const init = (event: H3Event, opts: ApiOptions, accessToken: string) => ({
+  ...opts,
+  baseURL: baseURL(),
+  headers: { Authorization: `Bearer ${accessToken}`, ...forwarded(event) }
+})
+
+/** Authenticated API call as the session's user */
+export function apiFetch<T>(event: H3Event, path: string, opts: ApiOptions = {}): Promise<T> {
+  return authed(event, token => ofetch<T>(path, init(event, opts, token)))
+}
+
+/** Like apiFetch, with the HTTP status for routes whose meaning depends on it (201 created vs 200 reactivated) */
+export function apiFetchStatus<T>(event: H3Event, path: string, opts: ApiOptions = {}): Promise<{ status: number, data: T }> {
+  return authed(event, async (token) => {
+    const res = await ofetch.raw<T>(path, init(event, opts, token))
+    return { status: res.status, data: res._data as T }
+  })
 }
 
 /** Same as apiFetch, but `null` when the resource is missing or hidden from this user (404/403) */

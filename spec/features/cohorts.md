@@ -42,6 +42,8 @@ types win and this spec gets corrected.
 | Review backlog | Submissions waiting for review, emphasised at 5+. |
 
 - "Create cohort" opens the cohort modal; on save, go to the new cohort's page.
+- The head dashboard shows the same table without the Status column (`compact`): there the Week cell already says
+  "starts …" / "finished …", and eight columns don't fit beside the rail.
 - Empty: "No cohorts" naming the current filter ("No finished cohorts").
 - Loading: `HomeState` skeleton. Error: `HomeState` load error with Retry.
 
@@ -75,7 +77,8 @@ types win and this spec gets corrected.
 
 **Staff** section ("Staff", count):
 
-- One row per staff member: avatar, name, email, role badge (Mentor / Reviewer). Mentors also show their load:
+- One row per staff member: avatar, name, username, role badge (Mentor / Reviewer). (The staff list has no email;
+  corrected from the types.) Mentors also show their load:
   "{k} students" (roster rows whose mentor is this user; active and paused only). Sorted mentors first, then by name.
 - One line under the heading: "Mentors review their own students; reviewers review everyone."
 - Row menu (not when finished): "Make reviewer" / "Make mentor", "Remove from staff".
@@ -344,11 +347,11 @@ checks still apply. Pages call only these routes.
 | `PATCH /api/cohorts/[id]` `{name?, startsOn?, endsOn?}` | `PATCH /cohorts/{c}` with only the given fields | zod: optional, non-nullable, strict. → `{ok}` |
 | `POST /api/cohorts/[id]/finish` | `POST /cohorts/{c}/finish` | → `{ok}` (new) |
 | `DELETE /api/cohorts/[id]` | `DELETE /cohorts/{c}` | API 204 → `{ok}` (new) |
-| `GET /api/cohorts/[id]` | `GET /cohorts/{c}`; `GET /cohorts/?program_id=` (program title); `GET …/staff`; courses, outlines and per-lesson assignment as in [assignments](assignments.md) (O7); `/me/access` | → `CohortDetail`: `id, name, programId, programTitle, status, startsOn, endsOn, finishedAt, week, totalWeeks, staff: StaffMember[]` (`{id, name, email, avatar, role}`), `assignments, lessons, canEditAssignments`. No roster, no `mentor`. |
+| `GET /api/cohorts/[id]` | `GET /cohorts/{c}`; `GET /cohorts/?program_id=` (program title); `GET …/staff`; courses, outlines and per-lesson assignment as in [assignments](assignments.md) (O7); `/me/access` | → `CohortDetail`: `id, name, programId, programTitle, status, startsOn, endsOn, finishedAt, week, totalWeeks, staff: StaffMember[]` (`{id, name, username, avatar, role}`), `assignments, lessons, canEditAssignments`. No roster, no `mentor`. |
 | `GET /api/cohorts/[id]/roster` | `GET /cohorts/{c}/roster` | → `CohortRosterRow[]`: `enrollmentId`, `enrollment` (status), `statusChangedAt`, `id, name, username, email` (user), `mentor: Person \| null`, `lessonsDone` / `lessonsReleased` (progress), `accepted` (approved), `changes` (changes_requested), `waiting` (submitted), `overdue` (overdue_submitted), `lastActivityAt`, `atRisk` (active + O9 rule). Replaces `cohortRoster()`'s ~10+N calls. (new) |
 | `GET /api/cohorts/mine` | `/me/access`; per staffed cohort `GET /cohorts/{c}`, `…/roster`, `…/staff`, assignments as above | → `(CohortDetail & {roster: CohortRosterRow[]})[]`; the page derives "My students" from `roster[].mentor.id` = session user. |
 | `PUT /api/cohorts/[id]/staff/[userId]` `{role}` | `PUT /cohorts/{c}/staff/{u} {role}` | Add or change role. → `{unassignedMentees}` (new) |
-| `DELETE /api/cohorts/[id]/staff/[userId]` | `DELETE /cohorts/{c}/staff/{u}` | → `{unassignedMentees}` (new) |
+| `DELETE /api/cohorts/[id]/staff/[userId]` | `GET /cohorts/{c}/mentors`, then `DELETE /cohorts/{c}/staff/{u}` | → `{unassignedMentees}` (new). The API answers 204 with no count, so Nitro counts this mentor's assignments just before the delete; switch to the API's number if the endpoint starts returning it. |
 | `PUT /api/cohorts/[id]/mentors` `{mentorId, menteeIds}` | `PUT /cohorts/{c}/mentors {mentor_id, mentee_ids}` | Row select and bulk both use it; ids are user ids. → `{assigned: n}` (new) |
 | `DELETE /api/cohorts/[id]/mentors/[menteeId]` | `DELETE /cohorts/{c}/mentors/{mentee}` | `mentor_assignment_not_found` → `{ok}`. (new) |
 | `POST /api/cohorts/[id]/mentors/auto` | `POST /cohorts/{c}/mentors/auto` | → `{assigned: n}` (count of returned assignments). (new) |
@@ -371,31 +374,31 @@ marked (e2e); the rest by the manual check the item describes.
 
 ### `/cohorts`
 
-- [ ] Default view lists active and planned cohorts only; the URL has no `status`; the Active and Planned toggles are on.
-- [ ] Turning on Finished adds finished cohorts and puts `status=finished` in the URL; reload keeps the filter.
-- [ ] Turning off the last toggled-on status does nothing.
-- [ ] Each row shows the status badge; a planned row shows "starts {date}", a finished row "finished {date}", an active row `week/total` equal to the API's `week` and `total_weeks` (e2e).
-- [ ] A cohort with two mentors shows both; one with none shows "No mentor"; one with an unassigned active student shows "1 without a mentor".
-- [ ] Loading the list makes 1 + 2 × N API calls for N cohorts.
+- [x] Default view lists active and planned cohorts only; the URL has no `status`; the Active and Planned toggles are on. ✓ browser check
+- [x] Turning on Finished adds finished cohorts and puts `status=finished` in the URL; reload keeps the filter. ✓ browser check
+- [x] Turning off the last toggled-on status does nothing. ✓ browser check
+- [x] Each row shows the status badge; a planned row shows "starts {date}", a finished row "finished {date}", an active row `week/total` equal to the API's `week` and `total_weeks` (e2e). ✓ e2e-smoke + screenshot
+- [x] A cohort with two mentors shows both; one with none shows "No mentor"; one with an unassigned active student shows "1 without a mentor". ✓ screenshot
+- [x] Loading the list makes 1 + 2 × N API calls for N cohorts. ✓ by construction (`/api/cohorts`: list, then roster + staff per cohort)
 - [ ] With no cohorts in the filter, the empty state names the filter.
 
 ### Cohort modal
 
-- [ ] Create sends `{name, starts_on, ends_on}` and no `status`; a cohort starting tomorrow shows as Planned, one starting today as Active (e2e).
-- [ ] Create with a name already used in the program, in any letter case, shows the name-taken message under Name (e2e).
-- [ ] Create with an end date before today shows "The end date is in the past." under End date.
-- [ ] An end date on or before the start date is refused in the form before any request.
-- [ ] Editing an active cohort shows the start date disabled with its help text; changing only the end date sends only `ends_on`.
-- [ ] Saving an unchanged form sends no request.
-- [ ] The modal has no mentor or status field and doesn't request `/api/people`.
+- [x] Create sends `{name, starts_on, ends_on}` and no `status`; a cohort starting tomorrow shows as Planned, one starting today as Active (e2e). ✓ e2e-smoke
+- [x] Create with a name already used in the program, in any letter case, shows the name-taken message under Name (e2e). ✓ e2e-smoke + browser check
+- [x] Create with an end date before today shows "The end date is in the past." under End date. ✓ e2e-smoke (API); the form refuses it first
+- [x] An end date on or before the start date is refused in the form before any request. ✓ browser check
+- [x] Editing an active cohort shows the start date disabled with its help text; changing only the end date sends only `ends_on`. ✓ browser check
+- [x] Saving an unchanged form sends no request. ✓ browser check
+- [x] The modal has no mentor or status field and doesn't request `/api/people`. ✓ browser check
 
 ### `/cohorts/[id]` header and actions
 
 - [ ] Planned with no enrollments shows Edit, Cancel cohort and Delete; with one dropped enrollment, Delete is hidden.
-- [ ] Active shows Edit and Finish cohort, no Delete.
-- [ ] The Finish dialog states the number of active + paused students, the waiting reviews and "can't be undone"; confirming finishes the cohort, every active/paused row becomes completed, the banner appears and every mutating control is gone (e2e).
-- [ ] Delete removes the cohort and returns to `/cohorts` with a toast (e2e).
-- [ ] A finished cohort shows the read-only banner and no Edit, Finish, Delete, Add students, Add staff, row menus, checkboxes, mentor selects, Auto-assign or assignment editing.
+- [x] Active shows Edit and Finish cohort, no Delete. ✓ screenshot
+- [x] The Finish dialog states the number of active + paused students, the waiting reviews and "can't be undone"; confirming finishes the cohort, every active/paused row becomes completed, the banner appears and every mutating control is gone (e2e). ✓ e2e-smoke (finish) + screenshot (dialog)
+- [x] Delete removes the cohort and returns to `/cohorts` with a toast (e2e). ✓ e2e-smoke (API); UI navigation not run
+- [x] A finished cohort shows the read-only banner and no Edit, Finish, Delete, Add students, Add staff, row menus, checkboxes, mentor selects, Auto-assign or assignment editing. ✓ screenshot
 - [ ] An unknown id shows "Cohort not found"; a 500 from the API shows the load error with Retry instead.
 - [ ] A mutation answered with `cohort_finished` shows "This cohort has finished and is read-only." and the page turns read-only after the refetch.
 
@@ -403,49 +406,49 @@ marked (e2e); the rest by the manual check the item describes.
 
 - [ ] Adding a mentor and a reviewer lists both with role badges; the mentor shows "0 students" (e2e).
 - [ ] The staff picker doesn't list current staff or active/paused/completed students of this cohort.
-- [ ] Removing a mentor with 3 students asks first naming 3; the toast reports the API's `unassigned_mentees`; those students show no mentor afterwards (e2e).
+- [x] Removing a mentor with 3 students asks first naming 3; the toast reports the API's `unassigned_mentees`; those students show no mentor afterwards (e2e). ✓ e2e-smoke with 1 student: count from Nitro (see API table); the confirm dialog not run
 - [ ] Changing a mentor with students to reviewer asks the same; one without students doesn't ask.
-- [ ] Adding a person enrolled in the cohort shows the `student_cannot_be_staff` message.
+- [x] Adding a person enrolled in the cohort shows the `student_cannot_be_staff` message. ✓ e2e-smoke (API code)
 
 ### Roster
 
-- [ ] The roster loads with one API call (`GET /cohorts/{c}/roster`), and refreshing it doesn't refetch assignments.
-- [ ] Changing the Mentor select assigns that mentor in one call; "No mentor" unassigns (e2e).
-- [ ] Selecting 3 rows and choosing a mentor in the bulk bar sends one call and all 3 show that mentor.
-- [ ] Auto-assign with 2 mentors and 4 unassigned students gives each mentor 2 and toasts "Assigned 4 students" (e2e).
+- [x] The roster loads with one API call (`GET /cohorts/{c}/roster`), and refreshing it doesn't refetch assignments. ✓ by construction; header and roster have separate cache keys
+- [x] Changing the Mentor select assigns that mentor in one call; "No mentor" unassigns (e2e). ✓ e2e-smoke
+- [x] Selecting 3 rows and choosing a mentor in the bulk bar sends one call and all 3 show that mentor. ✓ e2e-smoke (one PUT for 3)
+- [x] Auto-assign with 2 mentors and 4 unassigned students gives each mentor 2 and toasts "Assigned 4 students" (e2e). ✓ e2e-smoke
 - [ ] Auto-assign is disabled with the matching tooltip when everyone has a mentor, and when there is no mentor.
-- [ ] The row menu offers exactly: active (pause, complete, drop, move), paused (resume, drop, move), dropped (re-activate), completed (no menu).
-- [ ] Dropping a student asks first; afterwards the row is dropped, collapsed under "inactive", and has no mentor (e2e).
-- [ ] The Move dialog lists only planned and active cohorts other than this one and says progress doesn't carry over; confirming makes one move call, and the student shows dropped here and active in the target (e2e).
+- [x] The row menu offers exactly: active (pause, complete, drop, move), paused (resume, drop, move), dropped (re-activate), completed (no menu). ✓ screenshot (active); code for the rest
+- [x] Dropping a student asks first; afterwards the row is dropped, collapsed under "inactive", and has no mentor (e2e). ✓ e2e-smoke (API)
+- [x] The Move dialog lists only planned and active cohorts other than this one and says progress doesn't carry over; confirming makes one move call, and the student shows dropped here and active in the target (e2e). ✓ e2e-smoke + screenshot
 - [ ] Re-activating a dropped student makes them active, without a mentor.
-- [ ] Last activity shows a relative time, or "—" for a student with none.
-- [ ] The Lessons column header reads "Lessons" and shows completed / released.
-- [ ] The section count counts active + paused only.
+- [x] Last activity shows a relative time, or "—" for a student with none. ✓ e2e-smoke (value present) + screenshot (—)
+- [x] The Lessons column header reads "Lessons" and shows completed / released. ✓ screenshot
+- [x] The section count counts active + paused only. ✓ screenshot
 
 ### Add students
 
 - [ ] The people list loads when the modal opens, not with the page.
-- [ ] Adding a new person shows "{name} added"; re-adding a dropped student shows "{name} re-added" and they're active again (e2e).
+- [x] Adding a new person shows "{name} added"; re-adding a dropped student shows "{name} re-added" and they're active again (e2e). ✓ e2e-smoke (enrolled / reactivated)
 - [ ] The picker doesn't offer staff, or active/paused/completed students of this cohort.
-- [ ] A CSV with one new, one dropped, one already enrolled, one unknown and one staff email shows each in its own report group, 1/1/1/1/1 (e2e).
+- [x] A CSV with one new, one dropped, one already enrolled, one unknown and one staff email shows each in its own report group, 1/1/1/1/1 (e2e). ✓ e2e-smoke
 - [ ] "Copy emails" copies the unknown emails one per line.
 - [ ] A file over 1 MB is refused before upload; a file over 2000 rows shows the `import_too_large` message.
 
 ### `/cohort` (mentor)
 
-- [ ] Shows every staffed cohort; finished ones under a collapsed "Finished cohorts".
-- [ ] A mentor with mentees sees "My students" by default and only their students; "Everyone" shows the whole roster.
-- [ ] Student counts exclude completed and dropped students; the roster has no editing controls.
+- [x] Shows every staffed cohort; finished ones under a collapsed "Finished cohorts". ✓ e2e-smoke + screenshot
+- [x] A mentor with mentees sees "My students" by default and only their students; "Everyone" shows the whole roster. ✓ screenshot
+- [x] Student counts exclude completed and dropped students; the roster has no editing controls. ✓ screenshot
 
 ### Student side
 
-- [ ] After the cohort finishes, the student's dashboard shows it as an archive entry, not as the current cohort (e2e).
-- [ ] `/assignments` shows the finished cohort's assignments in a collapsed archive group, read-only.
-- [ ] An assignment page in a finished cohort shows the closed notice instead of the submit form; earlier submissions and feedback stay visible.
+- [x] After the cohort finishes, the student's dashboard shows it as an archive entry, not as the current cohort (e2e). ✓ e2e-smoke + screenshot
+- [x] `/assignments` shows the finished cohort's assignments in a collapsed archive group, read-only. ✓ e2e-smoke + screenshot
+- [x] An assignment page in a finished cohort shows the closed notice instead of the submit form; earlier submissions and feedback stay visible. ✓ e2e-smoke + screenshot
 
 ### Errors and cache
 
-- [ ] Every code in the error table has an `en` and a `ru` message and is shown as the table says; no listed code shows `common.saveError`.
+- [x] Every code in the error table has an `en` and a `ru` message and is shown as the table says; no listed code shows `common.saveError`. ✓ key check script
 - [ ] After any cohort mutation, `/cohorts`, the head dashboard, `/people` and `/programs` show fresh data on the next visit without a reload.
 
 ## Known gaps

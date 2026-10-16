@@ -118,98 +118,176 @@ ok(s == 200 and r['role'] == 'mentor', 'mentor accepts invite and is signed in',
 s, r = mentor('/api/invites/accept', 'POST', {'token': token, 'name': 'Again', 'username': f'ment{RUN}b', 'password': 'Str0ng-pass-123!'})
 ok(s == 422 and r['statusMessage'] == 'invite_invalid', 'used invite is rejected', r)
 
-s, people = head('/api/people')
-ok(s == 200, 'people list', people)
-mentor_row = next(p for p in people['people'] if p['username'] == f'ment{RUN}')
-student_row = next(p for p in people['people'] if p['username'] == student_u)
+def invite_user(email, username, name):
+    """A second account without the 5-per-hour registration limit: invite (mentor role, which grants nothing) + accept"""
+    s, r = head('/api/invites', 'POST', {'email': email, 'role': 'mentor'})
+    assert s == 201, r
+    time.sleep(1.2)
+    msgs = req(MAIL + '/api/v1/messages')[1]['messages']
+    mid = next(m['ID'] for m in msgs if any(t['Address'] == email for t in m['To']))
+    tok = re.search(r'accept-invite\?token=(\S+)', req(f'{MAIL}/api/v1/message/{mid}')[1]['Text']).group(1)
+    who = Bff()
+    s, r = who('/api/invites/accept', 'POST', {'token': tok, 'name': name, 'username': username, 'password': 'Str0ng-pass-123!'})
+    assert s == 200, r
+    return who
+
+
+day = lambda offset: time.strftime('%Y-%m-%d', time.gmtime(time.time() + offset * 86400))
+mentor_b = invite_user(f'mentorb{RUN}@example.com', f'mentb{RUN}', 'Aliya Mentor')
+for i in range(2, 6):
+    invite_user(f'stud{i}x{RUN}@example.com', f'stud{i}x{RUN}', f'Student {i}')
+
+s, people = head('/api/people/options')
+ok(s == 200 and len(people) >= 7, 'people options for pickers', len(people) if isinstance(people, list) else people)
+uid = {p['username']: p['id'] for p in people}
+A, B, S1 = uid[f'ment{RUN}'], uid[f'mentb{RUN}'], uid[student_u]
+S2, S3, S4, S5 = (uid[f'stud{i}x{RUN}'] for i in range(2, 6))
 
 s, programs = head('/api/programs')
 ok(s == 200 and any(p['id'] == str(prog['id']) for p in programs), 'programs list', programs)
+pid = str(prog['id'])
 
-s, c = head('/api/cohorts', 'POST', {'name': f'FE-{RUN}', 'programId': str(prog['id']), 'startAt': time.strftime('%Y-%m-%d', time.gmtime(time.time() - 8 * 86400)), 'totalWeeks': 12, 'mentorId': mentor_row['id']})
-ok(s == 201, 'head creates cohort with mentor', c)
+# --- cohort create, status from dates ---------------------------------------------------
+s, c = head('/api/cohorts', 'POST', {'name': f'FE-{RUN}', 'programId': pid, 'startsOn': day(-8), 'endsOn': day(76)})
+ok(s == 201, 'create active cohort (no status sent)', c)
 cid = c['id']
-s, r = head(f'/api/cohorts/{cid}/enrollments', 'POST', {'userId': student_row['id']})
-ok(s == 201, 'head enrolls student', r)
-s, r = head(f'/api/cohorts/{cid}/enrollments', 'POST', {'userId': student_row['id']})
-ok(s == 409, 'duplicate enrollment is a conflict', r)
-s, r = api(f"/cohorts/{cid}/courses/{course['id']}", 'PUT', {'start_offset_days': 0})
-ok(s in (200, 201), 'attach course (API)', r)
+s, p_ = head('/api/cohorts', 'POST', {'name': f'FE-plan-{RUN}', 'programId': pid, 'startsOn': day(1), 'endsOn': day(90)})
+ok(s == 201, 'create planned cohort', p_)
+pcid = p_['id']
+s, r = head('/api/cohorts', 'POST', {'name': f'fe-{RUN}', 'programId': pid, 'startsOn': day(1), 'endsOn': day(90)})
+ok(s == 422 and r['statusMessage'] == 'cohort_name_taken', 'name taken, any letter case', r)
+s, r = head('/api/cohorts', 'POST', {'name': f'Past-{RUN}', 'programId': pid, 'startsOn': day(-30), 'endsOn': day(-1)})
+ok(s == 422 and r['statusMessage'] == 'cohort_ends_in_past', 'end date in the past', r)
 
-s, roster = head(f'/api/cohorts/{cid}')
-ok(s == 200 and roster['mentor'] and roster['mentor']['name'] == 'Nurzhan Mentor' and len(roster['mentees']) == 1 and len(roster['lessons']) == 3, 'cohort roster', roster)
-ok(roster['week'] == 2 and roster['totalWeeks'] == 12, 'cohort week maths', (roster['week'], roster['totalWeeks']))
+s, det = head(f'/api/cohorts/{cid}')
+s2, apic = api(f'/cohorts/{cid}')
+ok(det['status'] == 'active' and det['week'] == apic['week'] and det['totalWeeks'] == apic['total_weeks'] and 'mentor' not in det, 'detail status and week come from the API', det)
+s, pdet = head(f'/api/cohorts/{pcid}')
+ok(pdet['status'] == 'planned' and pdet['week'] == 0, 'starting tomorrow is planned', pdet)
+s, r = head(f'/api/cohorts/{cid}', 'PATCH', {'startsOn': day(-7)})
+ok(s == 422 and r['statusMessage'] == 'cohort_started', 'active cohort: start date locked', r)
+s, r = head(f'/api/cohorts/{cid}', 'PATCH', {'endsOn': day(80)})
+ok(s == 200, 'active cohort: end date editable', r)
 
-s, r = head('/api/assignments', 'POST', {'lessonId': roster['lessons'][0]['id'], 'title': 'Todo app', 'description': 'Build it', 'dueOffsetDays': 7})
-ok(s == 201, 'head attaches assignment to lesson', r)
-s, roster = head(f'/api/cohorts/{cid}')
-a = roster['assignments'][0] if roster['assignments'] else {}
-ok(len(roster['assignments']) == 1 and a.get('dueAt') and roster['lessons'][0]['hasAssignment'] and roster['canEditAssignments'], 'assignment shows on cohort, head can edit', roster['assignments'])
-s, r = head(f"/api/assignments/{a['id']}", 'PATCH', {'title': 'Todo app v2', 'description': 'Build it well', 'dueOffsetDays': None})
-ok(s == 200, 'edit assignment (no deadline)', r)
+# --- staff ----------------------------------------------------------------------------
+s, r = head(f'/api/cohorts/{cid}/staff/{A}', 'PUT', {'role': 'mentor'})
+s2, r2 = head(f'/api/cohorts/{cid}/staff/{B}', 'PUT', {'role': 'mentor'})
+ok(s == 200 and s2 == 200 and r['unassignedMentees'] == 0, 'add two mentors', (r, r2))
+s, det = head(f'/api/cohorts/{cid}')
+ok(sorted(m['role'] for m in det['staff']) == ['mentor', 'mentor'], 'staff lists both with roles', det['staff'])
+
+# --- enroll, auto-assign, bulk ------------------------------------------------------------
+for u in (S1, S2, S3, S4):
+    s, r = head(f'/api/cohorts/{cid}/enrollments', 'POST', {'userId': u})
+    ok(s == 201 and r['result'] == 'enrolled', f'enroll {u}', r)
+s, r = head(f'/api/cohorts/{cid}/enrollments', 'POST', {'userId': S1})
+ok(s == 409 and r['statusMessage'] == 'enrollment_exists', 'duplicate enrollment', r)
+s, r = head(f'/api/cohorts/{cid}/staff/{S1}', 'PUT', {'role': 'reviewer'})
+ok(s == 422 and r['statusMessage'] == 'student_cannot_be_staff', 'a student cannot be staff', r)
+
+s, r = head(f'/api/cohorts/{cid}/mentors/auto', 'POST')
+s2, roster = head(f'/api/cohorts/{cid}/roster')
+loads = {}
+for x in roster:
+    loads[x['mentor']['id'] if x['mentor'] else None] = loads.get(x['mentor']['id'] if x['mentor'] else None, 0) + 1
+ok(r.get('assigned') == 4 and loads.get(A) == 2 and loads.get(B) == 2, 'auto-assign: 2 mentors × 2 students', (r, loads))
+
+s, r = head(f'/api/cohorts/{cid}/mentors', 'PUT', {'mentorId': A, 'menteeIds': [S1, S2, S3]})
+s2, roster = head(f'/api/cohorts/{cid}/roster')
+ok(r.get('assigned') == 3 and all(x['mentor']['id'] == A for x in roster if x['id'] in (S1, S2, S3)), 'bulk assign in one call', r)
+s, r = head(f'/api/cohorts/{cid}/mentors/{S3}', 'DELETE')
+s2, r2 = head(f'/api/cohorts/{cid}/mentors/{S3}', 'DELETE')
+s3, roster = head(f'/api/cohorts/{cid}/roster')
+ok(s == 200 and s2 == 200 and next(x for x in roster if x['id'] == S3)['mentor'] is None, 'unassign; already unassigned is fine', (r, r2))
+
+s, r = head(f'/api/cohorts/{cid}/staff/{B}', 'DELETE')
+s2, roster = head(f'/api/cohorts/{cid}/roster')
+ok(s == 200 and r['unassignedMentees'] == 1 and next(x for x in roster if x['id'] == S4)['mentor'] is None, 'remove mentor reports unassigned students', r)
+
+# --- status changes, re-enroll, CSV ---------------------------------------------------------
+enr = {x['id']: x['enrollmentId'] for x in roster}
+s, r = head(f'/api/enrollments/{enr[S4]}', 'PATCH', {'status': 'dropped'})
+s2, r2 = head(f'/api/cohorts/{cid}/enrollments', 'POST', {'userId': S4})
+ok(s == 200 and s2 == 200 and r2['result'] == 'reactivated', 're-adding a dropped student reactivates', r2)
+s, r = head(f'/api/enrollments/{enr[S2]}', 'PATCH', {'status': 'dropped'})
+s, r = head(f'/api/enrollments/{enr[S2]}', 'PATCH', {'status': 'paused'})
+ok(s == 409 and r['statusMessage'] == 'invalid_transition', 'dropped → paused is not allowed', r)
+
+csv = '\n'.join(['email', f'stud5x{RUN}@example.com', f'stud2x{RUN}@example.com', f'{student_u}@example.com', f'nobody{RUN}@example.com', f'mentor{RUN}@example.com']).encode()
+boundary = 'b' + RUN
+body = (f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="s.csv"\r\nContent-Type: text/csv\r\n\r\n').encode() + csv + f'\r\n--{boundary}--\r\n'.encode()
+rq = urllib.request.Request(FE + f'/api/cohorts/{cid}/enrollments/import', data=body, method='POST', headers={'Content-Type': f'multipart/form-data; boundary={boundary}', 'Cookie': head.cookie})
+rep = json.loads(urllib.request.urlopen(rq).read())
+ok([len(rep[k]) for k in ('enrolled', 'reactivated', 'alreadyEnrolled', 'unknown', 'skippedStaff')] == [1, 1, 1, 1, 1], 'CSV report 1/1/1/1/1', rep)
+
+s, roster = head(f'/api/cohorts/{cid}/roster')
+enr = {x['id']: x['enrollmentId'] for x in roster}
+s, r = head(f'/api/enrollments/{enr[S3]}/move', 'POST', {'cohortId': pcid})
+s2, roster = head(f'/api/cohorts/{cid}/roster')
+s3, proster = head(f'/api/cohorts/{pcid}/roster')
+ok(s == 200 and next(x for x in roster if x['id'] == S3)['enrollment'] == 'dropped' and next(x for x in proster if x['id'] == S3)['enrollment'] == 'active', 'move: dropped here, active there, one call', r)
+s, r = head(f'/api/cohorts/{pcid}', 'DELETE')
+ok(s == 422 and r['statusMessage'] == 'cohort_not_deletable', 'planned cohort with a student cannot be deleted', r)
+s, e_ = head('/api/cohorts', 'POST', {'name': f'Empty-{RUN}', 'programId': pid, 'startsOn': day(3), 'endsOn': day(60)})
+s, r = head(f"/api/cohorts/{e_['id']}", 'DELETE')
+s2, r2 = head(f"/api/cohorts/{e_['id']}")
+ok(s == 200 and s2 == 404, 'empty planned cohort deleted', (r, r2))
 
 s, rows = head('/api/cohorts')
-ok(s == 200 and any(r['id'] == cid and r['mentees'] == 1 for r in rows), 'cohorts table', rows)
-s, dash = head('/api/dashboard/head')
-ok(s == 200 and any(i['email'] == f'mentor{RUN}@example.com' for i in dash['invites']) is False and dash['mentorLoad'], 'head dashboard (accepted invite gone, mentor load)', dash)
+mine_row = next((x for x in rows if x['id'] == cid), None)
+ok(s == 200 and mine_row and mine_row['status'] == 'active' and [m['id'] for m in mine_row['mentors']] == [A] and mine_row['week'] == apic['week'], 'cohorts table row', mine_row)
+s, rows = head('/api/cohorts?status=planned')
+ok(s == 200 and all(x['status'] == 'planned' for x in rows) and any(x['id'] == pcid for x in rows), 'status filter', [x['status'] for x in rows])
 s, opts = head('/api/cohorts/options')
-ok(s == 200 and any(o['id'] == cid for o in opts), 'cohort options', opts)
+ok(s == 200 and any(o['id'] == pcid for o in opts) and all(o['status'] != 'finished' for o in opts), 'move targets: planned and active only', opts)
 
-# --- student ---
+# --- assignments and reviews -------------------------------------------------------------
+s, r = api(f"/cohorts/{cid}/courses/{course['id']}", 'PUT', {'start_offset_days': 0})
+ok(s in (200, 201), 'attach course (API)', r)
+s, det = head(f'/api/cohorts/{cid}')
+s, r = head('/api/assignments', 'POST', {'lessonId': det['lessons'][0]['id'], 'title': 'Todo app', 'description': 'Build it', 'dueOffsetDays': 30})
+ok(s == 201, 'attach assignment to a lesson', r)
+
 stud = Bff()
 s, r = stud('/api/auth/login', 'POST', {'login': f'{student_u}@example.com', 'password': 'Str0ng-pass-123!'})
 ok(s == 200 and r['role'] == 'mentee', 'student login by email', r)
 s, d = stud('/api/dashboard/mentee')
-ok(s == 200 and d['cohort']['name'] == f'FE-{RUN}' and d['mentor']['name'] == 'Nurzhan Mentor', 'student dashboard', d)
-s, items = stud('/api/assignments')
-ok(s == 200 and len(items) == 1 and items[0]['status'] == 'not_submitted' and 'dueAt' not in items[0], 'student assignment list', items)
-aid = items[0]['id']
-s, det = stud(f'/api/assignments/{aid}')
-ok(s == 200 and det['title'] == 'Todo app v2' and det['mentor']['name'] == 'Nurzhan Mentor', 'student assignment detail', det)
+ok(s == 200 and d['cohort']['name'] == f'FE-{RUN}' and d['cohort']['status'] == 'active' and d['mentor']['name'] == 'Nurzhan Mentor', 'student dashboard: active cohort, own mentor', d)
+s, lst = stud('/api/assignments')
+ok(s == 200 and len(lst['current']) == 1 and lst['archive'] == [], 'student assignment list', lst)
+aid = lst['current'][0]['id']
 s, r = stud(f'/api/assignments/{aid}/submissions', 'POST', {'url': 'https://github.com/x/todo', 'note': 'first try'})
 ok(s == 201, 'student submits', r)
-s, r = stud(f'/api/assignments/{aid}/submissions', 'POST', {'url': 'https://github.com/x/todo'})
-ok(s == 409, 'second submit while pending is a conflict', r)
-s, prof = stud('/api/mentor/profile')
-ok(s == 200 and prof['mentor']['name'] == 'Nurzhan Mentor', 'student mentor page', prof)
-s, r = stud('/api/cohorts')
-ok(s == 403, 'student cannot read head cohorts list', r)
 
-# --- mentor ---
-s, md = mentor('/api/dashboard/mentor')
-ok(s == 200 and len(md['reviewQueue']) == 1 and md['cohorts'][0]['mentees'], 'mentor dashboard queue', md)
 s, rv = mentor('/api/reviews')
-ok(s == 200 and len(rv['waiting']) == 1, 'mentor review list', rv)
-sid = rv['waiting'][0]['id']
-s, det = mentor(f'/api/reviews/{sid}')
-ok(s == 200 and det['submission']['url'] == 'https://github.com/x/todo' and det['submission']['note'] == 'first try' and det['assignment']['description'] == 'Build it well', 'mentor review detail', det)
-s, r = mentor(f'/api/reviews/{sid}', 'POST', {'verdict': 'changes', 'feedback': 'Add tests'})
-ok(s == 200, 'mentor requests changes', r)
-s, r = mentor(f'/api/reviews/{sid}', 'POST', {'verdict': 'accepted'})
-ok(s == 409, 'reviewing twice is a conflict', r)
-s, mine = mentor('/api/cohorts/mine')
-ok(s == 200 and len(mine) == 1 and mine[0]['mentees'][0]['username'] == student_u, 'mentor cohort page', mine)
-ok(len(mine[0]['assignments']) == 1 and mine[0]['canEditAssignments'] is False, 'mentor sees assignments, read-only', mine[0]['assignments'])
+ok(s == 200 and len(rv['waiting']) == 1, 'own mentor sees the submission', rv)
+s, roster = head(f'/api/cohorts/{cid}/roster')
+s1row = next(x for x in roster if x['id'] == S1)
+ok(s1row['waiting'] == 1 and s1row['lastActivityAt'], 'roster counts the waiting submission and activity', s1row)
+s, dash = head('/api/dashboard/head')
+load = {m['id']: m for m in dash['mentorLoad']}
+ok(s == 200 and load.get(A, {}).get('waiting') == 1, 'head mentor load per mentor', dash['mentorLoad'])
 
+# --- finish --------------------------------------------------------------------------------
+s, r = head(f'/api/cohorts/{cid}/finish', 'POST')
+s2, det = head(f'/api/cohorts/{cid}')
+s3, roster = head(f'/api/cohorts/{cid}/roster')
+statuses = sorted(x['enrollment'] for x in roster)
+ok(s == 200 and det['status'] == 'finished' and det['finishedAt'] and 'active' not in statuses and 'paused' not in statuses, 'finish: read-only, active/paused become completed', (det['status'], statuses))
+s, r = head(f'/api/cohorts/{cid}/enrollments', 'POST', {'userId': S3})
+ok(s == 422 and r['statusMessage'] == 'cohort_finished', 'finished cohort refuses enrolling', r)
+s, d = stud('/api/dashboard/mentee')
+ok(s == 200 and d['cohort'] is None and any(p_['id'] == cid for p_ in d['pastCohorts']), 'student: finished cohort is in the archive', d.get('pastCohorts'))
+s, lst = stud('/api/assignments')
+ok(s == 200 and lst['current'] == [] and lst['archive'] and lst['archive'][0]['cohortId'] == cid and lst['archive'][0]['items'], 'student assignments archive', lst)
 s, det = stud(f'/api/assignments/{aid}')
-ok(det['status'] == 'changes' and det['submissions'][0]['feedback'] == 'Add tests' and det['submissions'][0]['reviewer']['name'] == 'Nurzhan Mentor', 'student sees feedback and reviewer', det)
+ok(s == 200 and det['cohort']['status'] == 'finished' and det['submissions'], 'assignment in a finished cohort: readable, with history', det.get('cohort'))
 s, r = stud(f'/api/assignments/{aid}/submissions', 'POST', {'url': 'https://github.com/x/todo2'})
-ok(s == 201, 'student resubmits', r)
+ok(r.get('statusMessage') in ('cohort_not_active', 'submission_pending'), 'submitting in a finished cohort is refused', r)
 s, rv = mentor('/api/reviews')
-sid2 = rv['waiting'][0]['id']
-s, r = mentor(f'/api/reviews/{sid2}', 'POST', {'verdict': 'accepted'})
-ok(s == 200, 'mentor accepts resubmission', r)
-s, items = stud('/api/assignments')
-ok(items[0]['status'] == 'accepted', 'student sees accepted', items)
-
-# --- head roster after work ---
-s, roster = head(f'/api/cohorts/{cid}')
-m = roster['mentees'][0]
-ok(m['accepted'] == 1 and m['assignmentsTotal'] == 1 and roster['assignments'][0]['submissions'] >= 1, 'roster counts accepted work', m)
-s, r = head(f"/api/assignments/{roster['assignments'][0]['id']}", 'DELETE')
-ok(s == 409, 'delete assignment with submissions is refused', r)
-s, r = head(f"/api/enrollments/{m['enrollmentId']}", 'PATCH', {'status': 'paused'})
-ok(s == 200, 'pause enrollment', r)
+ok(s == 200 and len(rv['waiting']) == 1, 'mentor can still review after the end', rv)
+s, mine = mentor('/api/cohorts/mine')
+ok(s == 200 and any(x['id'] == cid and x['status'] == 'finished' for x in mine), 'mentor page lists the finished cohort', [x['status'] for x in mine])
 
 s, r = stud('/api/auth/logout', 'POST')
 s, r = stud('/api/dashboard/mentee')

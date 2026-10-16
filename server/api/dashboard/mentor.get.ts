@@ -1,7 +1,10 @@
 import type { components } from '~~/shared/types/api'
-import type { MentorDashboard } from '~~/shared/types'
+import type { EnrollmentStatus, MentorDashboard } from '~~/shared/types'
 
-/** Sessions and contest have no API yet and stay on the mock */
+/**
+ * Planned and active cohorts only (finished ones are archives), current students only. The waiting queue still
+ * includes finished cohorts: mentors close the backlog after the end. Sessions and contest stay mock.
+ */
 export default defineEventHandler(async (event): Promise<MentorDashboard> => {
   const user = await requireRole(event, 'mentor')
   const now = Date.now()
@@ -14,21 +17,24 @@ export default defineEventHandler(async (event): Promise<MentorDashboard> => {
     mentor: { name: user.name.split(' ')[0]! },
     reviewQueue: waiting.sort((a, b) => a.at.localeCompare(b.at)),
     sessions: mentorSessions(user.id, now).slice(0, 4),
-    cohorts: cohorts.map((c) => {
+    cohorts: cohorts.flatMap((c) => {
       const info = listed.find(x => x.id === c.cohort_id)
-      return {
+      if (!info || info.status === 'finished') return []
+      return [{
         id: String(c.cohort_id),
         name: c.cohort_name,
-        program: info?.program_title ?? '',
-        ...(info ? cohortWeeks(info, now) : { week: 0, totalWeeks: 0 }),
-        mentees: c.mentees.map(m => ({
-          ...person(m.user),
-          coursesDone: m.completed,
-          coursesTotal: c.released_lessons,
-          overdue: waiting.filter(w => w.mentee.id === String(m.user.id) && reviewOverdue(w.submittedAt, now)).length,
-          atRisk: m.enrollment_status === 'active' && isAtRisk(m.completed, c.released_lessons)
-        }))
-      }
+        program: info.program_title,
+        ...cohortTiming(info),
+        mentees: c.mentees
+          .filter(m => isCurrent(m.enrollment_status as EnrollmentStatus))
+          .map(m => ({
+            ...person(m.user),
+            lessonsDone: m.completed,
+            lessonsReleased: c.released_lessons,
+            overdue: waiting.filter(w => w.mentee.id === String(m.user.id) && reviewOverdue(w.submittedAt, now)).length,
+            atRisk: m.enrollment_status === 'active' && isAtRisk(m.completed, c.released_lessons)
+          }))
+      }]
     }),
     contest: { title: db.contest.title, at: new Date(db.contest.at).toISOString() }
   }

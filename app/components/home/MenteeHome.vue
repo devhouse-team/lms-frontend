@@ -3,6 +3,16 @@ const { t, locale } = useI18n()
 const toast = useToast()
 const { data, status, refresh, setCourseStatus, toggleContest } = useStudentDashboard()
 const { left } = useCountdown()
+const { short } = useCohortFormat()
+
+/** Active: "Week 3 of 26 · cohort X"; planned: "Starts 12 Jan · cohort X"; none: the not-in-a-cohort line */
+const summary = computed(() => {
+  const c = data.value?.cohort
+  if (!c) return t('home.noCohort')
+  return c.status === 'planned'
+    ? t('home.summaryPlanned', { date: short(c.startsOn), cohort: c.name })
+    : t('home.summary', { week: c.week, total: c.totalWeeks, cohort: c.name })
+})
 
 const doneCount = computed(() => data.value?.courses.filter(c => c.status === 'done').length ?? 0)
 const careerDone = computed(() => data.value?.career.filter(s => s.done).length ?? 0)
@@ -34,9 +44,15 @@ async function onContest() {
           <h1 class="text-balance text-xl font-semibold tracking-tight text-highlighted">
             {{ t('home.greeting', { name: data.student.name }) }}
           </h1>
-          <p class="num mt-1 text-sm text-muted">
-            {{ !data.cohort ? t('home.noCohort') : t(data.cohort.totalWeeks ? 'home.summary' : 'home.summaryOpen', { week: data.cohort.week, total: data.cohort.totalWeeks, cohort: data.cohort.name }) }}
-          </p>
+          <p class="num mt-1 text-sm text-muted">{{ summary }}</p>
+          <!-- Finished cohorts the student completed: their work stays readable in /assignments -->
+          <ul v-if="data.pastCohorts.length" class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+            <li v-for="p in data.pastCohorts" :key="p.id">
+              <NuxtLink to="/assignments" class="num text-muted underline-offset-4 hover:text-highlighted hover:underline">
+                {{ t('home.pastCohort', { cohort: p.name, date: short(p.finishedAt ?? '') }) }}
+              </NuxtLink>
+            </li>
+          </ul>
         </header>
 
         <NextUp v-if="data.nextUp" :item="data.nextUp" />

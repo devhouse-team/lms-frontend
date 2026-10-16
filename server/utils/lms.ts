@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import type { components } from '~~/shared/types/api'
-import type { CohortLesson, CohortRoster, CohortRow, ManagedAssignment, Person, ReviewListItem, SubmissionStatus, SubmissionView } from '~~/shared/types'
+import type { CohortDetail, CohortLesson, CohortRosterRow, CohortRow, CohortStatus, CohortTiming, EnrollmentStatus, ManagedAssignment, Person, ReviewListItem, StaffMember, SubmissionStatus, SubmissionView } from '~~/shared/types'
 
 /** Mapping between the LMS API and the UI's view models */
 
@@ -8,8 +8,6 @@ type S = components['schemas']
 export type ApiCohort = S['CohortListItem']
 export type ApiQueueItem = S['QueueItem']
 
-const DAY = 86_400_000
-const WEEK = 7 * DAY
 /** A submission waiting this long for review is overdue (DESIGN: mentor's 48 h promise) */
 const REVIEW_SLA = 48 * 3_600_000
 
@@ -28,16 +26,15 @@ export const toUiStatus = (s: S['SubmissionStatus']): SubmissionStatus =>
 /** A due day ends at UTC midnight (backend open item D5) */
 export const dueAt = (dueOn: string | null | undefined) => (dueOn ? `${dueOn}T23:59:59Z` : undefined)
 
-export function addDays(day: string, days: number) {
-  return new Date(Date.parse(`${day}T00:00:00Z`) + days * DAY).toISOString().slice(0, 10)
-}
-
-export function cohortWeeks(c: { starts_on: string, ends_on?: string | null }, now = Date.now()) {
-  const start = Date.parse(c.starts_on)
-  const totalWeeks = c.ends_on ? Math.max(1, Math.ceil((Date.parse(c.ends_on) - start) / WEEK)) : 0
-  const week = now < start ? 0 : Math.floor((now - start) / WEEK) + 1
-  return { week: totalWeeks ? Math.min(week, totalWeeks) : week, totalWeeks }
-}
+/** Status, dates and week exactly as the API computes them; the frontend does no date maths for these */
+export const cohortTiming = (c: S['CohortRead']): CohortTiming => ({
+  status: c.status,
+  startsOn: c.starts_on,
+  endsOn: c.ends_on,
+  finishedAt: c.finished_at,
+  week: c.week,
+  totalWeeks: c.total_weeks
+})
 
 export const reviewOverdue = (submittedAt: string, now = Date.now()) => now - Date.parse(submittedAt) > REVIEW_SLA
 
@@ -58,13 +55,16 @@ export function submissionView(s: S['SubmissionRead'], staff: S['StaffRead'][] =
   }
 }
 
-export const listCohorts = (event: H3Event, query?: { program_id?: number }) =>
+export const listCohorts = (event: H3Event, query: { program_id?: number, status?: CohortStatus[] } = {}) =>
   apiFetch<ApiCohort[]>(event, '/cohorts/', { query })
 
 export const listStaff = (event: H3Event, cohortId: number) =>
   apiFetch<S['StaffRead'][]>(event, `/cohorts/${cohortId}/staff`)
 
+/** First staff mentor; only /programs still shows one mentor per cohort (spec cohorts.md, Known gaps) */
 export const cohortMentor = (staff: S['StaffRead'][]) => staff.find(s => s.role === 'mentor')?.user
+
+export const staffMentors = (staff: S['StaffRead'][]) => staff.filter(s => s.role === 'mentor').map(s => person(s.user))
 
 /** Latest submission per student and assignment; empty when this user may not review the cohort */
 export const reviewQueue = async (event: H3Event, cohortId: number, status: S['SubmissionStatus'] = 'submitted') =>
@@ -95,7 +95,7 @@ export async function cohortLessons(event: H3Event, cohortId: number): Promise<L
 /**
  * The cohort's assignments, found by asking each lesson. The cohort-scoped read works for mentors too
  * (the staff one needs course.update) and already resolves the due day for this cohort.
- * ponytail: one call per lesson; ask BE for GET /cohorts/{c}/assignments once cohorts carry many lessons.
+ * ponytail: one call per lesson (O7); ask BE for GET /cohorts/{c}/assignments once cohorts carry many lessons.
  */
 export async function cohortAssignments(event: H3Event, cohortId: number, lessons: LessonRef[]) {
   const found = await Promise.all(lessons.map(async ({ lesson }) => {
@@ -108,59 +108,76 @@ export async function cohortAssignments(event: H3Event, cohortId: number, lesson
 /** Assignments live on course lessons; editing them needs course.update */
 export const canEditCourses = (a: S['MyAccess']) => a.is_superuser || a.permissions.includes('course.update')
 
-async function progress(event: H3Event, cohortId: number) {
-  return (await apiFind<S['StudentProgress'][]>(event, `/cohorts/${cohortId}/progress`)) ?? []
+/** Active and paused students are the cohort's current ones; completed and dropped are history */
+export const isCurrent = (status: EnrollmentStatus) => status === 'active' || status === 'paused'
+
+export function rosterRow(r: S['RosterStudent']): CohortRosterRow {
+  const enrollment = r.enrollment.status as EnrollmentStatus
+  return {
+    id: String(r.user.id),
+    name: r.user.name,
+    username: r.user.username,
+    email: r.user.email,
+    enrollmentId: String(r.enrollment.id),
+    enrollment,
+    statusChangedAt: r.enrollment.status_changed_at,
+    mentor: r.mentor ? { id: String(r.mentor.id), name: r.mentor.name } : null,
+    lessonsDone: r.progress.completed,
+    lessonsReleased: r.progress.released_lessons,
+    accepted: r.submissions.approved,
+    changes: r.submissions.changes_requested,
+    waiting: r.submissions.submitted,
+    overdue: r.submissions.overdue_submitted,
+    lastActivityAt: r.last_activity_at,
+    atRisk: enrollment === 'active' && isAtRisk(r.progress.completed, r.progress.released_lessons)
+  }
 }
 
-/** Head metrics row for one cohort, plus the parts the head dashboard reuses */
-export async function cohortStats(event: H3Event, c: ApiCohort, now = Date.now()) {
-  const [staff, students, waiting] = await Promise.all([listStaff(event, c.id), progress(event, c.id), reviewQueue(event, c.id)])
-  const counted = students.filter(s => s.status !== 'dropped')
-  const mentor = cohortMentor(staff)
+/** The whole roster in one API call (replaces the per-student fan-out) */
+export const cohortRoster = async (event: H3Event, cohortId: number) =>
+  (await apiFetch<S['RosterStudent'][]>(event, `/cohorts/${cohortId}/roster`)).map(rosterRow)
+
+/** Cohorts table row from the list item, its roster and its staff (2 calls per cohort) */
+export async function cohortStats(event: H3Event, c: ApiCohort) {
+  const [roster, staff] = await Promise.all([cohortRoster(event, c.id), listStaff(event, c.id)])
+  const counted = roster.filter(r => r.enrollment !== 'dropped')
   const row: CohortRow = {
     id: String(c.id),
     name: c.name,
     programId: String(c.program_id),
     programTitle: c.program_title,
-    mentor: mentor ? person(mentor) : null,
+    ...cohortTiming(c),
+    mentors: staffMentors(staff),
+    unassigned: roster.filter(r => isCurrent(r.enrollment) && !r.mentor).length,
     mentees: c.active_students,
-    ...cohortWeeks(c, now),
-    progress: counted.length ? counted.reduce((sum, s) => sum + (s.released_lessons ? s.completed / s.released_lessons : 0), 0) / counted.length : 0,
-    atRisk: counted.filter(s => s.status === 'active' && isAtRisk(s.completed, s.released_lessons)).length,
-    backlog: waiting.length
+    studentsTotal: c.students_total,
+    progress: counted.length ? counted.reduce((sum, r) => sum + (r.lessonsReleased ? r.lessonsDone / r.lessonsReleased : 0), 0) / counted.length : 0,
+    atRisk: roster.filter(r => r.atRisk).length,
+    backlog: roster.reduce((sum, r) => sum + r.waiting, 0)
   }
-  return { row, mentor, waiting }
+  return { row, roster }
 }
 
-export const cohortRow = async (event: H3Event, c: ApiCohort, now = Date.now()) => (await cohortStats(event, c, now)).row
+export const staffMember = (s: S['StaffRead']): StaffMember =>
+  ({ ...person(s.user), username: s.user.username, role: s.role })
 
-/** Everything the cohort admin and mentor cohort pages show */
-export async function cohortRoster(event: H3Event, cohortId: number, now = Date.now()): Promise<CohortRoster> {
+/** Header, staff and assignments of one cohort (the roster has its own route) */
+export async function cohortDetail(event: H3Event, cohortId: number): Promise<CohortDetail> {
   const cohort = await apiFetch<S['CohortRead']>(event, `/cohorts/${cohortId}`)
-  const [listed, staff, roster, students, waiting, approved, changes, assignments, access] = await Promise.all([
+  const [listed, staff, assignments, access] = await Promise.all([
     listCohorts(event, { program_id: cohort.program_id }),
     listStaff(event, cohortId),
-    apiFetch<S['RosterEntry'][]>(event, `/cohorts/${cohortId}/enrollments`),
-    progress(event, cohortId),
-    reviewQueue(event, cohortId, 'submitted'),
-    reviewQueue(event, cohortId, 'approved'),
-    reviewQueue(event, cohortId, 'changes_requested'),
     cohortLessons(event, cohortId).then(async lessons => ({ lessons, found: await cohortAssignments(event, cohortId, lessons) })),
     myAccess(event)
   ])
-  const { lessons } = assignments
-  const all = [...waiting, ...approved, ...changes]
-  const mentor = cohortMentor(staff)
   const withAssignment = new Set(assignments.found.map(a => a.lesson.id))
-
   return {
     id: String(cohort.id),
     name: cohort.name,
     programId: String(cohort.program_id),
     programTitle: listed.find(c => c.id === cohort.id)?.program_title ?? '',
-    mentor: mentor ? person(mentor) : null,
-    ...cohortWeeks(cohort, now),
-    startAt: `${cohort.starts_on}T00:00:00Z`,
+    ...cohortTiming(cohort),
+    staff: staff.map(staffMember).sort((a, b) => (a.role === b.role ? a.name.localeCompare(b.name, 'ru') : a.role === 'mentor' ? -1 : 1)),
     assignments: assignments.found
       .map(({ assignment: a, lesson }): ManagedAssignment => ({
         id: String(lesson.id),
@@ -169,47 +186,17 @@ export async function cohortRoster(event: H3Event, cohortId: number, now = Date.
         description: a.instructions,
         dueOffsetDays: a.due_offset_days,
         dueAt: dueAt(a.due_on),
-        submissions: all.filter(s => s.assignment_id === a.id).length
+        submissions: a.submissions.length
       }))
       .sort((a, b) => (a.dueAt ?? '~').localeCompare(b.dueAt ?? '~')),
     canEditAssignments: canEditCourses(access),
-    lessons: lessons.map(({ lesson, courseTitle }): CohortLesson => ({
+    lessons: assignments.lessons.map(({ lesson, courseTitle }): CohortLesson => ({
       id: String(lesson.id),
       title: lesson.title,
       courseTitle,
       hasAssignment: withAssignment.has(lesson.id)
-    })),
-    mentees: roster.map((e) => {
-      const p = students.find(s => s.enrollment_id === e.id)
-      const mine = waiting.filter(s => s.student.id === e.user_id)
-      return {
-        ...person(e.user),
-        enrollmentId: String(e.id),
-        username: e.user.username,
-        enrollment: e.status,
-        coursesDone: p?.completed ?? 0,
-        coursesTotal: p?.released_lessons ?? 0,
-        accepted: approved.filter(s => s.student.id === e.user_id).length,
-        assignmentsTotal: assignments.found.length,
-        waiting: mine.length,
-        overdue: mine.filter(s => reviewOverdue(s.submitted_at, now)).length,
-        atRisk: e.status === 'active' && isAtRisk(p?.completed ?? 0, p?.released_lessons ?? 0)
-      }
-    })
+    }))
   }
-}
-
-/** Make `mentorId` the cohort's mentor (staff + mentor of every student); null removes the current one */
-export async function setCohortMentor(event: H3Event, cohortId: number, mentorId: number | null) {
-  const staff = await listStaff(event, cohortId)
-  const current = cohortMentor(staff)
-  if ((current?.id ?? null) === mentorId) return
-  const roster = await apiFetch<S['RosterEntry'][]>(event, `/cohorts/${cohortId}/enrollments`)
-  if (mentorId) await apiFetch(event, `/cohorts/${cohortId}/staff/${mentorId}`, { method: 'PUT', body: { role: 'mentor' } })
-  await Promise.all(roster.map(e => mentorId
-    ? apiFetch(event, `/cohorts/${cohortId}/mentors/${e.user_id}`, { method: 'PUT', body: { mentor_id: mentorId } })
-    : apiFind(event, `/cohorts/${cohortId}/mentors/${e.user_id}`, { method: 'DELETE' })))
-  if (current) await apiFetch(event, `/cohorts/${cohortId}/staff/${current.id}`, { method: 'DELETE' })
 }
 
 /** Student-side assignment id: the API keys them by cohort and lesson */
@@ -219,9 +206,14 @@ export function parseAssignmentKey(key: string | undefined) {
   return { cohortId: apiId(c), lessonId: apiId(l) }
 }
 
-/** Cohorts the user studies in right now */
+/** Cohorts where the user's enrollment is active (the cohort may be planned or active) */
 export async function activeStudentCohorts(event: H3Event) {
   return (await myAccess(event)).cohorts.filter(c => c.relation === 'student' && c.enrollment_status === 'active')
+}
+
+/** Cohorts the user completed (their enrollment became completed, e.g. when the cohort finished) */
+export async function completedStudentCohorts(event: H3Event) {
+  return (await myAccess(event)).cohorts.filter(c => c.relation === 'student' && c.enrollment_status === 'completed')
 }
 
 /** My assignments in a cohort: one per released lesson that has one */
@@ -252,13 +244,10 @@ export async function myReviewItems(event: H3Event, status: S['SubmissionStatus'
   return lists.flat()
 }
 
-/** The student's own mentor, else the cohort's */
+/** The student's own mentor; no fallback to another mentor of the cohort (v2: mentors are per student) */
 export async function studentMentor(event: H3Event, cohortId: number, userId: string) {
-  const [mentors, staff] = await Promise.all([
-    apiFind<S['MentorAssignmentRead'][]>(event, `/cohorts/${cohortId}/mentors`),
-    listStaff(event, cohortId)
-  ])
-  return mentors?.find(m => String(m.mentee.id) === userId)?.mentor ?? cohortMentor(staff)
+  const mentors = await apiFind<S['MentorAssignmentRead'][]>(event, `/cohorts/${cohortId}/mentors`)
+  return mentors?.find(m => String(m.mentee.id) === userId)?.mentor
 }
 
 /** The API fills profile_image_url with a placeholder domain when there is no photo */

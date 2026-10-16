@@ -3,16 +3,26 @@ import type { QueueItem, StudentDashboard } from '~~/shared/types'
 
 type S = components['schemas']
 
-/** Cohort, mentor and deadlines come from the API; external courses, contest and career stay on the mock */
+/**
+ * Cohort, mentor and deadlines come from the API; external courses, contest and career stay on the mock.
+ * The current cohort is the active one, else a planned one (the API lists active enrollments in either);
+ * finished cohorts the student completed are the archive.
+ */
 export default defineEventHandler(async (event): Promise<StudentDashboard> => {
   const user = await requireRole(event, 'mentee')
-  const [cohorts, listed] = await Promise.all([
+  const [cohorts, listed, completed] = await Promise.all([
     apiFetch<S['StudentCohort'][]>(event, '/dashboard/student'),
-    listCohorts(event)
+    listCohorts(event),
+    completedStudentCohorts(event)
   ])
-  const c = cohorts[0]
+  const statusOf = (id: number) => listed.find(x => x.id === id)?.status
+  const c = cohorts.find(x => statusOf(x.cohort_id) === 'active') ?? cohorts.find(x => statusOf(x.cohort_id) === 'planned')
   const info = listed.find(x => x.id === c?.cohort_id)
   const mentor = c ? await studentMentor(event, c.cohort_id, user.id) : undefined
+  const pastCohorts = listed
+    .filter(x => x.status === 'finished' && completed.some(e => e.cohort_id === x.id))
+    .sort((a, b) => (b.finished_at ?? '').localeCompare(a.finished_at ?? ''))
+    .map(x => ({ id: String(x.id), name: x.name, finishedAt: x.finished_at }))
 
   // Open work first: not submitted yet or sent back; waiting-for-review and approved need nothing from the student
   const todo = (c?.deadlines ?? [])
@@ -25,9 +35,10 @@ export default defineEventHandler(async (event): Promise<StudentDashboard> => {
   return {
     student: { name: user.name.split(' ')[0]! },
     mentor: mentor ? { ...person(mentor), role: '' } : null,
-    cohort: c
-      ? { id: String(c.cohort_id), name: c.cohort_name, program: c.program_title, ...(info ? cohortWeeks(info) : { week: 0, totalWeeks: 0 }), members: info?.active_students ?? 0 }
+    cohort: c && info
+      ? { id: String(c.cohort_id), name: c.cohort_name, program: c.program_title, ...cohortTiming(info), members: info.active_students }
       : null,
+    pastCohorts,
     nextUp: first ?? null,
     queue: [
       ...rest.slice(0, 3),

@@ -13,7 +13,13 @@ const { data, status, error, refresh } = await useFetch(() => `/api/assignments/
 useHead({ title: () => `${data.value?.title ?? t('nav.assignments')} · dev.house` })
 
 const fmt = (iso: string) => new Intl.DateTimeFormat(locale.value, { weekday: 'short', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
-const canSubmit = computed(() => data.value && (data.value.status === 'not_submitted' || data.value.status === 'changes'))
+const { long } = useCohortFormat()
+/** Submitting is open only in an active cohort; a finished or planned one shows a notice instead of the form */
+const closed = computed(() => (data.value && data.value.cohort.status !== 'active' ? data.value.cohort : null))
+const closedText = computed(() => closed.value?.status === 'finished'
+  ? t('submission.closedFinished', { date: long(closed.value.finishedAt ?? '') })
+  : closed.value ? t('submission.closedPlanned', { date: long(closed.value.startsOn) }) : '')
+const canSubmit = computed(() => !closed.value && data.value && (data.value.status === 'not_submitted' || data.value.status === 'changes'))
 const pastDue = computed(() => !!data.value?.dueAt && new Date(data.value.dueAt).getTime() < Date.now())
 
 const schema = computed(() => z.object({
@@ -33,9 +39,11 @@ async function onSubmit() {
     refreshNuxtData('dashboard-mentee')
     toast.add({ title: t('submission.sentToast'), icon: 'i-lucide-check', color: 'success' })
   } catch (e) {
-    const code = (e as { statusCode?: number })?.statusCode
-    toast.add({ title: code === 409 ? t('submission.err.conflict') : t('common.saveError'), color: 'error', icon: 'i-lucide-circle-alert' })
-    if (code === 409) refresh()
+    const { code, status } = apiError(e)
+    // The cohort finished while the page was open: the refetch turns the form into the notice
+    if (code === 'cohort_not_active') return void refresh()
+    toast.add({ title: status === 409 ? t('submission.err.conflict') : t('common.saveError'), color: 'error', icon: 'i-lucide-circle-alert' })
+    if (status === 409) refresh()
   } finally {
     sending.value = false
   }
@@ -59,7 +67,8 @@ async function onSubmit() {
             <p class="max-w-prose whitespace-pre-line text-sm text-default">{{ data.description }}</p>
           </header>
 
-          <section v-if="canSubmit" aria-labelledby="submit-title" class="rounded-lg bg-elevated p-5 ring-1 ring-inset ring-default sm:p-6">
+          <UAlert v-if="closed" icon="i-lucide-lock" color="neutral" variant="subtle" :description="closedText" />
+          <section v-else-if="canSubmit" aria-labelledby="submit-title" class="rounded-lg bg-elevated p-5 ring-1 ring-inset ring-default sm:p-6">
             <h2 id="submit-title" class="text-sm font-semibold text-highlighted">
               {{ data.status === 'changes' ? t('submission.resubmit') : t('submission.submit') }}
             </h2>

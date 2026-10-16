@@ -1,6 +1,6 @@
-import type { CohortRoster } from '~~/shared/types'
+import type { CohortDetail } from '~~/shared/types'
 
-export default defineEventHandler(async (event): Promise<CohortRoster> => {
+export default defineEventHandler(async (event): Promise<CohortDetail> => {
   await requireUserSession(event)
-  return cohortRoster(event, apiId(getRouterParam(event, 'id')))
+  return cohortDetail(event, apiId(getRouterParam(event, 'id')))
 })

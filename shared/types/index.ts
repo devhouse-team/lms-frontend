@@ -26,13 +26,31 @@ export interface Mentor extends Person {
   nextSessionAt?: string
 }
 
-export interface CohortInfo {
+export type CohortStatus = 'planned' | 'active' | 'finished'
+
+/** Status and timing, as the API computes them (never derived from dates in the frontend) */
+export interface CohortTiming {
+  status: CohortStatus
+  /** YYYY-MM-DD calendar dates (UTC) */
+  startsOn: string
+  endsOn: string
+  finishedAt: string | null
+  /** 0 before the start */
+  week: number
+  totalWeeks: number
+}
+
+export interface CohortInfo extends CohortTiming {
   id: string
   name: string
   program: string
-  week: number
-  totalWeeks: number
   members: number
+}
+
+export interface PastCohort {
+  id: string
+  name: string
+  finishedAt: string | null
 }
 
 export interface QueueItem {
@@ -71,8 +89,10 @@ export interface CareerStep {
 export interface StudentDashboard {
   student: { name: string }
   mentor: Mentor | null
-  /** Null when the student has no active cohort (not enrolled yet, paused, finished) */
+  /** The active cohort, else a planned one; null with neither */
   cohort: CohortInfo | null
+  /** Finished cohorts the student completed */
+  pastCohorts: PastCohort[]
   nextUp: QueueItem | null
   queue: QueueItem[]
   courses: ExternalCourse[]
@@ -99,8 +119,8 @@ export interface SessionItem {
 }
 
 export interface MenteeProgress extends Person {
-  coursesDone: number
-  coursesTotal: number
+  lessonsDone: number
+  lessonsReleased: number
   overdue: number
   atRisk: boolean
 }
@@ -109,22 +129,25 @@ export interface MentorDashboard {
   mentor: { name: string }
   reviewQueue: ReviewItem[]
   sessions: SessionItem[]
-  cohorts: { id: string, name: string, program: string, week: number, totalWeeks: number, mentees: MenteeProgress[] }[]
+  cohorts: (CohortTiming & { id: string, name: string, program: string, mentees: MenteeProgress[] })[]
   contest: Omit<Contest, 'registered'> | null
 }
 
 /* ---------- head ---------- */
 
-export interface CohortRow {
+export interface CohortRow extends CohortTiming {
   id: string
   name: string
   programId: string
   programTitle: string
-  mentor: Person | null
+  /** Staff with the mentor role */
+  mentors: Person[]
+  /** Active and paused students without a mentor */
+  unassigned: number
+  /** active_students from the API */
   mentees: number
-  week: number
-  totalWeeks: number
-  /** 0..1 share of released lessons completed across the cohort */
+  studentsTotal: number
+  /** 0..1 mean share of released lessons completed, over non-dropped students */
   progress: number
   atRisk: number
   backlog: number
@@ -140,9 +163,10 @@ export interface InvitePublic {
   expired: boolean
 }
 
+/** Waiting work of the students assigned to one mentor; `id` 'none' collects students without a mentor */
 export interface MentorLoad extends Person {
   waiting: number
-  oldestAt?: string
+  overdue: number
 }
 
 export interface HeadDashboard {
@@ -178,12 +202,28 @@ export interface AssignmentListItem {
   lastSubmittedAt?: string
 }
 
+export interface AssignmentArchive {
+  cohortId: string
+  cohortName: string
+  finishedAt: string | null
+  items: AssignmentListItem[]
+}
+
+export interface AssignmentsResponse {
+  /** From cohorts where the enrollment is active */
+  current: AssignmentListItem[]
+  /** One group per finished cohort the student completed; read-only */
+  archive: AssignmentArchive[]
+}
+
 export interface AssignmentDetail {
   id: string
   title: string
   description: string
   dueAt?: string
   cohortName: string
+  /** Submitting is open only in an active cohort */
+  cohort: Pick<CohortTiming, 'status' | 'startsOn' | 'finishedAt'>
   mentor: Person | null
   status: AssignmentStatus
   /** Newest first */
@@ -209,6 +249,7 @@ export interface CohortOption {
   id: string
   name: string
   programTitle: string
+  status: CohortStatus
 }
 
 /* ---------- section pages ---------- */
@@ -216,17 +257,32 @@ export interface CohortOption {
 export type EnrollmentStatus = 'active' | 'paused' | 'completed' | 'dropped'
 export const ENROLLMENT_STATUSES: EnrollmentStatus[] = ['active', 'paused', 'completed', 'dropped']
 
+/** One student of a cohort (`id` is the user id), from GET /cohorts/{c}/roster */
 export interface CohortRosterRow extends Person {
   enrollmentId: string
   username: string
+  email: string
   enrollment: EnrollmentStatus
-  coursesDone: number
-  coursesTotal: number
+  statusChangedAt: string
+  mentor: Person | null
+  lessonsDone: number
+  lessonsReleased: number
+  /** Latest submission per assignment, by status */
   accepted: number
-  assignmentsTotal: number
+  changes: number
   waiting: number
+  /** Waiting over 48 h */
   overdue: number
+  lastActivityAt: string | null
   atRisk: boolean
+}
+
+export type StaffRole = 'mentor' | 'reviewer'
+
+/** A cohort's mentor or reviewer (the staff list has usernames, not emails) */
+export interface StaffMember extends Person {
+  username: string
+  role: StaffRole
 }
 
 /** An assignment attached to a lesson; `id` is the lesson id */
@@ -249,21 +305,38 @@ export interface CohortLesson {
   hasAssignment: boolean
 }
 
-export interface CohortRoster {
+/** Header, staff and assignments of one cohort; the roster is fetched separately */
+export interface CohortDetail extends CohortTiming {
   id: string
   name: string
   programId: string
   programTitle: string
-  mentor: Person | null
-  week: number
-  totalWeeks: number
-  startAt: string
+  staff: StaffMember[]
   assignments: ManagedAssignment[]
   /** Lessons of the cohort's courses, for attaching assignments */
   lessons: CohortLesson[]
   /** Whether this user may add, edit and delete assignments (course.update) */
   canEditAssignments: boolean
-  mentees: CohortRosterRow[]
+}
+
+/** A staffed cohort on the mentor's page */
+export interface MentorCohort extends CohortDetail {
+  roster: CohortRosterRow[]
+}
+
+/** Light user list for pickers */
+export interface PersonOption extends Person {
+  email: string
+  username: string
+}
+
+/** CSV import result, as email lists */
+export interface ImportReport {
+  enrolled: string[]
+  reactivated: string[]
+  alreadyEnrolled: string[]
+  unknown: string[]
+  skippedStaff: string[]
 }
 
 export interface PersonRow extends Person {
@@ -322,13 +395,12 @@ export interface MentorProfile {
 
 /* ---------- mutation responses ---------- */
 
-/** Body for creating / editing a cohort. startAt is a YYYY-MM-DD date. */
+/** Body for creating a cohort; dates are YYYY-MM-DD. Editing sends only the changed fields, never programId. */
 export interface CohortInput {
   name: string
   programId: string
-  startAt: string
-  totalWeeks: number
-  mentorId?: string | null
+  startsOn: string
+  endsOn: string
 }
 
 /** Body for PATCH /api/enrollments/:enrollmentId */
