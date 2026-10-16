@@ -127,12 +127,14 @@ Density is a feature. Mentors scan rosters and review queues; students scan what
 
 The world inherits the dev.house marketing site (dark ground, `#FFC700`, Geist) and the four-point star logo. It rejects the generic course-catalogue look (grids of same-size cards with stock illustrations) and gamification (streaks, XP, badges, confetti).
 
+The LMS hosts its courses, and a lesson page is the one place the desk becomes a reading table: a contents rail on the left, a calm prose column, formulas, code and documents shown in place. It reads like a well-set page of lecture notes (MIT OpenCourseWare is the reference for structure, not for looks), in the same graphite and with the same single lamp.
+
 **Key Characteristics:**
 - Dark-first graphite ground, tonal layering instead of shadows
 - One yellow signal per view; status is a tint, never a heavy fill
 - Ruled lists and tables over card grids
 - Geist for words, Geist Mono for every figure
-- Main column plus a quiet right-hand context rail
+- Main column plus a quiet right-hand context rail; course pages put the contents rail on the left
 - Flat, exact controls with hairline rings and visible focus
 
 ## Colors
@@ -184,7 +186,10 @@ A near-monochrome graphite palette with one saturated signal colour and a small 
 - **Countdown**: the time-left figure inside Next up; turns Signal Yellow when under 24h.
 
 ### Named Rules
-**The Mono-For-Figures Rule.** If it is a number, a date or a duration, it is set in Geist Mono with tabular numerals. Mono is never used for prose or for "technical" decoration.
+**The Mono-For-Figures Rule.** If it is a number, a date or a duration, it is set in Geist Mono with tabular numerals. Mono is never used for prose or for "technical" decoration. Code (code blocks, inline code, the markdown editor's text) is set in Geist Mono because it is code.
+
+### Course content (markdown body)
+Authored content renders inside one `.md-body` scope: body 15px / 1.6 for reading (one step larger than UI body), capped at 72ch; content headings h1 20px, h2 16px, h3 14px semibold, all in Text Highlighted, never uppercase; paragraphs and lists 12px apart; links in Text Toned with an underline (not yellow); inline code and code blocks on Graphite Raised with a hairline ring, 6px corners, horizontal scroll inside the block; tables in a hairline frame with Graphite Raised header cells, scrolling inside their frame; display math centred and scrolling inside its line; images up to the column width with 6px corners. Formulas inherit the text colour.
 
 **The Small Section Rule.** Section headings are 14px semibold. Hierarchy comes from the content's own weight (the Next up headline, the queue), not from big section titles.
 
@@ -197,6 +202,10 @@ Home screens use a **main column plus context rail** grid: a fluid main column a
 Vertical rhythm is 32px between sections and 12px between a section heading and its content. Rows use 12px × 16px padding; rail sections 16px; the Next up panel 20px on mobile and 24px from `sm`. Wide tables scroll horizontally inside their ring rather than squeezing columns.
 
 **The Main-And-Rail Rule.** The main column holds what you act on; the rail holds context about who and when (mentor, cohort, contest, career, invites, load). New role homes follow the same split.
+
+Course pages (course home, lesson, course pages, materials by type) use a **contents rail plus reading column**: a 16rem contents rail on the left (course pages, then modules with their lessons), the reading column on the right with prose capped at 72ch and media (PDF, video) up to 48rem. Below `lg` the contents rail becomes a slide-over opened from a "Contents" button, and lesson pages get a sticky bottom bar with previous / next. The assignment page keeps the main-and-rail layout (deadline, mentor and solution in the right rail).
+
+**The Reading Column Rule.** Authored content never runs wider than 72ch of text, and nothing in it scrolls the page sideways: wide tables, code and formulas scroll inside their own box.
 
 ## Elevation & Depth
 
@@ -228,14 +237,23 @@ The feel is quiet and exact: hairline rings, flat surfaces, no shadows. Only the
 ### Next Up Panel (signature)
 The single raised panel on the mentee home: Graphite Raised with a hairline ring, a kind badge and a date figure, the headline title, the countdown, and the one primary button.
 
-### Course Status Control (signature)
-A three-way segmented radio group (Не начат / В процессе / Пройден) in a muted frame. Selected states: Graphite Pressed for not started, Signal Yellow Ink tint with a yellow ring for in progress, and an emerald tint with an emerald ring for done. Arrow keys move the selection; labels collapse to icons below `sm` but stay available to screen readers.
+### Course Contents Rail (signature)
+The course's table of contents: course pages first, then modules as disclosures with their lessons as compact rows. Each lesson row carries one state icon (empty circle, emerald check for done, lock for not yet open with "Opens {date}" beneath) and at most one figure (the nearest deadline or exam time, in Mono). The current lesson gets the raised background with a yellow icon, like the active nav item. Locked rows are not links for students.
+
+### Material Blocks
+Materials stack in the reading column in the author's order, each with its title as a section heading and its type tags as neutral chips. Viewers stay inside the hairline language: a PDF in a framed inline viewer with a slim toolbar (name, size, open, download) on desktop and a file card on phones; video in a 16:9 frame; files as a ruled file card (type icon, name, size in Mono, Download); links as a card with the host in Mono and an external arrow. A material that hasn't opened yet is a muted row with a lock and the date it opens, never silently missing.
+
+### Exam Countdown
+The countdown type (Mono, 1.875rem) with the window beneath ("Fri 14:00–16:00 · Asia/Almaty"). Turns Signal Yellow under 24h before opening and under 15 minutes before closing. The one solid yellow element on an open exam is the Send button.
+
+### Markdown Editor
+A plain Mono textarea under a row of ghost icon buttons (bold, italic, heading, link, code, math, table, image, upload .md), with the rendered preview beside it on wide screens and in a Write / Preview tab pair on narrow ones. The preview is the real reader rendering, framed like the reading column.
 
 ### Status Badge
 One vocabulary for assignment and submission state across all roles: Не сдано (neutral, dashed circle), На ревью (primary tint, hourglass), На доработку (error tint, rotate-ccw), Принято (success tint, check). Always icon + word + tint.
 
 ### Submission History
-A ruled list of attempts, newest first. Each entry: status badge, sent time in Geist Mono, the work link (host + path, external arrow), the student's note, and the mentor's feedback in a Graphite Rail inset with the reviewer's avatar, name and time.
+A ruled list of attempts, newest first. Each entry: status badge, sent time in Geist Mono, attached files as compact file cards, the work links (host + path, external arrow), the student's note rendered as markdown, and the mentor's feedback in a Graphite Rail inset with the reviewer's avatar, name and time.
 
 ### Roster and Leaderboard Tables
 Plain semantic tables inside a hairline frame: avatar + name with the email in Geist Mono beneath, right-aligned figure columns (accepted/total, done/total, waiting), and a single "Отстаёт" badge in the last column. The contest leaderboard uses competition ranking (1, 1, 3) with places 1–3 in highlighted text, and tints the viewer's own row with a 10% Signal Yellow wash plus a "вы" marker.
@@ -264,11 +282,12 @@ Nuxt UI table inside a hairline frame: muted 12px headers with ghost sort button
 - **Do** theme browser surfaces from the palette: yellow selection, caret and focus ring, graphite scrollbars.
 
 ### Don't:
-- **Don't** build pages from grids of same-size cards with stock illustrations; this is not a course catalogue.
+- **Don't** build pages from grids of same-size cards with stock illustrations. Courses are listed as ruled rows, even now that the LMS hosts them.
 - **Don't** add gamification: streaks, XP, badges, confetti.
 - **Don't** add drop shadows or glows; use the graphite ladder and hairline rings.
 - **Don't** put an eyebrow or kicker label above a heading.
 - **Don't** fill status pills solid; status is always a tint plus a ring.
 - **Don't** use Text Dimmed for anything a user must read.
 - **Don't** use Geist Mono for prose or as a "techy" costume.
-- **Don't** use a modal where an inline control works (course status, contest registration).
+- **Don't** use a modal where an inline control works (mark complete, publish, contest registration).
+- **Don't** let authored content break the system: no author-chosen colours, fonts or embedded widgets beyond the allowed video hosts; markdown renders in the house style.

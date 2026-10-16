@@ -14,10 +14,10 @@ Nuxt + Vue 3 + Nuxt UI + Tailwind CSS (user decision). Backend undecided: build 
 
 Three roles, one role per account, one app with role-based views (mentee and mentor carry equal weight; head of academy oversees):
 
-- **Students / mentees** in dev.house academy programs (mostly young specialists entering IT or growing in it). Job: follow their program, submit graded work, track progress on external courses, compete in contests, prepare for jobs.
-- **Mentors**: working engineers from leading IT companies who run cohorts. Job: guide their cohort, review and grade submissions, see each student's progress at a glance.
+- **Students / mentees** in dev.house academy programs (mostly young specialists entering IT or growing in it). Job: follow their program, read and watch the course material, submit graded work and exams, compete in contests, prepare for jobs.
+- **Mentors**: working engineers from leading IT companies who run cohorts. Job: guide their cohort, review and grade submissions, see each student's progress at a glance. Mentors assigned as **course editors** also write the course: lessons, materials, assignments, solutions.
 
-- **Head of academy**: oversees all cohorts (progress, at-risk students, mentor load), manages people (invites mentees and mentors, assigns them to cohorts), manages programs and cohorts, and runs LeetCode contests (schedule, results).
+- **Head of academy**: oversees all cohorts (progress, at-risk students, mentor load), manages people (invites mentees and mentors, assigns them to cohorts), manages programs and cohorts, assigns course editors, and runs LeetCode contests (schedule, results). A program lead runs their programs and edits those programs' courses.
 
 ## Product Purpose
 
@@ -25,14 +25,14 @@ The LMS for dev.house academy (devhouse.kz), a mentorship academy in Astana, Kaz
 
 ## Positioning
 
-Mentorship-first, not content-first. The core unit is a cohort with an assigned mentor who works at a real IT company. Course content can live anywhere on the web. dev.house adds structure, review, accountability, and career outcomes on top of it.
+Mentorship-first, with the course in the house. The core unit is a cohort with an assigned mentor who works at a real IT company. The LMS hosts the course itself, the way MIT OpenCourseWare publishes one (lesson pages with notes, slides, video, readings, problem sets and solutions), and adds what open courseware lacks: release dates, deadlines, exams, review, progress and career outcomes. Video stays on YouTube, Vimeo, Google Drive or Loom and is embedded, never uploaded.
 
 ## Operating Context
 
 - Programs: Frontend Development, Backend Development, Mobile Development, Machine Learning (ML), Algorithms & Data Structures.
 - Cohorts (batches) per program, each led by a mentor; 1:1 and/or group sessions.
-- Graded practice: assignments, mentor code review, quizzes, coding exercises.
-- External courses: a course can be a link to another website. The student tracks status per course as **not started / in progress / done**. There is no hosted video or lesson player for these.
+- Courses: modules of lessons; each lesson is a session page with materials in order (markdown notes with math and code, PDFs, embedded video, files, links), course pages (syllabus, grading), a by-type index and a calendar. Content is written in markdown or uploaded as `.md`; edits reach running cohorts at once.
+- Graded work: homework (submit files, text and links; resubmit after review), exams in a time window (one attempt, a trial upload beforehand), practice (unlimited, solution after the first attempt), solutions that open after the due date or when the mentor releases them. Mentor review with feedback. Auto-graded quizzes are out of scope for now.
 - LeetCode Contest: algorithms and data structures contests every two weeks, with student registration and competition between students.
 - Career track: job and interview preparation progress.
 - Feature references seen (not visual references): Frappe LMS home, courses list with Published/Upcoming/Created/Unpublished filters, ⌘K jump-to search.
@@ -44,7 +44,7 @@ Mentorship-first, not content-first. The core unit is a cohort with an assigned 
 - Registration is **invite only**: the head sends an invite link; the invitee sets name and password. No public sign-up.
 - Login: email + password, and Telegram (Telegram Login Widget once a backend exists).
 - Mock-first data layer. The real API shape is undecided.
-- Undecided: auth backend, payments/enrollment flow, notifications channel, whether self-paced hosted lessons will ever exist, how contest results are sourced (manual vs LeetCode integration).
+- Undecided: payments/enrollment flow, notifications channel, cohort timezone for exam times, how contest results are sourced (manual vs LeetCode integration).
 
 ## Brand Commitments
 
@@ -56,12 +56,12 @@ Mentorship-first, not content-first. The core unit is a cohort with an assigned 
 
 From the dev.house marketing site (claims the business already makes publicly): 5 programs, 100+ students trained, 50+ graduates working at major companies in KZ and abroad, 14 mentors. One real graduate testimonial (Amirzhan Armandiyev, SWE @Meta, ex-@Yandex). Logo: `/images/logos/devhouse-logo2.png` in the marketing site project (not in this repo).
 Mentors with real names, credentials and photos (from devhouse-client `src/data/<program>/mentors.ts`, photos in `public/mentors/`): Нұржан Изимбетов, Ерасыл Болат (frontend), Едиге Аширбек (mobile), Даулет Дандыкулов (ML), Абдуррошид Жаңаберген, Алишер Казтаев, Альмансур Максым (algorithms). Backend mentors are not confirmed. Program module titles come from devhouse-client `syllabusItems.ts`. Next mentorship cohort runs 19 Oct 2026 – 19 Apr 2027 (6 months); Algorithms runs 20 Oct 2026 – 1 Jan 2027. Academy contacts: Telegram https://t.me/dev_house_academy, dev.house.academy@gmail.com.
-Absent: real course content, student data, contest results. Do not fabricate them; use clearly fake mock data.
+Absent: real course content (until editors write it), student data, contest results. Do not fabricate them; use clearly fake mock data.
 
 ## Product Principles
 
 1. **Mentor relationship is the center.** Every student surface should show who their mentor is and what the mentor expects next.
 2. **Progress is explicit and honest.** Not started / in progress / done, graded, reviewed. No vanity metrics.
-3. **Link out, track in.** External content is welcome. dev.house owns the structure and accountability, not the hosting.
+3. **Host the course, keep it plain.** Lessons are readable pages, not a media player: text, formulas, code and files first, video embedded from where it already lives. dev.house owns the structure, the deadlines and the accountability.
 4. **Built for working engineers' time.** Mentors review and grade fast. Dense, scannable views beat decoration.
 5. **Outcomes over completion.** Contests and career prep are first-class, not add-ons.

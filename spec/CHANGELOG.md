@@ -2,6 +2,39 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-10-16: course content v2 spec (not built)
+
+- New [features/course-content.md](features/course-content.md): the LMS hosts courses, OCW-style. Student course page
+  with a contents rail (course pages, modules → lessons with lock / done state), lesson page with materials in order
+  (markdown with KaTeX and highlighted code, inline PDF on desktop, embedded video from YouTube / Vimeo / Drive /
+  Loom, file and link cards), mark complete, prev / next; materials by type and a cohort calendar (Phase 3);
+  assignment pages per mode (homework, exam with countdown, one attempt and a trial upload, practice with the solution
+  after the first attempt) and solution release states (Phase 2).
+- Editors: course editors per course (head assigns; program leads implicit), `/editor/[courseId]` outline with up /
+  down reorder and move, material editor (textarea + live preview, `.md` upload, image paste as `file:` references,
+  video host check), assignment editor (Phase 2), per-cohort solution release.
+- Decisions: markdown stack `marked` + `marked-katex-extension` + `katex` + `highlight.js` + `dompurify`, rendered in
+  the browser, `v-html` only in `MarkdownView`; textarea editor instead of `UEditor` (lossless markdown, math);
+  file links go through Nitro to the API's `302` redirect endpoints (no expiring URL in a page); upload `purpose`
+  (`cover`, `content_image`, `content`, `submission`) validated by the API, content types from file extensions; exam
+  and practice reviews accept only. Phased plan in the spec.
+- Reconciled with backend `spec/content.md` (same day): every endpoint, field and error code uses the backend's name
+  (e.g. `permission_denied`, `content_has_submissions`, `exam_window_started`, `lesson_locked`, `material_locked`,
+  `release_invalid`, `no_such_file`, `released_on`, `release_hint`, `releases_on`, `solution_of_id`, `PATCH
+  /materials/{m} {file_ids}`, `PUT /cohorts/{c}/materials/{m}/release`, `GET /courses/{course}`); the backend added
+  what the UI needed (`GET /cohorts/{c}/assignments`, `GET /cohorts/{c}/solutions`, course progress figures,
+  `server_time`, `timezone`, `can_manage_editors`, `cohort_count`). Same phases: prev / next moves to Phase 3,
+  calendar and search use backend endpoints, Phase 2 needs the cohort timezone (O22) decided first and deploys
+  together with backend P2, which removes the singular assignment endpoints Phase 1 still uses. O21, O23, O25
+  resolved in the specs.
+- Nav "Courses" will show the real courses; the external-courses mock is removed in Phase 1.
+- PRODUCT.md and DESIGN.md: the LMS hosts course content (positioning, principle 3, operating context; contents rail
+  + reading column layout, markdown body style, new signature components; Course Status Control retired).
+- [assignments](features/assignments.md), [reviews](features/reviews.md), [dashboards](features/dashboards.md),
+  [mock features](features/mock-features.md) point at the new model. Open items O21–O28 added; O7, O10, O11, O14,
+  O17, O19 mapped to phases.
+- Backend counterpart: `../backend/spec/content.md` (also spec only).
+
 ## 2026-10-16: programs v2
 
 - Built per [features/programs.md](features/programs.md): `/programs` with Active / Draft / Archived tabs, cards and
