@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { t, locale } = useI18n()
+const weekLabel = useWeekLabel()
 const { data, status, refresh } = useFetch('/api/dashboard/mentor', { key: 'dashboard-mentor' })
 const { ago, left, stale } = useCountdown()
 
@@ -55,7 +56,7 @@ const overdueCount = computed(() => data.value?.reviewQueue.filter(r => stale(r.
             <h2 :id="`cohort-${c.id}`" class="text-sm font-semibold text-highlighted">
               {{ t('mentor.cohort', { name: c.name }) }}
             </h2>
-            <p class="num text-xs text-muted">{{ c.program }} · {{ t('mentor.week', { week: c.week, total: c.totalWeeks }) }}</p>
+            <p class="num text-xs text-muted">{{ c.program }} · {{ weekLabel(c.week, c.totalWeeks) }}</p>
           </div>
           <ul class="divide-y divide-default rounded-lg ring-1 ring-inset ring-default">
             <li v-for="m in c.mentees" :key="m.id" class="flex items-center gap-3 px-4 py-2.5">

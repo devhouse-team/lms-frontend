@@ -34,32 +34,38 @@ const rows = computed(() => {
       <div v-if="data" class="mx-auto grid w-full max-w-7xl gap-x-10 gap-y-8 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <div class="min-w-0 space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-3">
-            <UTabs v-model="filter" :items="tabs" :content="false" variant="link" color="primary" />
+            <!-- Four tabs with counts don't fit a phone: scroll them rather than clip the last one -->
+            <UTabs v-model="filter" :items="tabs" :content="false" variant="link" color="primary" class="max-w-full overflow-x-auto" :ui="{ root: 'items-start', list: 'w-max' }" />
             <UInput v-model="q" icon="i-lucide-search" :placeholder="t('people.search')" class="w-full sm:w-64" :aria-label="t('people.search')" />
           </div>
-          <div class="overflow-x-auto rounded-lg ring-1 ring-inset ring-default">
-            <table class="w-full min-w-[36rem] text-sm">
+          <div class="overflow-hidden rounded-lg ring-1 ring-inset ring-default">
+            <table class="w-full text-sm">
               <thead>
                 <tr class="border-b border-default text-left text-xs text-muted">
                   <th scope="col" class="px-4 py-2 font-medium">{{ t('people.name') }}</th>
-                  <th scope="col" class="px-3 py-2 font-medium">{{ t('invite.role') }}</th>
-                  <th scope="col" class="px-4 py-2 font-medium">{{ t('people.where') }}</th>
+                  <th scope="col" class="hidden px-3 py-2 font-medium sm:table-cell">{{ t('invite.role') }}</th>
+                  <th scope="col" class="hidden px-4 py-2 font-medium sm:table-cell">{{ t('people.where') }}</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-default">
                 <tr v-for="p in rows" :key="p.id" class="transition-colors hover:bg-elevated/60">
-                  <td class="px-4 py-2.5">
+                  <!-- w-full + max-w-0: name and email truncate instead of widening the table -->
+                  <td class="w-full max-w-0 px-4 py-2.5">
                     <div class="flex min-w-0 items-center gap-2.5">
                       <UAvatar :src="p.avatar" :alt="p.name" size="xs" />
                       <div class="min-w-0">
-                        <p class="truncate text-highlighted">{{ p.name }}</p>
-                        <p class="num truncate text-xs text-muted">{{ p.email }}</p>
+                        <p class="truncate text-highlighted" :title="p.name">{{ p.name }}</p>
+                        <p class="num truncate text-xs text-muted" :title="p.email">{{ p.email }}</p>
+                        <!-- Phones: role and cohort under the name, the columns are hidden -->
+                        <p class="truncate text-xs sm:hidden" :class="p.role ? 'text-toned' : 'text-dimmed'">
+                          {{ p.role ? t(`roles.${p.role}`) : t('people.noRole') }}<span v-if="p.cohortName" class="num"> · {{ p.cohortName }}</span>
+                        </p>
                       </div>
                     </div>
                   </td>
-                  <td class="px-3 py-2.5" :class="p.role ? 'text-muted' : 'text-dimmed'">{{ p.role ? t(`roles.${p.role}`) : t('people.noRole') }}</td>
-                  <td class="px-4 py-2.5">
-                    <p v-if="p.cohortName" class="num text-highlighted">{{ p.cohortName }}</p>
+                  <td class="hidden whitespace-nowrap px-3 py-2.5 sm:table-cell" :class="p.role ? 'text-muted' : 'text-dimmed'">{{ p.role ? t(`roles.${p.role}`) : t('people.noRole') }}</td>
+                  <td class="hidden max-w-56 px-4 py-2.5 sm:table-cell">
+                    <p v-if="p.cohortName" class="num truncate text-highlighted" :title="p.cohortName">{{ p.cohortName }}</p>
                     <p v-if="p.programTitle" class="truncate text-xs text-muted">{{ p.programTitle }}</p>
                     <span v-if="!p.cohortName && !p.programTitle" class="text-dimmed">—</span>
                   </td>

@@ -68,7 +68,8 @@
     "loadErrorHint": "Check your connection and try again.",
     "statusError": "Could not save the course status",
     "mentorNone": "No mentor assigned yet. The academy will let you know.",
-    "noCohort": "You are not in an active cohort yet. The academy will add you and let you know."
+    "noCohort": "You are not in an active cohort yet. The academy will add you and let you know.",
+    "summaryOpen": "Week {week} · cohort {cohort}"
   },
   "kind": {
     "session": "Session",
@@ -159,7 +160,8 @@
     "overdueN": "{n} in review",
     "coursesDoneLabel": "Lessons done: {done} of {total}",
     "sessions": "Upcoming sessions",
-    "noSessions": "No sessions scheduled."
+    "noSessions": "No sessions scheduled.",
+    "weekOpen": "week {week}"
   },
   "head": {
     "title": "Academy",
@@ -186,7 +188,7 @@
       "mentor": "Mentor",
       "mentees": "Students",
       "week": "Week",
-      "progress": "Courses",
+      "progress": "Lessons",
       "atRisk": "Behind",
       "backlog": "Reviews"
     }

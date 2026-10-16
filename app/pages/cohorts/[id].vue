@@ -4,6 +4,7 @@ import type { CohortOption, CohortRoster, CohortRosterRow, EnrollmentStatus } fr
 definePageMeta({ roles: ['head'] })
 const route = useRoute()
 const { t, locale } = useI18n()
+const weekLabel = useWeekLabel()
 const { data, status, error, refresh } = await useFetch<CohortRoster>(() => `/api/cohorts/${route.params.id}`)
 useHead({ title: () => `${data.value?.name ?? t('nav.cohorts')} · dev.house` })
 const toast = useToast()
@@ -46,7 +47,7 @@ const fmt = (iso: string) => new Intl.DateTimeFormat(locale.value, { day: 'numer
             <h1 class="num text-xl font-semibold tracking-tight text-highlighted">{{ data.name }}</h1>
             <p class="mt-1 text-sm text-muted">
               {{ data.programTitle }} ·
-              <span class="num">{{ data.week === 0 ? t('cohorts.startsOn', { date: fmt(data.startAt) }) : t('mentor.week', { week: data.week, total: data.totalWeeks }) }}</span>
+              <span class="num">{{ data.week === 0 ? t('cohorts.startsOn', { date: fmt(data.startAt) }) : weekLabel(data.week, data.totalWeeks) }}</span>
             </p>
           </div>
           <div class="flex flex-wrap items-center gap-3">
