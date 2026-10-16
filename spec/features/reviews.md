@@ -4,6 +4,13 @@
 
 Mentors review students' work quickly: oldest first, accept or send back with feedback.
 
+> **Course content v2 (spec, not built):** see [course-content.md](course-content.md#screens-mentor-review-changes).
+> Phase 1: the detail shows submitted files (pdf and images open inline), every link, and the note and feedback as
+> rendered markdown; feedback is written in the markdown editor. Phase 2: a mode chip; exams are accepted (with a
+> score when the assignment has one) but never sent back; practice gets optional feedback (also accept-only) and is
+> left out of the queue unless "Include practice" is on; trial attempts never appear in the queue; earlier attempts
+> and an exam's trials show on the detail (closes O11).
+
 ## Screens
 
 | Route | Who | What it shows / does |
@@ -35,4 +42,4 @@ Mentors review students' work quickly: oldest first, accept or send back with fe
 
 ## Known gaps
 
-[O11](../open-items.md) attempt history for staff
+[O11](../open-items.md) attempt history for staff (course content Phase 2)

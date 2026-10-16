@@ -5,6 +5,16 @@
 Graded practice. Follows the API model (backend decision D2): an assignment belongs to a **lesson** of a course, and
 is due a number of days after that lesson opens for the cohort.
 
+> **Course content v2 (spec, not built):** [course-content.md](course-content.md) replaces this model in phases.
+> Phase 1: the submit form takes files, a markdown note and links (the link is no longer required); history and the
+> instructions render as markdown; assignments are also created from the course editor (`/editor/[courseId]`).
+> Phase 2: several assignments per lesson, modes `homework` / `exam` (time window, one attempt, trial attempt) /
+> `practice` (unlimited, solution after the first attempt), accepted formats and limits, solutions with release
+> rules, a new page `/assignments/[cohortId]/[assignmentId]` (old `[c]-[l]` links redirect), an assignment editor page
+> instead of the modal, and `GET /cohorts/{c}/assignments` (closes O7). The singular endpoints this page uses today
+> (`/lessons/{l}/assignment`, `/cohorts/{c}/lessons/{l}/assignment`, `…/lessons/{l}/submissions`) keep working until
+> Phase 2, which deploys together with the backend release that removes them. This file describes what is built today.
+
 ## Screens
 
 | Route | Who | What it shows / does |
@@ -52,5 +62,5 @@ is due a number of days after that lesson opens for the cohort.
 
 ## Known gaps
 
-[O4](../open-items.md) delete cascade · [O7](../open-items.md) per-lesson calls · O10 course authoring UI ·
-file uploads in submissions
+[O4](../open-items.md) delete cascade · [O7](../open-items.md) per-lesson calls (course content Phase 2) · O10 course
+authoring UI and file uploads in submissions (course content Phase 1)
