@@ -1,21 +1,29 @@
 <script setup lang="ts">
 import { z } from 'zod'
-import type { CohortDetail } from '~~/shared/types'
+import type { CohortDetail, ProgramOption } from '~~/shared/types'
 
 /**
- * Create (no `cohort`) or edit a cohort. Head only. No mentor or status field: staff is managed on the cohort page,
- * status follows the dates on the server. Edit sends only the changed fields.
+ * Create (no `cohort`) or edit a cohort. Head or program lead. No mentor or status field: staff is managed on the
+ * cohort page, status follows the dates on the server. Edit sends only the changed fields. `program` presets and
+ * locks the program (opened from a program page). Spec: cohorts.md, Cohort modal; programs.md, Cohort form changes.
  */
-const props = defineProps<{ cohort?: CohortDetail }>()
+const props = defineProps<{ cohort?: CohortDetail, program?: ProgramOption }>()
 const open = defineModel<boolean>('open', { default: false })
 const emit = defineEmits<{ saved: [id: string], stale: [] }>()
 
 const { t } = useI18n()
 const toast = useToast()
+const { user } = useAuth()
 const { message, code } = useCohortErrors()
 
-const { data: programs, refresh: refreshPrograms } = await useFetch('/api/programs', { key: 'programs', default: () => [] })
+// Active programs only; refetched on every open (a program may have been archived meanwhile)
+const { data: options, status: optionsStatus, execute: loadOptions } = useLazyFetch<ProgramOption[]>('/api/programs/options', {
+  key: 'program-options', immediate: false, server: false, default: () => []
+})
+const programs = computed(() => (props.program ? [props.program] : options.value))
 const programItems = computed(() => programs.value.map(p => ({ value: p.id, label: p.title })))
+const noPrograms = computed(() => !props.cohort && !props.program && optionsStatus.value === 'success' && !options.value.length)
+const duration = computed(() => programs.value.find(p => p.id === state.programId)?.durationWeeks)
 
 /** UTC calendar day (D5) */
 const today = () => new Date().toISOString().slice(0, 10)
@@ -26,28 +34,30 @@ const schema = computed(() => z.object({
   name: z.string().trim().min(2, t('cohorts.err.name')).max(200, t('cohorts.err.name')),
   programId: z.string({ message: t('cohorts.err.program') }).min(1, t('cohorts.err.program')),
   startsOn: z.string().min(1, t('cohorts.err.startsOn')),
-  endsOn: z.string().min(1, t('cohorts.err.endsOn'))
-}).refine(v => !v.startsOn || !v.endsOn || v.endsOn > v.startsOn, { message: t('cohorts.err.endBeforeStart'), path: ['endsOn'] })
+  endsOn: z.string()
+}).refine(v => !props.cohort || !!v.endsOn, { message: t('cohorts.err.endsOn'), path: ['endsOn'] })
+  .refine(v => !v.startsOn || !v.endsOn || v.endsOn > v.startsOn, { message: t('cohorts.err.endBeforeStart'), path: ['endsOn'] })
   .refine(v => !v.endsOn || (props.cohort && !active.value) || v.endsOn >= today(), { message: t('cohorts.err.cohort_ends_in_past'), path: ['endsOn'] }))
 
 interface State { name: string, programId?: string, startsOn: string, endsOn: string }
 const state = reactive<State>({ name: '', startsOn: '', endsOn: '' })
 const form = useTemplateRef('form')
 const saving = ref(false)
+/** Create: the end date follows start + program duration until it is edited by hand */
+const endTouched = ref(false)
 
 watch(open, (isOpen) => {
   if (!isOpen) return
-  // invalidateCohorts() resets the shared 'programs' key to [] without refetching
-  if (!programs.value.length) refreshPrograms()
+  if (!props.cohort && !props.program) loadOptions()
   const c = props.cohort
   Object.assign(state, c
     ? { name: c.name, programId: c.programId, startsOn: c.startsOn, endsOn: c.endsOn }
-    : { name: '', programId: undefined, startsOn: '', endsOn: '' })
+    : { name: '', programId: props.program?.id, startsOn: '', endsOn: '' })
+  endTouched.value = false
 })
 
-// Create: a start date with no end yet pre-fills 26 weeks
-watch(() => state.startsOn, (start) => {
-  if (!props.cohort && start && !state.endsOn) state.endsOn = plusDays(start, 182)
+watch([() => state.startsOn, duration], ([start, weeks]) => {
+  if (!props.cohort && !endTouched.value && start && weeks) state.endsOn = plusDays(start, weeks * 7)
 })
 
 const startHint = computed(() => {
@@ -58,7 +68,7 @@ const startHint = computed(() => {
 
 /** API field names → form fields, for validation_error and the coded errors */
 const FIELD: Record<string, keyof State> = { name: 'name', starts_on: 'startsOn', ends_on: 'endsOn' }
-const CODE_FIELD: Record<string, keyof State> = { cohort_name_taken: 'name', cohort_started: 'startsOn', cohort_ends_in_past: 'endsOn' }
+const CODE_FIELD: Record<string, keyof State> = { cohort_name_taken: 'name', cohort_started: 'startsOn', cohort_ends_in_past: 'endsOn', program_not_active: 'programId' }
 
 function showError(e: unknown) {
   const c = code(e)
@@ -68,7 +78,8 @@ function showError(e: unknown) {
     : c && CODE_FIELD[c] ? [{ name: CODE_FIELD[c]!, message: message(e) }] : []
   if (fields.length) form.value?.setErrors(fields)
   else toast.add({ title: message(e), color: 'error', icon: 'i-lucide-circle-alert' })
-  if (c === 'cohort_started' || c === 'cohort_finished') emit('stale')
+  if (c === 'cohort_started' || c === 'cohort_finished' || c === 'program_not_active') emit('stale')
+  if (c === 'program_not_active' && !props.program) loadOptions()
 }
 
 async function onSubmit() {
@@ -76,7 +87,7 @@ async function onSubmit() {
   const body = c
     ? Object.fromEntries(Object.entries({ name: state.name.trim(), startsOn: state.startsOn, endsOn: state.endsOn })
         .filter(([k, v]) => v !== (k === 'name' ? c.name : k === 'startsOn' ? c.startsOn : c.endsOn)))
-    : { name: state.name.trim(), programId: state.programId, startsOn: state.startsOn, endsOn: state.endsOn }
+    : { name: state.name.trim(), programId: state.programId, startsOn: state.startsOn, ...(state.endsOn ? { endsOn: state.endsOn } : {}) }
   if (c && !Object.keys(body).length) {
     open.value = false // nothing changed: nothing to send
     return
@@ -89,7 +100,9 @@ async function onSubmit() {
       emit('saved', c.id)
     } else {
       const created = await $fetch('/api/cohorts', { method: 'POST', body })
-      toast.add({ title: t('cohorts.created', { name: created.name }), icon: 'i-lucide-check', color: 'success' })
+      toast.add(created.coursesAttached
+        ? { title: t('cohorts.createdCourses', created.coursesAttached), icon: 'i-lucide-check', color: 'success' }
+        : { title: t('cohorts.createdNoCourses'), icon: 'i-lucide-triangle-alert', color: 'warning' })
       emit('saved', created.id)
     }
     invalidateCohorts()
@@ -110,14 +123,23 @@ async function onSubmit() {
           <UInput v-model="state.name" autocomplete="off" class="w-full" />
         </UFormField>
         <UFormField :label="t('cohorts.program')" name="programId" :help="cohort ? t('cohorts.programLocked') : undefined">
-          <USelect v-model="state.programId" :items="programItems" :placeholder="t('cohorts.programPlaceholder')" :disabled="!!cohort" class="w-full" />
+          <p v-if="cohort || program" class="text-sm text-highlighted">{{ cohort?.programTitle ?? program?.title }}</p>
+          <USelect
+            v-else
+            v-model="state.programId"
+            :items="programItems"
+            :loading="optionsStatus === 'pending'"
+            :placeholder="noPrograms ? t(user?.headScope === 'programs' ? 'cohorts.noActiveProgramsLead' : 'cohorts.noActivePrograms') : t('cohorts.programPlaceholder')"
+            :disabled="noPrograms"
+            class="w-full"
+          />
         </UFormField>
         <div class="grid gap-4 sm:grid-cols-2">
           <UFormField :label="t('cohorts.startsOn')" name="startsOn" :help="active ? t('cohorts.startLocked') : startHint">
             <UInput v-model="state.startsOn" type="date" :disabled="active" :max="state.endsOn || undefined" class="w-full" />
           </UFormField>
-          <UFormField :label="t('cohorts.endsOn')" name="endsOn">
-            <UInput v-model="state.endsOn" type="date" :min="active || !cohort ? today() : state.startsOn || undefined" class="w-full" />
+          <UFormField :label="t('cohorts.endsOn')" name="endsOn" :help="!cohort && duration ? t('cohorts.endsOnHelp', duration) : undefined">
+            <UInput v-model="state.endsOn" type="date" :min="active || !cohort ? today() : state.startsOn || undefined" class="w-full" @update:model-value="endTouched = true" />
           </UFormField>
         </div>
       </UForm>

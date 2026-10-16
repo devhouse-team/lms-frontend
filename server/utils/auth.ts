@@ -10,10 +10,12 @@ export async function requireRole(event: H3Event, role: Role) {
   return user
 }
 
-/** UI views from backend access (frontend.md "Roles in the UI"); most privileged first */
+const isAdmin = (a: Schemas['MyAccess']) => a.is_superuser || a.roles.includes('admin')
+
+/** UI views from backend access (frontend.md "Roles in the UI"); most privileged first. A program lead gets the head view. */
 export function rolesOf(a: Schemas['MyAccess']): Role[] {
   const roles: Role[] = []
-  if (a.is_superuser || a.roles.includes('admin')) roles.push('head')
+  if (isAdmin(a) || a.programs.some(p => p.relation === 'lead')) roles.push('head')
   if (a.roles.includes('mentor') || a.cohorts.some(c => c.relation === 'mentor' || c.relation === 'reviewer')) roles.push('mentor')
   if (a.cohorts.some(c => c.relation === 'student')) roles.push('mentee')
   return roles.length ? roles : ['mentee']
@@ -28,7 +30,10 @@ export async function startSession(event: H3Event, tokens: { accessToken: string
   ])
   const roles = rolesOf(access)
   await setUserSession(event, {
-    user: { id: String(me.id), name: me.name, email: me.email, username: me.username, avatar: avatarUrl(me.profile_image_url), roles, role: roles[0]! }
+    user: {
+      id: String(me.id), name: me.name, email: me.email, username: me.username, avatar: avatarUrl(me.profile_image_url), roles, role: roles[0]!,
+      headScope: isAdmin(access) ? 'all' : 'programs'
+    }
   })
   return { role: roles[0]! }
 }

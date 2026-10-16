@@ -6,7 +6,8 @@ const { t, locale, setLocale } = useI18n()
 const { user, role, logout, switchRole } = useAuth()
 const open = ref(false)
 
-const navByRole: Record<Role, { key: string, icon: string, to: string }[]> = {
+/** `all`: hidden from a program lead without admin rights (headScope 'programs') */
+const navByRole: Record<Role, { key: string, icon: string, to: string, all?: boolean }[]> = {
   mentee: [
     { key: 'home', icon: 'i-lucide-layout-dashboard', to: '/' },
     { key: 'courses', icon: 'i-lucide-book-open', to: '/courses' },
@@ -25,14 +26,14 @@ const navByRole: Record<Role, { key: string, icon: string, to: string }[]> = {
   head: [
     { key: 'home', icon: 'i-lucide-layout-dashboard', to: '/' },
     { key: 'cohorts', icon: 'i-lucide-users', to: '/cohorts' },
-    { key: 'people', icon: 'i-lucide-contact', to: '/people' },
+    { key: 'people', icon: 'i-lucide-contact', to: '/people', all: true },
     { key: 'programs', icon: 'i-lucide-library', to: '/programs' },
-    { key: 'contests', icon: 'i-lucide-trophy', to: '/contests' }
+    { key: 'contests', icon: 'i-lucide-trophy', to: '/contests', all: true }
   ]
 }
 
 const items = computed<NavigationMenuItem[]>(() =>
-  (role.value ? navByRole[role.value] : []).map(i => ({
+  (role.value ? navByRole[role.value] : []).filter(i => !i.all || user.value?.headScope !== 'programs').map(i => ({
     label: t(`nav.${i.key}`),
     icon: i.icon,
     to: i.to,

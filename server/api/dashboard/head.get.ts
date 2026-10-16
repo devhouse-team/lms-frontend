@@ -8,7 +8,8 @@ export default defineEventHandler(async (event): Promise<HeadDashboard> => {
   const head = await requireRole(event, 'head')
   const [stats, invites] = await Promise.all([
     listCohorts(event, { status: ['planned', 'active'] }).then(list => Promise.all(list.map(c => cohortStats(event, c)))),
-    pendingInvites(event)
+    // A program lead without admin rights doesn't manage invites
+    head.headScope === 'programs' ? [] : pendingInvites(event)
   ])
 
   // Per mentor across cohorts: waiting work of the students assigned to them; unassigned students' work under "none"

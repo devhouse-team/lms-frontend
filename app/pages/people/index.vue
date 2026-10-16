@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Role } from '~~/shared/types'
 
-definePageMeta({ roles: ['head'] })
+definePageMeta({ roles: ['head'], headScope: 'all' })
 
 const { t } = useI18n()
 const { left } = useCountdown()

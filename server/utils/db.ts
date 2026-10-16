@@ -5,7 +5,6 @@
  * server instances. Everything else goes through server/utils/api.ts.
  */
 import type { CourseStatus, EnrollmentStatus, ProgramSlug, Role, SubmissionStatus } from '~~/shared/types'
-import { programs } from '../data/programs'
 
 const HOUR = 3_600_000
 const DAY = 24 * HOUR
@@ -289,7 +288,6 @@ const contests: DbContest[] = [
 
 export const db = {
   now,
-  programs,
   users: [head, ...mentors, ...mentees],
   cohorts,
   courses,
@@ -308,8 +306,4 @@ export const HOUR_MS = HOUR
 
 export function cohortWeek(c: DbCohort, at = Date.now()) {
   return Math.min(c.totalWeeks, Math.max(0, Math.floor((at - c.startAt) / WEEK) + 1))
-}
-
-export function programTitle(slug?: ProgramSlug) {
-  return programs.find(p => p.slug === slug)?.title
 }

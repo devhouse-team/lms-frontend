@@ -11,7 +11,7 @@ export type ApiQueueItem = S['QueueItem']
 /** A submission waiting this long for review is overdue (DESIGN: mentor's 48 h promise) */
 const REVIEW_SLA = 48 * 3_600_000
 
-export const person = (u: S['UserSummary']): Person => ({ id: String(u.id), name: u.name })
+export const person = (u: { id: number, name: string }): Person => ({ id: String(u.id), name: u.name })
 
 /** Path ids are integers; 404 for anything else so a bad URL reads as "not found" */
 export function apiId(value: string | undefined) {
@@ -60,11 +60,6 @@ export const listCohorts = (event: H3Event, query: { program_id?: number, status
 
 export const listStaff = (event: H3Event, cohortId: number) =>
   apiFetch<S['StaffRead'][]>(event, `/cohorts/${cohortId}/staff`)
-
-/** First staff mentor; only /programs still shows one mentor per cohort (spec cohorts.md, Known gaps) */
-export const cohortMentor = (staff: S['StaffRead'][]) => staff.find(s => s.role === 'mentor')?.user
-
-export const staffMentors = (staff: S['StaffRead'][]) => staff.filter(s => s.role === 'mentor').map(s => person(s.user))
 
 /** Latest submission per student and assignment; empty when this user may not review the cohort */
 export const reviewQueue = async (event: H3Event, cohortId: number, status: S['SubmissionStatus'] = 'submitted') =>
@@ -137,9 +132,9 @@ export function rosterRow(r: S['RosterStudent']): CohortRosterRow {
 export const cohortRoster = async (event: H3Event, cohortId: number) =>
   (await apiFetch<S['RosterStudent'][]>(event, `/cohorts/${cohortId}/roster`)).map(rosterRow)
 
-/** Cohorts table row from the list item, its roster and its staff (2 calls per cohort) */
+/** Cohorts table row from the list item (mentors included) and its roster (1 call per cohort) */
 export async function cohortStats(event: H3Event, c: ApiCohort) {
-  const [roster, staff] = await Promise.all([cohortRoster(event, c.id), listStaff(event, c.id)])
+  const roster = await cohortRoster(event, c.id)
   const counted = roster.filter(r => r.enrollment !== 'dropped')
   const row: CohortRow = {
     id: String(c.id),
@@ -147,7 +142,7 @@ export async function cohortStats(event: H3Event, c: ApiCohort) {
     programId: String(c.program_id),
     programTitle: c.program_title,
     ...cohortTiming(c),
-    mentors: staffMentors(staff),
+    mentors: c.mentors.map(person),
     unassigned: roster.filter(r => isCurrent(r.enrollment) && !r.mentor).length,
     mentees: c.active_students,
     studentsTotal: c.students_total,

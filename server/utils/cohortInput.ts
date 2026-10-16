@@ -7,7 +7,8 @@ export const cohortCreateBody = z.object({
   name: z.string().trim().min(2).max(200),
   programId: z.string().min(1),
   startsOn: day,
-  endsOn: day
+  /** Create: optional, the API defaults it from the program's duration */
+  endsOn: day.optional()
 })
 
 /** Only the fields that changed; never null (the API would 500 on null before v2, and refuses it now) */

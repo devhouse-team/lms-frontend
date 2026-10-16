@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({ roles: ['head'] })
+definePageMeta({ roles: ['head'], headScope: 'all' })
 
 const { t, locale } = useI18n()
 const toast = useToast()
