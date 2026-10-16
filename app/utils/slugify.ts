@@ -7,7 +7,7 @@ const CYR: Record<string, string> = {
 }
 
 /** "Бэкенд на Python" → "bekend-na-python" */
-export const slugify = (text: string) => [...text.toLowerCase()]
+export const slugify = (text: string) => [...text.normalize('NFC').toLowerCase()]
   .map(ch => CYR[ch] ?? ch)
   .join('')
   .replace(/[^a-z0-9]+/g, '-')

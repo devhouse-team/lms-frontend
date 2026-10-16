@@ -14,7 +14,7 @@ async function allUsers(event: Parameters<typeof apiFetch>[0]) {
 
 /** The API's user list has no roles; the UI role comes from cohort relations */
 export default defineEventHandler(async (event): Promise<PeopleResponse> => {
-  await requireRole(event, 'head')
+  await requireRole(event, 'head', 'all')
   const [users, cohorts, invites] = await Promise.all([allUsers(event), listCohorts(event), pendingInvites(event)])
   const relations = await Promise.all(cohorts.map(async (c) => {
     const [staff, roster] = await Promise.all([listStaff(event, c.id), apiFetch<S['RosterEntry'][]>(event, `/cohorts/${c.id}/enrollments`)])

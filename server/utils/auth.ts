@@ -4,9 +4,10 @@ import type { Role } from '~~/shared/types'
 
 type Schemas = components['schemas']
 
-export async function requireRole(event: H3Event, role: Role) {
+/** `scope: 'all'`: head routes a program lead without admin rights may not call (people, invites, contests) */
+export async function requireRole(event: H3Event, role: Role, scope?: 'all') {
   const { user } = await requireUserSession(event)
-  if (user.role !== role) throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+  if (user.role !== role || (scope === 'all' && user.headScope === 'programs')) throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   return user
 }
 
@@ -32,7 +33,7 @@ export async function startSession(event: H3Event, tokens: { accessToken: string
   await setUserSession(event, {
     user: {
       id: String(me.id), name: me.name, email: me.email, username: me.username, avatar: avatarUrl(me.profile_image_url), roles, role: roles[0]!,
-      headScope: isAdmin(access) ? 'all' : 'programs'
+      headScope: roles.includes('head') ? (isAdmin(access) ? 'all' : 'programs') : undefined
     }
   })
   return { role: roles[0]! }

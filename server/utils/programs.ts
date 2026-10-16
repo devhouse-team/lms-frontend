@@ -21,7 +21,7 @@ export function programRules(a: S['MyAccess']) {
   }
 }
 
-export const programRow = (p: S['ProgramListItem'], courseCount: number): ProgramRow => ({
+export const programRow = (p: S['ProgramListItem']): ProgramRow => ({
   id: String(p.id),
   slug: p.slug,
   title: p.title,
@@ -30,7 +30,7 @@ export const programRow = (p: S['ProgramListItem'], courseCount: number): Progra
   position: p.position,
   coverUrl: p.cover_url,
   lead: p.lead ? person(p.lead) : null,
-  courseCount,
+  courseCount: p.course_count,
   cohortCounts: p.cohorts,
   activeStudents: p.active_students,
   updatedAt: p.updated_at

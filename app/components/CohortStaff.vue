@@ -7,7 +7,7 @@ const emit = defineEmits<{ changed: [] }>()
 
 const { t } = useI18n()
 const toast = useToast()
-const { toastError, message, code } = useCohortErrors()
+const { toastError, message, leaveIfGone, code } = useCohortErrors()
 
 /** Current students each mentor is assigned to */
 const load = (id: string) => props.roster.filter(r => (r.enrollment === 'active' || r.enrollment === 'paused') && r.mentor?.id === id).length
@@ -50,6 +50,7 @@ async function add() {
   } catch (e) {
     // Stays in the modal so the head can pick someone else
     addError.value = message(e, { name })
+    leaveIfGone(e)
     if (code(e) === 'cohort_finished') emit('changed')
   } finally {
     saving.value = false

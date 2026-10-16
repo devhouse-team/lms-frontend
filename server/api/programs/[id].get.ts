@@ -16,7 +16,7 @@ export default defineEventHandler(async (event): Promise<ProgramDetail> => {
   // A lead without admin rights manages only their own programs; the rest reads as missing, like the API's drafts
   if (!rules.edit(p)) throw createError({ statusCode: 404, statusMessage: 'program_not_found' })
   return {
-    ...programRow(p, p.courses.length),
+    ...programRow(p),
     description: p.description,
     weeksOfContent: p.weeks_of_content,
     courses: p.courses.map(programCourse).sort((a, b) => a.position - b.position),

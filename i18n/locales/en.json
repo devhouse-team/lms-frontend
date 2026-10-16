@@ -547,7 +547,6 @@
     "courses": "{n} course | {n} courses",
     "modules": "{n} module | {n} modules",
     "lessons": "{n} lesson | {n} lessons",
-    "cohortsCount": "{n} cohort | {n} cohorts",
     "count": {
       "active": "{n} active",
       "planned": "{n} planned",

@@ -13,7 +13,7 @@ const emit = defineEmits<{ saved: [] }>()
 
 const { t } = useI18n()
 const toast = useToast()
-const { message, code } = useProgramErrors()
+const { message, toastError, code } = useProgramErrors()
 const { uploading, upload } = useStorageUpload()
 
 const { data: people, status: peopleStatus, execute: loadPeople } = useLazyFetch<PersonOption[]>('/api/people/options', {
@@ -85,10 +85,16 @@ async function onFile(e: Event) {
     coverFileId.value = await upload(file)
     setPreview(URL.createObjectURL(file))
   } catch (err) {
-    coverFileId.value = undefined
+    // The earlier choice (kept, new or removed) stays as it was
     const c = code(err)
     form.value?.setErrors([{ name: 'cover', message: c === 'upload_mismatch' ? message(err) : t('programs.err.uploadFailed') }])
   }
+}
+
+/** Back to "cover untouched": the saved cover, if any, stays */
+function resetCover() {
+  coverFileId.value = undefined
+  setPreview(props.program?.coverUrl ?? null)
 }
 
 function removeCover() {
@@ -107,8 +113,8 @@ function showError(e: unknown) {
     ? Object.keys(FIELD).flatMap(f => (err.field(f) ? [{ name: FIELD[f]!, message: err.field(f)! }] : []))
     : c && CODE_FIELD[c] ? [{ name: CODE_FIELD[c]!, message: message(e) }] : []
   if (fields.length) form.value?.setErrors(fields)
-  else toast.add({ title: message(e), color: 'error', icon: 'i-lucide-circle-alert' })
-  if (CODE_FIELD[c ?? ''] === 'cover') removeCover()
+  else toastError(e)
+  if (CODE_FIELD[c ?? ''] === 'cover') resetCover()
   if (c === 'user_not_found') loadPeople()
 }
 
@@ -137,8 +143,8 @@ async function onSubmit() {
     } else {
       const created = await $fetch('/api/programs', { method: 'POST', body })
       toast.add({ title: t('programs.done.created'), icon: 'i-lucide-check', color: 'success' })
-      invalidatePrograms()
       await navigateTo(`/programs/${created.id}`)
+      invalidatePrograms(`program:${created.id}`)
     }
     open.value = false
   } catch (e) {

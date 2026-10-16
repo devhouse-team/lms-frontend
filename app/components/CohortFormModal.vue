@@ -14,7 +14,7 @@ const emit = defineEmits<{ saved: [id: string], stale: [] }>()
 const { t } = useI18n()
 const toast = useToast()
 const { user } = useAuth()
-const { message, code } = useCohortErrors()
+const { message, toastError, code } = useCohortErrors()
 
 // Active programs only; refetched on every open (a program may have been archived meanwhile)
 const { data: options, status: optionsStatus, execute: loadOptions } = useLazyFetch<ProgramOption[]>('/api/programs/options', {
@@ -77,7 +77,7 @@ function showError(e: unknown) {
     ? Object.keys(FIELD).flatMap(f => (err.field(f) ? [{ name: FIELD[f]!, message: err.field(f)! }] : []))
     : c && CODE_FIELD[c] ? [{ name: CODE_FIELD[c]!, message: message(e) }] : []
   if (fields.length) form.value?.setErrors(fields)
-  else toast.add({ title: message(e), color: 'error', icon: 'i-lucide-circle-alert' })
+  else toastError(e)
   if (c === 'cohort_started' || c === 'cohort_finished' || c === 'program_not_active') emit('stale')
   if (c === 'program_not_active' && !props.program) loadOptions()
 }

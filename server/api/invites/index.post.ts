@@ -9,7 +9,7 @@ const body = z.object({
 
 /** The API emails the link; it never returns the token */
 export default defineEventHandler(async (event): Promise<InvitePublic> => {
-  await requireRole(event, 'head')
+  await requireRole(event, 'head', 'all')
   const { email, role } = await readValidatedBody(event, body.parse)
   const roleId = Number(useRuntimeConfig().public.roleIds[role])
   if (!roleId) throw createError({ statusCode: 422, statusMessage: 'role_unavailable' })

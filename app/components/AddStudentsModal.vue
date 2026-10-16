@@ -8,7 +8,7 @@ const emit = defineEmits<{ added: [], stale: [] }>()
 
 const { t } = useI18n()
 const toast = useToast()
-const { message, toastError, code } = useCohortErrors()
+const { message, toastError, leaveIfGone, code } = useCohortErrors()
 
 const tab = ref<'one' | 'csv'>('one')
 const tabs = computed(() => [{ value: 'one', label: t('addStudents.one') }, { value: 'csv', label: t('addStudents.csv') }])
@@ -81,6 +81,7 @@ async function importFile() {
   } catch (e) {
     const own = { import_empty: 'noFile', import_file_too_big: 'tooBig' }[code(e) ?? '']
     fileError.value = own ? t(`addStudents.err.${own}`) : message(e)
+    leaveIfGone(e)
     if (code(e) === 'cohort_finished') emit('stale')
   } finally {
     saving.value = false
