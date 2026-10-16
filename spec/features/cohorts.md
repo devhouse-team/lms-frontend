@@ -94,7 +94,7 @@ types win and this spec gets corrected.
   header so roster changes don't reload assignments.
 - Toolbar (not when finished): "Add students", "Auto-assign mentors (N)" where N = active/paused students without a
   mentor; disabled with a tooltip when N = 0 ("Everyone has a mentor") or there are no mentors ("Add a mentor
-  first").
+  first"; the API would answer `422 not_a_mentor`).
 - Columns:
 
 | Column | Content |
