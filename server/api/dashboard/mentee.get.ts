@@ -22,7 +22,7 @@ export default defineEventHandler(async (event): Promise<StudentDashboard> => {
   const pastCohorts = listed
     .filter(x => x.status === 'finished' && completed.some(e => e.cohort_id === x.id))
     .sort((a, b) => (b.finished_at ?? '').localeCompare(a.finished_at ?? ''))
-    .map(x => ({ id: String(x.id), name: x.name, finishedAt: x.finished_at }))
+    .map(x => ({ id: String(x.id), name: x.name, endsOn: x.ends_on, finishedAt: x.finished_at }))
 
   // Open work first: not submitted yet or sent back; waiting-for-review and approved need nothing from the student
   const todo = (c?.deadlines ?? [])

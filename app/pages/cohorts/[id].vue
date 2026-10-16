@@ -11,9 +11,9 @@ const { long, range, finishedDay, weekLine, statusBadge } = useCohortFormat()
 const { toastError, code } = useCohortErrors()
 
 // Header (with staff and assignments) and roster load separately, so roster changes don't reload assignments
-const { data, status, error, refresh } = await useFetch<CohortDetail>(() => `/api/cohorts/${id.value}`, { key: `cohort:${id.value}` })
+const { data, status, error, refresh } = await useFetch<CohortDetail>(() => `/api/cohorts/${id.value}`, { key: () => `cohort:${id.value}` })
 const { data: roster, status: rosterStatus, refresh: refreshRoster } = useLazyFetch<CohortRosterRow[]>(() => `/api/cohorts/${id.value}/roster`, {
-  key: `cohort-roster:${id.value}`, default: () => []
+  key: () => `cohort-roster:${id.value}`, default: () => []
 })
 useHead({ title: () => `${data.value?.name ?? t('nav.cohorts')} · dev.house` })
 
@@ -50,7 +50,6 @@ async function confirmDialog() {
     invalidateCohorts()
   } catch (e) {
     toastError(e)
-    if (code(e) === 'cohort_not_found') return navigateTo('/cohorts')
   } finally {
     busy.value = false
     dialog.value = undefined

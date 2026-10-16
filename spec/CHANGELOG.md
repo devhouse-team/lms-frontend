@@ -2,6 +2,23 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-10-16: cohort logic v2
+
+- Cohorts follow the API's lifecycle: status and week come from the API; `/cohorts` has a status filter (Active and
+  Planned by default, Finished optional); Finish, Cancel and Delete are offered by status; a finished cohort is
+  read-only everywhere.
+- Several mentors and reviewers per cohort (staff section) with a mentor per student: inline select, bulk assign and
+  Auto-assign.
+- The roster loads from `GET /cohorts/{c}/roster` (one call); only the transitions the API allows are offered; Move is
+  atomic; dropped students can be re-added.
+- CSV import shows a report (enrolled, re-added, already enrolled, unknown, staff); each API error code has its own
+  message in en and ru; cache keys follow the cohort id.
+- Review fixes: `cohort_not_found` toasts and returns to `/cohorts` from any mutation; Auto-assign with no mentors
+  and bulk "No mentor" report correctly; the move text says when earlier progress comes back; finished cohorts fall
+  back to the end date when `finished_at` is missing; the roster route is head-only; `/api/assignments` calls
+  `/me/access` once; Nitro CSV errors are translated; the disabled Auto-assign shows its tooltip; copy aligned with
+  the spec ("{n} students", "Assigned {n} students", "Week N of M").
+
 ## 2026-10-16: cohorts table fills its box
 
 - Fixed: the cohorts table (head home and `/cohorts`) was narrower than its bordered wrapper, leaving a gap on the

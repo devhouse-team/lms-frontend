@@ -49,7 +49,7 @@ async function onContest() {
           <ul v-if="data.pastCohorts.length" class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
             <li v-for="p in data.pastCohorts" :key="p.id">
               <NuxtLink to="/assignments" class="num text-muted underline-offset-4 hover:text-highlighted hover:underline">
-                {{ t('home.pastCohort', { cohort: p.name, date: short(p.finishedAt ?? '') }) }}
+                {{ t('home.pastCohort', { cohort: p.name, date: short(p.finishedAt ?? p.endsOn) }) }}
               </NuxtLink>
             </li>
           </ul>

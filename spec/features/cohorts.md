@@ -77,7 +77,7 @@ types win and this spec gets corrected.
 
 **Staff** section ("Staff", count):
 
-- One row per staff member: avatar, name, username, role badge (Mentor / Reviewer). (The staff list has no email;
+- One row per staff member: initials, name, username, role badge (Mentor / Reviewer). (The staff list has no email;
   corrected from the types.) Mentors also show their load:
   "{k} students" (roster rows whose mentor is this user; active and paused only). Sorted mentors first, then by name.
 - One line under the heading: "Mentors review their own students; reviewers review everyone."
@@ -347,7 +347,7 @@ checks still apply. Pages call only these routes.
 | `PATCH /api/cohorts/[id]` `{name?, startsOn?, endsOn?}` | `PATCH /cohorts/{c}` with only the given fields | zod: optional, non-nullable, strict. → `{ok}` |
 | `POST /api/cohorts/[id]/finish` | `POST /cohorts/{c}/finish` | → `{ok}` (new) |
 | `DELETE /api/cohorts/[id]` | `DELETE /cohorts/{c}` | API 204 → `{ok}` (new) |
-| `GET /api/cohorts/[id]` | `GET /cohorts/{c}`; `GET /cohorts/?program_id=` (program title); `GET …/staff`; courses, outlines and per-lesson assignment as in [assignments](assignments.md) (O7); `/me/access` | → `CohortDetail`: `id, name, programId, programTitle, status, startsOn, endsOn, finishedAt, week, totalWeeks, staff: StaffMember[]` (`{id, name, username, avatar, role}`), `assignments, lessons, canEditAssignments`. No roster, no `mentor`. |
+| `GET /api/cohorts/[id]` | `GET /cohorts/{c}`; `GET /cohorts/?program_id=` (program title); `GET …/staff`; courses, outlines and per-lesson assignment as in [assignments](assignments.md) (O7); `/me/access` | → `CohortDetail`: `id, name, programId, programTitle, status, startsOn, endsOn, finishedAt, week, totalWeeks, staff: StaffMember[]` (`{id, name, username, role}`; the API has no avatar, the UI shows initials), `assignments, lessons, canEditAssignments`. No roster, no `mentor`. |
 | `GET /api/cohorts/[id]/roster` | `GET /cohorts/{c}/roster` | → `CohortRosterRow[]`: `enrollmentId`, `enrollment` (status), `statusChangedAt`, `id, name, username, email` (user), `mentor: Person \| null`, `lessonsDone` / `lessonsReleased` (progress), `accepted` (approved), `changes` (changes_requested), `waiting` (submitted), `overdue` (overdue_submitted), `lastActivityAt`, `atRisk` (active + O9 rule). Replaces `cohortRoster()`'s ~10+N calls. (new) |
 | `GET /api/cohorts/mine` | `/me/access`; per staffed cohort `GET /cohorts/{c}`, `…/roster`, `…/staff`, assignments as above | → `(CohortDetail & {roster: CohortRosterRow[]})[]`; the page derives "My students" from `roster[].mentor.id` = session user. |
 | `PUT /api/cohorts/[id]/staff/[userId]` `{role}` | `PUT /cohorts/{c}/staff/{u} {role}` | Add or change role. → `{unassignedMentees}` (new) |
@@ -380,7 +380,7 @@ marked (e2e); the rest by the manual check the item describes.
 - [x] Each row shows the status badge; a planned row shows "starts {date}", a finished row "finished {date}", an active row `week/total` equal to the API's `week` and `total_weeks` (e2e). ✓ e2e-smoke + screenshot
 - [x] A cohort with two mentors shows both; one with none shows "No mentor"; one with an unassigned active student shows "1 without a mentor". ✓ screenshot
 - [x] Loading the list makes 1 + 2 × N API calls for N cohorts. ✓ by construction (`/api/cohorts`: list, then roster + staff per cohort)
-- [ ] With no cohorts in the filter, the empty state names the filter.
+- [x] With no cohorts in the filter, the empty state names the filter. ✓ code read
 
 ### Cohort modal
 
@@ -394,20 +394,20 @@ marked (e2e); the rest by the manual check the item describes.
 
 ### `/cohorts/[id]` header and actions
 
-- [ ] Planned with no enrollments shows Edit, Cancel cohort and Delete; with one dropped enrollment, Delete is hidden.
+- [x] Planned with no enrollments shows Edit, Cancel cohort and Delete; with one dropped enrollment, Delete is hidden. ✓ code read
 - [x] Active shows Edit and Finish cohort, no Delete. ✓ screenshot
 - [x] The Finish dialog states the number of active + paused students, the waiting reviews and "can't be undone"; confirming finishes the cohort, every active/paused row becomes completed, the banner appears and every mutating control is gone (e2e). ✓ e2e-smoke (finish) + screenshot (dialog)
 - [x] Delete removes the cohort and returns to `/cohorts` with a toast (e2e). ✓ e2e-smoke (API); UI navigation not run
 - [x] A finished cohort shows the read-only banner and no Edit, Finish, Delete, Add students, Add staff, row menus, checkboxes, mentor selects, Auto-assign or assignment editing. ✓ screenshot
 - [ ] An unknown id shows "Cohort not found"; a 500 from the API shows the load error with Retry instead.
-- [ ] A mutation answered with `cohort_finished` shows "This cohort has finished and is read-only." and the page turns read-only after the refetch.
+- [x] A mutation answered with `cohort_finished` shows "This cohort has finished and is read-only." and the page turns read-only after the refetch. ✓ code read
 
 ### Staff
 
 - [ ] Adding a mentor and a reviewer lists both with role badges; the mentor shows "0 students" (e2e).
-- [ ] The staff picker doesn't list current staff or active/paused/completed students of this cohort.
+- [x] The staff picker doesn't list current staff or active/paused/completed students of this cohort. ✓ code read
 - [x] Removing a mentor with 3 students asks first naming 3; the toast reports the API's `unassigned_mentees`; those students show no mentor afterwards (e2e). ✓ e2e-smoke with 1 student: count from Nitro (see API table); the confirm dialog not run
-- [ ] Changing a mentor with students to reviewer asks the same; one without students doesn't ask.
+- [x] Changing a mentor with students to reviewer asks the same; one without students doesn't ask. ✓ code read
 - [x] Adding a person enrolled in the cohort shows the `student_cannot_be_staff` message. ✓ e2e-smoke (API code)
 
 ### Roster
@@ -416,7 +416,7 @@ marked (e2e); the rest by the manual check the item describes.
 - [x] Changing the Mentor select assigns that mentor in one call; "No mentor" unassigns (e2e). ✓ e2e-smoke
 - [x] Selecting 3 rows and choosing a mentor in the bulk bar sends one call and all 3 show that mentor. ✓ e2e-smoke (one PUT for 3)
 - [x] Auto-assign with 2 mentors and 4 unassigned students gives each mentor 2 and toasts "Assigned 4 students" (e2e). ✓ e2e-smoke
-- [ ] Auto-assign is disabled with the matching tooltip when everyone has a mentor, and when there is no mentor.
+- [x] Auto-assign is disabled with the matching tooltip when everyone has a mentor, and when there is no mentor. ✓ code read
 - [x] The row menu offers exactly: active (pause, complete, drop, move), paused (resume, drop, move), dropped (re-activate), completed (no menu). ✓ screenshot (active); code for the rest
 - [x] Dropping a student asks first; afterwards the row is dropped, collapsed under "inactive", and has no mentor (e2e). ✓ e2e-smoke (API)
 - [x] The Move dialog lists only planned and active cohorts other than this one and says progress doesn't carry over; confirming makes one move call, and the student shows dropped here and active in the target (e2e). ✓ e2e-smoke + screenshot
@@ -427,12 +427,12 @@ marked (e2e); the rest by the manual check the item describes.
 
 ### Add students
 
-- [ ] The people list loads when the modal opens, not with the page.
+- [x] The people list loads when the modal opens, not with the page. ✓ code read
 - [x] Adding a new person shows "{name} added"; re-adding a dropped student shows "{name} re-added" and they're active again (e2e). ✓ e2e-smoke (enrolled / reactivated)
-- [ ] The picker doesn't offer staff, or active/paused/completed students of this cohort.
+- [x] The picker doesn't offer staff, or active/paused/completed students of this cohort. ✓ code read
 - [x] A CSV with one new, one dropped, one already enrolled, one unknown and one staff email shows each in its own report group, 1/1/1/1/1 (e2e). ✓ e2e-smoke
-- [ ] "Copy emails" copies the unknown emails one per line.
-- [ ] A file over 1 MB is refused before upload; a file over 2000 rows shows the `import_too_large` message.
+- [x] "Copy emails" copies the unknown emails one per line. ✓ code read
+- [x] A file over 1 MB is refused before upload; a file over 2000 rows shows the `import_too_large` message. ✓ code read
 
 ### `/cohort` (mentor)
 

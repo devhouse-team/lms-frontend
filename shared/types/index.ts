@@ -50,6 +50,7 @@ export interface CohortInfo extends CohortTiming {
 export interface PastCohort {
   id: string
   name: string
+  endsOn: string
   finishedAt: string | null
 }
 
@@ -223,7 +224,7 @@ export interface AssignmentDetail {
   dueAt?: string
   cohortName: string
   /** Submitting is open only in an active cohort */
-  cohort: Pick<CohortTiming, 'status' | 'startsOn' | 'finishedAt'>
+  cohort: Pick<CohortTiming, 'status' | 'startsOn' | 'endsOn' | 'finishedAt'>
   mentor: Person | null
   status: AssignmentStatus
   /** Newest first */

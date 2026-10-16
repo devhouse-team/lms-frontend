@@ -17,7 +17,7 @@ const { long } = useCohortFormat()
 /** Submitting is open only in an active cohort; a finished or planned one shows a notice instead of the form */
 const closed = computed(() => (data.value && data.value.cohort.status !== 'active' ? data.value.cohort : null))
 const closedText = computed(() => closed.value?.status === 'finished'
-  ? t('submission.closedFinished', { date: long(closed.value.finishedAt ?? '') })
+  ? t('submission.closedFinished', { date: long(closed.value.finishedAt ?? closed.value.endsOn) })
   : closed.value ? t('submission.closedPlanned', { date: long(closed.value.startsOn) }) : '')
 const canSubmit = computed(() => !closed.value && data.value && (data.value.status === 'not_submitted' || data.value.status === 'changes'))
 const pastDue = computed(() => !!data.value?.dueAt && new Date(data.value.dueAt).getTime() < Date.now())

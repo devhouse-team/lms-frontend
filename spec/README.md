@@ -18,7 +18,7 @@ contract is `../backend/openapi.json` (types in `shared/types/api.d.ts`).
 | [Auth and roles](features/auth.md) | everyone | API |
 | [Invites](features/invites.md) | head, invitee | API |
 | [Password reset and email verification](features/account-recovery.md) | everyone | API |
-| [Cohorts](features/cohorts.md) | head, mentor | API |
+| [Cohorts](features/cohorts.md) | head, mentor, student | API |
 | [People](features/people.md) | head | API |
 | [Programs](features/programs.md) | head | API + static syllabus |
 | [Assignments](features/assignments.md) | head, mentor, student | API |

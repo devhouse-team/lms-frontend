@@ -79,7 +79,8 @@ async function importFile() {
     invalidateCohorts()
     emit('added') // the roster refreshes as soon as the report arrives
   } catch (e) {
-    fileError.value = message(e)
+    const own = { import_empty: 'noFile', import_file_too_big: 'tooBig' }[code(e) ?? '']
+    fileError.value = own ? t(`addStudents.err.${own}`) : message(e)
     if (code(e) === 'cohort_finished') emit('stale')
   } finally {
     saving.value = false
