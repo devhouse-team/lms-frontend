@@ -35,7 +35,7 @@ async function onContest() {
             {{ t('home.greeting', { name: data.student.name }) }}
           </h1>
           <p class="num mt-1 text-sm text-muted">
-            {{ data.cohort ? t('home.summary', { week: data.cohort.week, total: data.cohort.totalWeeks, cohort: data.cohort.name }) : t('home.noCohort') }}
+            {{ !data.cohort ? t('home.noCohort') : t(data.cohort.totalWeeks ? 'home.summary' : 'home.summaryOpen', { week: data.cohort.week, total: data.cohort.totalWeeks, cohort: data.cohort.name }) }}
           </p>
         </header>
 

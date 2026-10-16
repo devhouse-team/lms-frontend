@@ -2,6 +2,7 @@
 definePageMeta({ roles: ['mentor'] })
 
 const { t } = useI18n()
+const weekLabel = useWeekLabel()
 useHead({ title: () => `${t('nav.cohort')} · dev.house` })
 const { data, status, refresh } = await useFetch('/api/cohorts/mine', { key: 'cohorts-mine' })
 </script>
@@ -13,7 +14,7 @@ const { data, status, refresh } = await useFetch('/api/cohorts/mine', { key: 'co
         <section v-for="c in data" :key="c.id" :aria-labelledby="`c-${c.id}`">
           <header class="mb-4">
             <h1 :id="`c-${c.id}`" class="text-xl font-semibold tracking-tight text-highlighted">{{ t('mentor.cohort', { name: c.name }) }}</h1>
-            <p class="num mt-1 text-sm text-muted">{{ c.programTitle }} · {{ t('mentor.week', { week: c.week, total: c.totalWeeks }) }} · {{ t('home.cohortMembers', { n: c.mentees.length }) }}</p>
+            <p class="num mt-1 text-sm text-muted">{{ c.programTitle }} · {{ weekLabel(c.week, c.totalWeeks) }} · {{ t('home.cohortMembers', { n: c.mentees.length }) }}</p>
           </header>
           <RosterTable :rows="c.mentees" />
           <AssignmentsManager class="mt-6" :assignments="c.assignments" :lessons="c.lessons" :editable="c.canEditAssignments" @changed="refresh()" />

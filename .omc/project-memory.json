@@ -310,6 +310,12 @@
       "accessCount": 1,
       "lastAccessed": 1792066354467,
       "type": "file"
+    },
+    {
+      "path": "app/components/CohortsTable.vue",
+      "accessCount": 1,
+      "lastAccessed": 1792149905081,
+      "type": "file"
     }
   ],
   "userDirectives": []
