@@ -14,7 +14,7 @@ const { t } = useI18n()
 const toast = useToast()
 const { message, code } = useCohortErrors()
 
-const { data: programs } = await useFetch('/api/programs', { key: 'programs', default: () => [] })
+const { data: programs, refresh: refreshPrograms } = await useFetch('/api/programs', { key: 'programs', default: () => [] })
 const programItems = computed(() => programs.value.map(p => ({ value: p.id, label: p.title })))
 
 /** UTC calendar day (D5) */
@@ -37,6 +37,8 @@ const saving = ref(false)
 
 watch(open, (isOpen) => {
   if (!isOpen) return
+  // invalidateCohorts() resets the shared 'programs' key to [] without refetching
+  if (!programs.value.length) refreshPrograms()
   const c = props.cohort
   Object.assign(state, c
     ? { name: c.name, programId: c.programId, startsOn: c.startsOn, endsOn: c.endsOn }

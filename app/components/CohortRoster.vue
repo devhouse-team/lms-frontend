@@ -168,7 +168,8 @@ async function move() {
     clearNuxtData(`cohort-roster:${to.id}`)
     moving.value = undefined
   } catch (e) {
-    toastError(e, { name: r.name, target: to.name })
+    if (code(e) === 'enrollment_exists') toast.add({ title: t('cohorts.err.enrollmentExistsTarget', { name: r.name, target: to.name }), color: 'error', icon: 'i-lucide-circle-alert' })
+    else toastError(e, { name: r.name, target: to.name })
     if (code(e) === 'cohort_finished') emit('stale')
   } finally {
     busy.value = false

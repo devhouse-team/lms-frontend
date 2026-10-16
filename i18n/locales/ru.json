@@ -480,6 +480,7 @@
       "cohort_not_deletable": "Удалить можно только запланированную когорту без студентов.",
       "cohort_not_active": "Когорта не идёт, сдача работ закрыта.",
       "enrollment_exists": "{name} уже в этой когорте.",
+      "enrollmentExistsTarget": "{name} уже в когорте {target}.",
       "invalid_transition": "Это изменение уже невозможно, список обновлён.",
       "staff_cannot_enroll": "{name} в составе этой когорты. Сначала уберите из состава.",
       "student_cannot_be_staff": "{name} учится в этой когорте. Сначала отчислите.",

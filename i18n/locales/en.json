@@ -480,6 +480,7 @@
       "cohort_not_deletable": "Only a planned cohort with no students can be deleted.",
       "cohort_not_active": "This cohort isn't running, so submissions are closed.",
       "enrollment_exists": "{name} is already in this cohort.",
+      "enrollmentExistsTarget": "{name} is already in {target}.",
       "invalid_transition": "That change isn't possible any more; the list was refreshed.",
       "staff_cannot_enroll": "{name} is on this cohort's staff. Remove them from staff first.",
       "student_cannot_be_staff": "{name} is a student in this cohort. Drop them first.",
