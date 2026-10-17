@@ -1,7 +1,12 @@
 <script setup lang="ts">
+import type { CoursesResponse } from '~~/shared/types'
+
 const { t, locale } = useI18n()
 const toast = useToast()
-const { data, status, refresh, setCourseStatus, toggleContest } = useStudentDashboard()
+const { data, status, refresh, toggleContest } = useStudentDashboard()
+const { data: courses, status: coursesStatus } = useLazyFetch<CoursesResponse>('/api/courses', { key: 'my-courses' })
+/** The active cohort's courses, else the planned one's */
+const currentCourses = computed(() => courses.value?.cohorts.find(g => g.cohort.status === 'active') ?? courses.value?.cohorts.find(g => g.cohort.status === 'planned'))
 const { left } = useCountdown()
 const { short } = useCohortFormat()
 
@@ -14,18 +19,9 @@ const summary = computed(() => {
     : t('home.summary', { week: c.week, total: c.totalWeeks, cohort: c.name })
 })
 
-const doneCount = computed(() => data.value?.courses.filter(c => c.status === 'done').length ?? 0)
 const careerDone = computed(() => data.value?.career.filter(s => s.done).length ?? 0)
 
 const fmtDate = (iso: string, opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale.value, opts).format(new Date(iso))
-
-async function onCourse(id: string, next: Parameters<typeof setCourseStatus>[1]) {
-  try {
-    await setCourseStatus(id, next)
-  } catch {
-    toast.add({ title: t('home.statusError'), color: 'error', icon: 'i-lucide-circle-alert' })
-  }
-}
 
 async function onContest() {
   try {
@@ -69,11 +65,11 @@ async function onContest() {
 
         <section aria-labelledby="courses-title">
           <div class="mb-3 flex items-baseline justify-between gap-4">
-            <h2 id="courses-title" class="text-sm font-semibold text-highlighted">{{ t('home.courses') }}</h2>
-            <p class="num text-xs text-muted">{{ t('home.coursesDone', { done: doneCount, total: data.courses.length }) }}</p>
+            <h2 id="courses-title" class="text-sm font-semibold text-highlighted">{{ t('home.myCourses') }}</h2>
+            <NuxtLink to="/courses" class="text-xs text-muted underline-offset-4 hover:text-highlighted hover:underline">{{ t('home.allCourses') }}</NuxtLink>
           </div>
-          <p class="mb-3 max-w-prose text-sm text-muted">{{ t('home.coursesHint') }}</p>
-          <CoursesList :courses="data.courses" @change="onCourse" />
+          <CourseRows v-if="currentCourses" :group="currentCourses" :soon="day => Date.parse(`${day}T23:59:59Z`) - Date.now() < 86_400_000" />
+          <p v-else-if="coursesStatus !== 'pending'" class="text-sm text-muted">{{ t('courses.emptyStudent') }}</p>
         </section>
       </div>
 

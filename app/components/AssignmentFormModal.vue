@@ -2,8 +2,11 @@
 import { z } from 'zod'
 import type { CohortLesson, ManagedAssignment } from '~~/shared/types'
 
-/** Create (no `assignment`) or edit the assignment of one lesson. Due is relative: N days after the lesson opens. */
-const props = defineProps<{ lessons: CohortLesson[], assignment?: ManagedAssignment }>()
+/**
+ * Create (no `assignment`) or edit the assignment of one lesson; the statement is markdown. Due is relative: N days
+ * after the lesson opens. `lessonId` presets the lesson (course editor outline).
+ */
+const props = defineProps<{ lessons: CohortLesson[], assignment?: ManagedAssignment, lessonId?: string }>()
 const open = defineModel<boolean>('open', { default: false })
 const emit = defineEmits<{ saved: [] }>()
 
@@ -15,7 +18,7 @@ const free = computed(() => props.lessons.filter(l => !l.hasAssignment).map(l =>
 const schema = computed(() => z.object({
   lessonId: z.string({ message: t('assignments.err.lesson') }).min(1, t('assignments.err.lesson')),
   title: z.string().trim().min(2, t('assignments.err.title')).max(120, t('assignments.err.title')),
-  description: z.string().trim().min(1, t('assignments.err.description')).max(5000, t('assignments.err.description')),
+  description: z.string().trim().min(1, t('assignments.err.description')).max(200_000, t('assignments.err.description')),
   // An emptied number input yields '' or NaN; both mean "no deadline"
   dueOffsetDays: z.preprocess(
     v => (v === '' || (typeof v === 'number' && Number.isNaN(v)) ? undefined : v),
@@ -32,7 +35,7 @@ watch(open, (isOpen) => {
   const a = props.assignment
   Object.assign(state, a
     ? { lessonId: a.id, title: a.title, description: a.description, dueOffsetDays: a.dueOffsetDays ?? undefined }
-    : { lessonId: undefined, title: '', description: '', dueOffsetDays: 7 })
+    : { lessonId: props.lessonId, title: '', description: '', dueOffsetDays: 7 })
 })
 
 async function onSubmit() {
@@ -55,7 +58,7 @@ async function onSubmit() {
 </script>
 
 <template>
-  <UModal v-model:open="open" :title="assignment ? t('assignments.editTitle') : t('assignments.createTitle')">
+  <UModal v-model:open="open" :title="assignment ? t('assignments.editTitle') : t('assignments.createTitle')" :ui="{ content: 'sm:max-w-2xl' }">
     <template #body>
       <p v-if="!assignment && !free.length" class="text-sm text-muted">{{ t('assignments.noLessons') }}</p>
       <UForm v-else id="assignment-form" :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
@@ -67,7 +70,7 @@ async function onSubmit() {
           <UInput v-model="state.title" autocomplete="off" class="w-full" />
         </UFormField>
         <UFormField :label="t('assignments.description')" name="description">
-          <UTextarea v-model="state.description" :rows="6" class="w-full" />
+          <MarkdownEditor v-model="state.description" mode="compact" :max-length="200000" />
         </UFormField>
         <UFormField :label="t('assignments.dueOffset')" name="dueOffsetDays" :hint="t('assignments.dueOffsetHint')">
           <UInput v-model.number="state.dueOffsetDays" type="number" :min="0" :max="365" class="num w-32" />

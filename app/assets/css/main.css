@@ -56,3 +56,47 @@ body { font-family: var(--font-sans); }
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* Authored markdown (DESIGN.md, Course content): reading size, 72ch, wide blocks scroll inside their own box */
+.md-body { font-size: 15px; line-height: 1.6; color: var(--ui-text); max-width: 72ch; overflow-wrap: anywhere; }
+.md-body > * + * { margin-top: 12px; }
+.md-body h1, .md-body h2, .md-body h3, .md-body h4 { color: var(--ui-text-highlighted); font-weight: 600; line-height: 1.3; text-wrap: balance; }
+.md-body h1 { font-size: 20px; margin-top: 28px; }
+.md-body h2 { font-size: 16px; margin-top: 24px; }
+.md-body h3, .md-body h4 { font-size: 14px; margin-top: 20px; }
+.md-body > :first-child { margin-top: 0; }
+.md-body p { text-wrap: pretty; }
+.md-body ul { list-style: disc; padding-left: 1.4em; }
+.md-body ol { list-style: decimal; padding-left: 1.6em; }
+.md-body li + li, .md-body li > ul, .md-body li > ol { margin-top: 4px; }
+.md-body li:has(> input[type=checkbox]) { list-style: none; margin-left: -1.3em; }
+.md-body a { color: var(--ui-text-toned); text-decoration: underline; text-underline-offset: 3px; }
+.md-body a:hover { color: var(--ui-text-highlighted); }
+.md-body strong { color: var(--ui-text-highlighted); font-weight: 600; }
+.md-body blockquote { border-left: 1px solid var(--ui-border-accented); padding-left: 12px; color: var(--ui-text-muted); }
+.md-body hr { border: 0; border-top: 1px solid var(--ui-border); margin: 24px 0; }
+.md-body code { font-family: var(--font-mono); font-size: 0.86em; }
+.md-body :not(pre) > code { background: var(--ui-bg-elevated); box-shadow: inset 0 0 0 1px var(--ui-border); border-radius: 4px; padding: 0.1em 0.35em; }
+.md-body .md-code { position: relative; }
+.md-body pre { background: var(--ui-bg-elevated); box-shadow: inset 0 0 0 1px var(--ui-border); border-radius: 6px; padding: 12px 14px; overflow-x: auto; font-size: 13px; line-height: 1.55; max-width: 100%; }
+.md-body .md-copy { position: absolute; top: 6px; right: 6px; font-size: 12px; padding: 2px 8px; border-radius: 4px; color: var(--ui-text-muted); background: var(--ui-bg-accented); opacity: 0; transition: opacity 150ms ease-out; }
+.md-body .md-code:hover .md-copy, .md-body .md-copy:focus-visible { opacity: 1; }
+.md-body table { display: block; width: max-content; overflow-x: auto; max-width: 100%; border-collapse: collapse; font-size: 14px; box-shadow: inset 0 0 0 1px var(--ui-border); border-radius: 8px; }
+.md-body th, .md-body td { padding: 6px 12px; border-bottom: 1px solid var(--ui-border); text-align: left; }
+.md-body th { background: var(--ui-bg-elevated); color: var(--ui-text-highlighted); font-weight: 600; }
+.md-body tr:last-child td { border-bottom: 0; }
+.md-body img { max-width: 100%; height: auto; border-radius: 6px; }
+.md-body .katex { color: inherit; font-size: 1.05em; }
+.md-body .katex-display { overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
+.md-body .md-missing { display: inline-block; padding: 8px 12px; border-radius: 6px; font-size: 13px; color: var(--ui-text-muted); box-shadow: inset 0 0 0 1px var(--ui-border-accented); }
+
+/* highlight.js from the palette; dark first, light below */
+.md-body .hljs { --hl-key: #ffdc3d; --hl-str: #9fd39b; --hl-num: #f2a46f; --hl-com: #77777a; --hl-fn: #8fc1ff; --hl-type: #d7a5f2; color: var(--ui-text); }
+:root:not(.dark) .md-body .hljs { --hl-key: #8f6c00; --hl-str: #2f7d32; --hl-num: #b5531b; --hl-com: #85858a; --hl-fn: #1f5fae; --hl-type: #7a3fa8; }
+.hljs-keyword, .hljs-selector-tag, .hljs-built_in, .hljs-literal { color: var(--hl-key); }
+.hljs-string, .hljs-regexp, .hljs-addition, .hljs-attribute { color: var(--hl-str); }
+.hljs-number, .hljs-symbol, .hljs-variable, .hljs-template-variable { color: var(--hl-num); }
+.hljs-comment, .hljs-quote, .hljs-meta { color: var(--hl-com); font-style: italic; }
+.hljs-title, .hljs-section, .hljs-function .hljs-title { color: var(--hl-fn); }
+.hljs-type, .hljs-class .hljs-title, .hljs-tag, .hljs-name { color: var(--hl-type); }
+.hljs-deletion { color: var(--ui-error); }

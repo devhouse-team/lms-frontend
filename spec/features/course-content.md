@@ -10,7 +10,7 @@ submissions with files, exams in a time window, solutions that open at the right
 a student reads, watches and submits everything for a week without leaving the LMS; an editor builds a lesson with
 math, code, a PDF and a video in one sitting; nothing on these pages contradicts what the API will accept.
 
-Status: **spec, not built** (course content v2, 2026-10-16). Decisions: product owner 2026-10-16 (PO1–PO6 below) and
+Status: **Phase 1 built** (2026-10-17); Phases 2 and 3 not built (course content v2, 2026-10-16). Decisions: product owner 2026-10-16 (PO1–PO6 below) and
 the defaults in the decisions doc (D-…). Contract: `../backend/spec/content.md` and `../backend/openapi.json`
 (`npm run api:types`). Endpoint, field and error-code names below are **exactly those of backend spec/content.md**
 (reconciled 2026-10-16); the generated types win and this file gets corrected where they differ.
@@ -18,6 +18,25 @@ the defaults in the decisions doc (D-…). Contract: `../backend/spec/content.md
 Built in three phases ([Phased plan](#phased-plan), same boundaries as the backend): 1 materials and reading +
 homework with files + editor; 2 assignment modes, exams, practice, trial attempt, solutions (needs D5's cohort
 timezone decided first; deployed together with backend P2); 3 by-type view, calendar, prev / next, course search.
+
+### Phase 1 as built
+
+Differences from the text below (the code follows these):
+
+- **Uploads send `purpose` everywhere**, program covers included (`cover`), so the backend can make the field
+  required. `useStorageUpload().upload(file, purpose)`; `POST /api/files {filename, size, purpose}` derives the type from
+  the extension (`shared/utils/fileTypes.ts`) and checks the purpose's limits before calling the API.
+- **Authoring goes through one allowlisted proxy**, `server/api/editor/[...path].ts`: the editor pages work on the
+  API's own authoring shapes (`CourseOutline`, `MaterialRead`, …, snake_case) instead of mapped view models. Every
+  path and method is allowlisted; the API decides permissions and validates bodies. Same URLs as the API table.
+- **Raw HTML in markdown shows as text** (backend markdown contract: `html: false`), and DOMPurify still runs over the
+  output. Relative image paths render nothing (only `https:` and `file:` resolve).
+- **Files attach at once** in the material editor (each upload or removal is a `PATCH {file_ids}`), so the preview's
+  `file:` images resolve before Save; Save covers title, tags, body, URL and published.
+- Not built in Phase 1: the sticky bottom "Contents" bar on phones (the header has the Contents button), preview
+  scroll sync, remembering open modules in `sessionStorage` (Phase 3 sidebar polish), a separate assignment editor
+  (the modal is reused, with a markdown statement).
+- `apiError()` is null-safe (pages pass `error.value` directly).
 
 ## Decisions this spec relies on
 
@@ -738,46 +757,46 @@ a browser check, or the named check.
 
 ### Phase 1: student reading
 
-- [ ] Nav "Courses" opens the real course list for students, mentors and heads; the mock tracker, its routes and
-  `db.courses` are gone, and the student home shows "My courses". (e2e)
-- [ ] A student sees their cohort's course with modules and lessons; future lessons show a lock and "Opens {date}"
-  and aren't links. (e2e)
-- [ ] The course page makes one API outline call; moving between two lessons fetches only the lesson.
-- [ ] A lesson shows its materials in order: markdown with an inline formula, a display formula, a highlighted Python
+- [x] Nav "Courses" opens the real course list for students, mentors and heads; the mock tracker, its routes and
+  `db.courses` are gone, and the student home shows "My courses". (e2e) ✓ e2e-smoke + browser check
+- [x] A student sees their cohort's course with modules and lessons; future lessons show a lock and "Opens {date}"
+  and aren't links. (e2e) ✓ e2e-smoke + browser check
+- [x] The course page makes one API outline call; moving between two lessons fetches only the lesson. ✓ browser check
+- [x] A lesson shows its materials in order: markdown with an inline formula, a display formula, a highlighted Python
   block and a table renders correctly (screenshot); a PDF opens inline on desktop and as Open / Download on a phone
   viewport; a YouTube link plays embedded; a zip shows name, size and Download. (e2e for the data, browser check for
-  rendering)
+  rendering) ✓ e2e-smoke + browser check (desktop and iPhone 13)
 - [ ] A markdown image `file:<id>` loads through the Nitro file route; after leaving the page open 10 minutes, a lazy
   image further down and a Download still work; no `s3.` URL appears in the page HTML.
-- [ ] Markdown with `<script>`, `<img onerror>`, `javascript:` links and `<iframe>` renders inert (unit check of
-  `renderMarkdown` with these inputs; `v-html` appears only in `MarkdownView.vue`).
-- [ ] Mark complete flips at once, survives a reload, updates the sidebar check and the home figure; in a finished
-  cohort it is disabled with "This cohort has finished". (e2e)
-- [ ] Course pages (syllabus) appear at the top of the sidebar and open.
+- [x] Markdown with `<script>`, `<img onerror>`, `javascript:` links and `<iframe>` renders inert (unit check of
+  `renderMarkdown` with these inputs; `v-html` appears only in `MarkdownView.vue`). ✓ browser check of `renderMarkdown` through the editor preview; grep: one `v-html`
+- [x] Mark complete flips at once, survives a reload, updates the sidebar check and the home figure; in a finished
+  cohort it is disabled with "This cohort has finished". (e2e) ✓ e2e-smoke + browser check
+- [x] Course pages (syllabus) appear at the top of the sidebar and open. ✓ e2e-smoke + browser check
 - [ ] Program and course descriptions render as markdown (O19).
 
 ### Phase 1: homework with files
 
-- [ ] A student submits a homework with two files (pdf, zip), a markdown note and a link; the history shows all
-  three parts; a mentor sees the files (pdf opens inline) and the rendered note in review. (e2e)
-- [ ] A 30 MB file and a `.exe` are refused before upload with the right message; a `.md`, an `.ipynb` and a `.ts`
-  (browser type `video/mp2t`) upload with the extension's type; the API refuses a `content` upload by a student.
-- [ ] A failed send keeps the uploaded files and text in the form.
+- [x] A student submits a homework with two files (pdf, zip), a markdown note and a link; the history shows all
+  three parts; a mentor sees the files (pdf opens inline) and the rendered note in review. (e2e) ✓ e2e-smoke (data and the 302 file route)
+- [x] A 30 MB file and a `.exe` are refused before upload with the right message; a `.md`, an `.ipynb` and a `.ts`
+  (browser type `video/mp2t`) upload with the extension's type; the API refuses a `content` upload by a student. ✓ browser check (26 MB, `.exe`, `.md`, `.ts`) + e2e-smoke (Nitro refusals, student `content` → 403); `.ipynb` by the mapping check
+- [x] A failed send keeps the uploaded files and text in the form. ✓ browser check
 
 ### Phase 1: editor
 
-- [ ] A course editor sees the course under "Editing" and edits it; a mentor who isn't an editor gets "You're not an
-  editor of this course" on `/editor/[id]`. (e2e)
-- [ ] The head adds and removes an editor; a program lead appears as an editor "via program". (e2e)
-- [ ] Add module, lesson and each material kind; reorder with up / down and move a lesson to another module; the
-  student view shows the new order. (e2e)
+- [x] A course editor sees the course under "Editing" and edits it; a mentor who isn't an editor gets "You're not an
+  editor of this course" on `/editor/[id]`. (e2e) ✓ e2e-smoke (a program lead, not admin, sees it under Editing and edits; a mentor gets 403)
+- [x] The head adds and removes an editor; a program lead appears as an editor "via program". (e2e) ✓ e2e-smoke
+- [x] Add module, lesson and each material kind; reorder with up / down and move a lesson to another module; the
+  student view shows the new order. (e2e) ✓ e2e-smoke (order and move calls through Nitro; the up / down buttons weren't clicked in a browser)
 - [ ] The material editor previews math and code exactly as the lesson page shows them; pasting an image inserts a
   `file:` reference that renders in the preview and for students.
-- [ ] Uploading a `.md` replaces the body and lists unresolved relative image paths.
-- [ ] A non-allowlisted video URL is refused in the field; a Vimeo unlisted link previews.
-- [ ] Deleting a lesson with submissions is refused with "Unpublish it instead"; unpublishing hides it from students.
-  (e2e)
-- [ ] Leaving the material editor with unsaved changes asks to confirm.
+- [x] Uploading a `.md` replaces the body and lists unresolved relative image paths. ✓ browser check
+- [x] A non-allowlisted video URL is refused in the field; a Vimeo unlisted link previews. ✓ browser check
+- [x] Deleting a lesson with submissions is refused with "Unpublish it instead"; unpublishing hides it from students.
+  (e2e) ✓ e2e-smoke
+- [x] Leaving the material editor with unsaved changes asks to confirm. ✓ browser check
 
 ### Phase 2: modes, exams, practice, solutions
 

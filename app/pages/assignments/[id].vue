@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { z } from 'zod'
-
 definePageMeta({ roles: ['mentee'] })
 
 const route = useRoute()
@@ -22,31 +20,19 @@ const closedText = computed(() => closed.value?.status === 'finished'
 const canSubmit = computed(() => !closed.value && data.value && (data.value.status === 'not_submitted' || data.value.status === 'changes'))
 const pastDue = computed(() => !!data.value?.dueAt && new Date(data.value.dueAt).getTime() < Date.now())
 
-const schema = computed(() => z.object({
-  url: z.string().trim().min(1, t('submission.err.urlRequired')).url(t('submission.err.url')).refine(u => /^https?:\/\//i.test(u), t('submission.err.url')),
-  note: z.string().max(2000, t('submission.err.note')).optional()
-}))
-const state = reactive({ url: '', note: '' })
-const sending = ref(false)
+async function onSent() {
+  await refresh()
+  refreshNuxtData('dashboard-mentee')
+  invalidateContent()
+  toast.add({ title: t('submission.sentToast'), icon: 'i-lucide-check', color: 'success' })
+}
 
-async function onSubmit() {
-  sending.value = true
-  try {
-    await $fetch(`/api/assignments/${id.value}/submissions`, { method: 'POST', body: { url: state.url.trim(), note: state.note.trim() || undefined } })
-    state.url = ''
-    state.note = ''
-    await refresh()
-    refreshNuxtData('dashboard-mentee')
-    toast.add({ title: t('submission.sentToast'), icon: 'i-lucide-check', color: 'success' })
-  } catch (e) {
-    const { code, status } = apiError(e)
-    // The cohort finished while the page was open: the refetch turns the form into the notice
-    if (code === 'cohort_not_active') return void refresh()
-    toast.add({ title: status === 409 ? t('submission.err.conflict') : t('common.saveError'), color: 'error', icon: 'i-lucide-circle-alert' })
-    if (status === 409) refresh()
-  } finally {
-    sending.value = false
-  }
+function onSendError(e: unknown) {
+  const { code } = apiError(e)
+  // The cohort finished while the page was open: the refetch turns the form into the notice
+  if (code === 'cohort_not_active') return void refresh()
+  toast.add({ title: code === 'submission_pending' ? t('submission.err.conflict') : t('common.saveError'), color: 'error', icon: 'i-lucide-circle-alert' })
+  if (code === 'submission_pending') refresh()
 }
 </script>
 
@@ -64,7 +50,7 @@ async function onSubmit() {
           <header class="space-y-3">
             <StatusBadge :status="data.status" />
             <h1 class="text-balance text-[1.75rem] font-semibold leading-tight tracking-tight text-highlighted">{{ data.title }}</h1>
-            <p class="max-w-prose whitespace-pre-line text-sm text-default">{{ data.description }}</p>
+            <MarkdownView :source="data.description" />
           </header>
 
           <UAlert v-if="closed" icon="i-lucide-lock" color="neutral" variant="subtle" :description="closedText" />
@@ -73,15 +59,8 @@ async function onSubmit() {
               {{ data.status === 'changes' ? t('submission.resubmit') : t('submission.submit') }}
             </h2>
             <p class="mt-1 text-sm text-muted">{{ t('submission.hint') }}</p>
-            <UForm :schema="schema" :state="state" class="mt-5 space-y-4" @submit="onSubmit">
-              <UFormField :label="t('submission.url')" name="url">
-                <UInput v-model="state.url" type="url" inputmode="url" placeholder="https://github.com/…" size="lg" class="w-full" />
-              </UFormField>
-              <UFormField :label="t('submission.note')" name="note" :hint="t('common.optional')">
-                <UTextarea v-model="state.note" :rows="3" autoresize :placeholder="t('submission.notePlaceholder')" class="w-full" />
-              </UFormField>
-              <UButton type="submit" :label="t('submission.send')" icon="i-lucide-send" color="primary" size="lg" :loading="sending" />
-            </UForm>
+            <p v-if="pastDue" class="mt-2 text-sm text-warning">{{ t('submission.lateNotice') }}</p>
+            <SubmitForm class="mt-5" :assignment-id="data.id" @sent="onSent" @error="onSendError" />
           </section>
 
           <UAlert

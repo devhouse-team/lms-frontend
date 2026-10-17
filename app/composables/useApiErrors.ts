@@ -2,13 +2,13 @@
  * API error codes → messages under `<ns>.err.<code>` (specs cohorts.md and programs.md, Errors). Pages switch on the
  * code, never on the HTTP status: Nitro turns some 422s into 409. Unknown codes fall back to common.saveError.
  */
-export function useApiErrors(ns: 'cohorts' | 'programs') {
+export function useApiErrors(ns: 'cohorts' | 'programs' | 'content') {
   const { t, te } = useI18n()
   const toast = useToast()
 
   /** The cohort or program is gone: back to its list. toastError does it; inline error displays call it themselves. */
   function leaveIfGone(e: unknown) {
-    if (apiError(e).code === `${ns.slice(0, -1)}_not_found`) navigateTo(`/${ns}`)
+    if (ns !== 'content' && apiError(e).code === `${ns.slice(0, -1)}_not_found`) navigateTo(`/${ns}`)
   }
 
   function message(e: unknown, params: Record<string, string | number> = {}) {

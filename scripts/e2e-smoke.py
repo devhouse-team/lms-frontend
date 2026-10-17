@@ -4,7 +4,7 @@ End-to-end smoke test for the acceptance criteria in spec/features/.
 Needs a LOCAL backend (../backend: docker compose up, migrations, first superuser) and this app running against it:
   NUXT_API_BASE=http://localhost:8000/api/v1 NUXT_PUBLIC_ROLE_IDS_HEAD=<admin id> NUXT_PUBLIC_ROLE_IDS_MENTOR=<mentor id> npx nuxi dev --port 3123
 Then: python3 -I scripts/e2e-smoke.py
-Seeds courses and lessons straight on the API (no UI for them yet), builds the program through Nitro and drives every role through Nitro.
+Seeds a course skeleton straight on the API, builds programs and course content through Nitro and drives every role through Nitro.
 Creates data on every run; never point it at production.
 """
 import json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
@@ -46,6 +46,34 @@ def ok(cond, label, extra=''):
 ok.failed = 0
 
 
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *a, **k):
+        return None
+
+
+def location(bff, path):
+    """Status and Location of a Nitro file route, without following the redirect"""
+    try:
+        res = urllib.request.build_opener(NoRedirect).open(urllib.request.Request(FE + path, headers={'Cookie': bff.cookie}))
+        return res.status, res.headers.get('Location'), res.headers.get('Cache-Control')
+    except urllib.error.HTTPError as e:
+        return e.code, e.headers.get('Location'), e.headers.get('Cache-Control')
+
+
+def upload(bff, filename, data, purpose):
+    """Sign through Nitro, PUT to storage, complete; returns the file id"""
+    s, t = bff('/api/files', 'POST', {'filename': filename, 'size': len(data), 'purpose': purpose})
+    assert s == 200, (s, t)
+    urllib.request.urlopen(urllib.request.Request(t['uploadUrl'], data=data, method='PUT', headers=t['headers']))
+    s, done = bff(f"/api/files/{t['fileId']}/complete", 'POST')
+    assert s == 200, done
+    return t['fileId']
+
+
+PDF = b'%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n'
+ZIP = bytes.fromhex('504b0506000000000000000000000000000000000000')
+
+
 class Bff:
     """Keeps the session cookie by hand: the stdlib jar drops Secure cookies over http, browsers don't on localhost"""
     def __init__(self):
@@ -83,7 +111,7 @@ s, mod = api(f"/courses/{course['id']}/modules", 'POST', {'title': 'Week 1', 'po
 assert s == 201, mod
 lessons = []
 for i in range(3):
-    s, l = api(f"/modules/{mod['id']}/lessons", 'POST', {'title': f'Lesson {i + 1}', 'content': {'type': 'text', 'body': 'x'}, 'position': i + 1, 'is_published': True})
+    s, l = api(f"/modules/{mod['id']}/lessons", 'POST', {'title': f'Lesson {i + 1}', 'summary': '', 'position': i + 1, 'is_published': True})
     assert s == 201, l
     lessons.append(l)
 extra = []
@@ -184,14 +212,14 @@ ok(next(x for x in lst['programs'] if x['id'] == pid)['courseCount'] == 2, 'list
 
 # Cover: sign, PUT straight to storage, complete, save
 png = bytes.fromhex('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d49444154789c63000100000500010d0a2db40000000049454e44ae426082')
-s, ticket = head('/api/files', 'POST', {'filename': 'cover.png', 'contentType': 'image/png', 'size': len(png)})
+s, ticket = head('/api/files', 'POST', {'filename': 'cover.png', 'size': len(png), 'purpose': 'cover'})
 put = urllib.request.urlopen(urllib.request.Request(ticket['uploadUrl'], data=png, method='PUT', headers=ticket['headers'])).status
 s2, done = head(f"/api/files/{ticket['fileId']}/complete", 'POST')
 s3, _ = head(f'/api/programs/{pid}', 'PATCH', {'coverFileId': ticket['fileId']})
 s4, pd = head(f'/api/programs/{pid}')
 ok(s == 200 and put == 200 and s2 == 200 and s3 == 200 and pd['coverUrl'], 'cover upload: signed, stored, completed, saved', (s, put, s2, s3, pd.get('coverUrl')))
-s, r = head('/api/files', 'POST', {'filename': 'x.pdf', 'contentType': 'application/pdf', 'size': 10})
-ok(s == 400, 'Nitro refuses a non-image cover', s)
+s, r = head('/api/files', 'POST', {'filename': 'x.pdf', 'size': 10, 'purpose': 'cover'})
+ok(s == 422 and r['statusMessage'] == 'validation_error', 'Nitro refuses a non-image cover', s)
 
 s, r = head(f'/api/programs/{pid}/activate', 'POST')
 s2, opts = head('/api/programs/options')
@@ -311,6 +339,50 @@ ok(s == 200 and any(o['id'] == pcid for o in opts) and all(o['status'] != 'finis
 # --- assignments and reviews -------------------------------------------------------------
 s, det = head(f'/api/cohorts/{cid}')
 ok(len(det['lessons']) == 3, 'cohort got the curriculum course and its lessons', len(det['lessons']))
+
+# --- course editor through Nitro (spec course-content.md) -----------------------------------
+CID = course['id']
+s, eo = head(f'/api/editor/courses/{CID}')
+ok(s == 200 and eo['can_manage_editors'] and len(eo['modules'][0]['lessons']) == 3, 'editor outline (admin edits every course)', eo.get('modules'))
+L1, L2, L3 = (x['id'] for x in sorted(eo['modules'][0]['lessons'], key=lambda x: x['position']))
+img = upload(head, 'graph.png', png, 'content_image')
+s, md = head(f'/api/editor/lessons/{L1}/materials', 'POST', {'title': 'Notes', 'kind': 'markdown', 'tags': ['lecture_notes'], 'body': f'## Limits\nInline $x^2$ and\n\n$$\\sum_i i$$\n\n```python\nprint(1)\n```\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n![graph](file:{img})', 'url': None, 'file_ids': [int(img)], 'is_published': True})
+ok(s == 201 and md['files'][0]['id'] == int(img), 'markdown material with an attached image', md)
+pdf_id = upload(head, 'slides.pdf', PDF, 'content')
+s, pdfm = head(f'/api/editor/lessons/{L1}/materials', 'POST', {'title': 'Slides', 'kind': 'pdf', 'tags': ['slides'], 'body': '', 'url': None, 'file_ids': [int(pdf_id)], 'is_published': True})
+s2, vid = head(f'/api/editor/lessons/{L1}/materials', 'POST', {'title': 'Lecture', 'kind': 'video', 'tags': ['lecture_video'], 'body': '', 'url': 'https://youtu.be/dQw4w9WgXcQ?t=65', 'file_ids': [], 'is_published': True})
+zip_id = upload(head, 'starter.zip', ZIP, 'content')
+s3, zm = head(f'/api/editor/lessons/{L1}/materials', 'POST', {'title': 'Starter code', 'kind': 'file', 'tags': ['code'], 'body': '', 'url': None, 'file_ids': [int(zip_id)], 'is_published': True})
+s4, lk = head(f'/api/editor/lessons/{L1}/materials', 'POST', {'title': 'Reading', 'kind': 'link', 'tags': ['reading'], 'body': '', 'url': 'https://example.com/read', 'file_ids': [], 'is_published': True})
+pic = upload(head, 'diagram.png', png, 'content')
+s5, im = head(f'/api/editor/lessons/{L2}/materials', 'POST', {'title': 'Diagram', 'kind': 'image', 'tags': [], 'body': 'A caption', 'url': None, 'file_ids': [int(pic)], 'is_published': True})
+ok(s5 == 201, 'image material', im)
+ok((s, s2, s3, s4) == (201, 201, 201, 201) and vid['embed_url'] == 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?start=65', 'pdf, video, file and link materials', (s, s2, s3, s4, vid.get('embed_url')))
+s, r = head(f'/api/editor/lessons/{L1}/materials', 'POST', {'title': 'Bad', 'kind': 'video', 'tags': [], 'body': '', 'url': 'https://evil.example/v', 'file_ids': [], 'is_published': True})
+ok(r.get('statusMessage') in ('video_host_not_allowed', 'validation_error'), 'video host outside the allowlist refused', r)
+s, hidden = head(f'/api/editor/lessons/{L1}/materials', 'POST', {'title': 'Draft notes', 'kind': 'markdown', 'tags': [], 'body': 'draft', 'url': None, 'file_ids': [], 'is_published': False})
+order = [lk['id'], md['id'], pdfm['id'], vid['id'], zm['id'], hidden['id']]
+s, r = head(f'/api/editor/lessons/{L1}/materials/order', 'PUT', {'material_ids': order})
+ok(s == 200, 'reorder materials (full list)', r)
+s, page = head(f'/api/editor/courses/{CID}/materials', 'POST', {'title': 'Syllabus', 'kind': 'markdown', 'tags': ['syllabus'], 'body': '# Syllabus', 'url': None, 'file_ids': [], 'is_published': True})
+ok(s == 201 and page['lesson_id'] is None, 'course page (material without a lesson)', page)
+s, m2 = head(f'/api/editor/courses/{CID}/modules', 'POST', {'title': 'Week 9', 'position': 1, 'release_offset_days': 60})
+s2, late = head(f"/api/editor/modules/{m2['id']}/lessons", 'POST', {'title': 'Later lesson', 'summary': '', 'position': 0, 'is_published': True})
+s3, r = head(f'/api/editor/lessons/{L3}', 'PATCH', {'module_id': m2['id'], 'position': 1})
+s4, eo = head(f'/api/editor/courses/{CID}')
+mod2 = next(x for x in eo['modules'] if x['id'] == m2['id'])
+ok((s, s2, s3) == (201, 201, 200) and [x['id'] for x in sorted(mod2['lessons'], key=lambda x: x['position'])] == [late['id'], L3], 'add module and lesson; move a lesson to another module', [x['id'] for x in mod2['lessons']])
+s, r = mentor(f'/api/editor/courses/{CID}')
+ok(s in (403, 404), 'a mentor who edits nothing gets the "not an editor" answer', (s, r))
+s, r = head(f'/api/editor/courses/{CID}/editors/{B}', 'PUT', {})
+s2, eds = head(f'/api/editor/courses/{CID}/editors')
+s3, r3 = head(f'/api/editor/courses/{CID}/editors/{B}', 'DELETE')
+s4, eds2 = head(f'/api/editor/courses/{CID}/editors')
+ok(s == 200 and any(e['user']['id'] == int(B) and e['source'] == 'editor' for e in eds) and s3 == 200 and not any(e['user']['id'] == int(B) for e in eds2), 'head adds and removes an editor', (r, eds, r3))
+s, r = head('/api/files', 'POST', {'filename': 'a.exe', 'size': 10, 'purpose': 'submission'})
+s2, r2 = head('/api/files', 'POST', {'filename': 'big.zip', 'size': 30 * 1024 * 1024, 'purpose': 'submission'})
+s3, r3 = head('/api/files', 'POST', {'filename': 'notes.ts', 'size': 10, 'purpose': 'submission'})
+ok(r.get('statusMessage') == 'validation_error' and r2.get('statusMessage') == 'file_too_large' and s3 == 200, 'upload rules: .exe and 30 MB refused before the API, .ts accepted', (r, r2, s3))
 s, r = head('/api/assignments', 'POST', {'lessonId': det['lessons'][0]['id'], 'title': 'Todo app', 'description': 'Build it', 'dueOffsetDays': 30})
 ok(s == 201, 'attach assignment to a lesson', r)
 
@@ -330,11 +402,52 @@ ok(r['status'] == 'active', 'restore', r)
 s, lst = stud('/api/assignments')
 ok(s == 200 and len(lst['current']) == 1 and lst['archive'] == [], 'student assignment list', lst)
 aid = lst['current'][0]['id']
-s, r = stud(f'/api/assignments/{aid}/submissions', 'POST', {'url': 'https://github.com/x/todo', 'note': 'first try'})
-ok(s == 201, 'student submits', r)
+
+# --- student reads the course --------------------------------------------------------------
+s, mc = stud('/api/courses')
+grp = next((g for g in mc['cohorts'] if g['cohort']['id'] == cid), None)
+row = grp and next((c_ for c_ in grp['courses'] if c_['courseId'] == str(CID)), None)
+ok(s == 200 and row and row['doneLessons'] == 0 and row['releasedLessons'] >= 2, '/api/courses: my cohort with its course and figures', mc)
+s, ol = stud(f'/api/courses/{cid}/{CID}')
+les = {l_['id']: l_ for m_ in ol['modules'] for l_ in m_['lessons']}
+ok(s == 200 and not ol['staff'] and les[str(L1)]['isReleased'] and not les[str(late['id'])]['isReleased'] and ol['pages'][0]['title'] == 'Syllabus', 'outline: released lessons, a locked one, course pages', ol)
+s, lv = stud(f'/api/courses/{cid}/lessons/{L1}')
+ok(s == 200 and [m_['id'] for m_ in lv['materials']] == [str(x) for x in order[:5]] and lv['materials'][1]['files'][0]['id'] == str(img) and 'file:' in lv['materials'][1]['body'], 'lesson: published materials in order, raw body with file metadata', [m_['title'] for m_ in lv.get('materials', [])])
+s, r = stud(f"/api/courses/{cid}/lessons/{late['id']}")
+ok(s == 403 and r['statusMessage'] == 'lesson_locked', 'a lesson before its day answers lesson_locked', r)
+st, loc, cc = location(stud, f'/api/files/cohorts/{cid}/materials/{md["id"]}/{img}')
+ok(st == 302 and loc and 'localhost:8333' in loc and 'private' in (cc or ''), 'file route answers 302 to a fresh signed URL', (st, loc, cc))
+st, loc, cc = location(stud, f'/api/files/cohorts/{cid}/materials/{md["id"]}/{pdf_id}')
+ok(st == 404, 'a file of another material is refused', st)
+s, pg = stud(f"/api/courses/{cid}/pages/{page['id']}")
+ok(s == 200 and pg['title'] == 'Syllabus' and pg['body'] == '# Syllabus', 'a course page opens for the student', pg)
+s, r = head(f'/api/editor/lessons/{L2}', 'PATCH', {'is_published': False})
+s2, ol2 = stud(f'/api/courses/{cid}/{CID}')
+s3, r3 = head(f'/api/editor/lessons/{L2}', 'PATCH', {'is_published': True})
+ok(s == 200 and str(L2) not in [l_['id'] for m_ in ol2['modules'] for l_ in m_['lessons']] and s3 == 200, 'an unpublished lesson disappears for students', [l_['id'] for m_ in ol2['modules'] for l_ in m_['lessons']])
+s, r = stud(f'/api/courses/{cid}/lessons/{L1}/complete', 'PUT')
+s2, ol = stud(f'/api/courses/{cid}/{CID}')
+s3, mc = stud('/api/courses')
+ok(s == 200 and next(l_ for m_ in ol['modules'] for l_ in m_['lessons'] if l_['id'] == str(L1))['completed'] and next(c_ for g in mc['cohorts'] for c_ in g['courses'] if c_['courseId'] == str(CID))['doneLessons'] == 1, 'mark complete shows in the outline and the course figure', r)
+s, r = stud('/api/files', 'POST', {'filename': 'x.pdf', 'size': 10, 'purpose': 'content'})
+ok(s == 403 and r['statusMessage'] == 'permission_denied', 'a student may not upload course content', r)
+
+# --- homework with files -------------------------------------------------------------------
+f1 = upload(stud, 'solution.pdf', PDF, 'submission')
+f2 = upload(stud, 'code.zip', ZIP, 'submission')
+s, r = stud(f'/api/assignments/{aid}/submissions', 'POST', {'body': 'First try, **see** the PDF', 'links': ['https://github.com/x/todo'], 'fileIds': [f1, f2]})
+s2, adet = stud(f'/api/assignments/{aid}')
+sub = adet['submissions'][0]
+ok(s == 201 and len(sub['files']) == 2 and sub['links'] == ['https://github.com/x/todo'] and sub['body'].startswith('First try'), 'student submits two files, a markdown note and a link', sub)
 
 s, rv = mentor('/api/reviews')
 ok(s == 200 and len(rv['waiting']) == 1, 'own mentor sees the submission', rv)
+s, rd = mentor(rv['waiting'][0]['to'].replace('/reviews/', '/api/reviews/'))
+st, loc, _ = location(mentor, f"/api/files/submissions/{rd['submission']['id']}/{f1}")
+ok(s == 200 and len(rd['submission']['files']) == 2 and rd['submission']['body'] and st == 302, 'review shows the files (inline through the route) and the note', (rd.get('submission'), st))
+s, r = head(f'/api/editor/lessons/{L1}', 'DELETE')
+s2, r2 = head(f'/api/assignments/{L1}', 'DELETE')
+ok(r.get('statusMessage') == 'content_has_submissions' and r2.get('statusMessage') == 'content_has_submissions', 'deleting a lesson or assignment with submissions is refused', (r, r2))
 s, roster = head(f'/api/cohorts/{cid}/roster')
 s1row = next(x for x in roster if x['id'] == S1)
 ok(s1row['waiting'] == 1 and s1row['lastActivityAt'], 'roster counts the waiting submission and activity', s1row)
@@ -356,7 +469,9 @@ s, lst = stud('/api/assignments')
 ok(s == 200 and lst['current'] == [] and lst['archive'] and lst['archive'][0]['cohortId'] == cid and lst['archive'][0]['items'], 'student assignments archive', lst)
 s, det = stud(f'/api/assignments/{aid}')
 ok(s == 200 and det['cohort']['status'] == 'finished' and det['submissions'], 'assignment in a finished cohort: readable, with history', det.get('cohort'))
-s, r = stud(f'/api/assignments/{aid}/submissions', 'POST', {'url': 'https://github.com/x/todo2'})
+s, lv = stud(f'/api/courses/{cid}/lessons/{L1}')
+ok(lv['completeClosed'] == 'finished', 'finished cohort: mark complete closed', lv.get('completeClosed'))
+s, r = stud(f'/api/assignments/{aid}/submissions', 'POST', {'links': ['https://github.com/x/todo2']})
 ok(r.get('statusMessage') in ('cohort_not_active', 'submission_pending'), 'submitting in a finished cohort is refused', r)
 s, rv = mentor('/api/reviews')
 ok(s == 200 and len(rv['waiting']) == 1, 'mentor can still review after the end', rv)
@@ -391,6 +506,10 @@ s3, _ = lead('/api/people')
 s4, _ = lead('/api/invites', 'POST', {'email': f'z{RUN}@example.com', 'role': 'mentor'})
 s5, _ = lead('/api/people/options')
 ok((s1, s2, s3, s4, s5) == (403, 403, 403, 403, 200), 'lead: contests, people, invites 403; people picker open', (s1, s2, s3, s4, s5))
+s, eds = head(f'/api/editor/courses/{CID}/editors')
+ok(any(e['user']['id'] == int(LEAD) and e['source'] == 'program_lead' for e in eds), 'the program lead is an editor "via program"', eds)
+s, lc = lead('/api/courses')
+ok(s == 200 and any(c_['id'] == str(CID) for c_ in lc['editing']), 'the lead (not admin) sees the course under Editing', lc.get('editing'))
 s, dash = lead('/api/dashboard/head')
 ok(s == 200 and dash['invites'] == [] and all(x['programId'] == pid for x in dash['cohorts']), 'lead dashboard: own cohorts, no invites', [x['programId'] for x in dash.get('cohorts', [])])
 

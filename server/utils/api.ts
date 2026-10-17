@@ -129,6 +129,20 @@ export function apiFetchStatus<T>(event: H3Event, path: string, opts: ApiOptions
   })
 }
 
+/**
+ * For the API's file redirects: calls `path` without following the `302` and resolves to its `Location`, a freshly
+ * signed storage URL. API errors (404 no_such_file, 403 lesson_locked…) pass through as usual.
+ */
+export function apiRedirect(event: H3Event, path: string, query?: Query): Promise<string> {
+  return authed(event, async (token) => {
+    // ofetch resolves a 3xx (only >= 400 throws), so the Location is read from the response
+    const res = await ofetch.raw(path, { ...init(event, { query }, token), redirect: 'manual' })
+    const location = res.headers.get('location')
+    if (res.status >= 300 && res.status < 400 && location) return location
+    throw createError({ statusCode: 502, statusMessage: 'no_redirect' })
+  })
+}
+
 /** Same as apiFetch, but `null` when the resource is missing or hidden from this user (404/403) */
 export async function apiFind<T>(event: H3Event, path: string, opts: ApiOptions = {}): Promise<T | null> {
   try {

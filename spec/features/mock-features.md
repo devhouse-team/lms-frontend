@@ -8,7 +8,6 @@ can vanish between requests).
 
 | Feature | Screens | Mock routes | Backend status |
 |---|---|---|---|
-| External courses (student-tracked status) | `/courses`, home list | `GET/POST /api/courses`, `DELETE /api/courses/[id]`, `PATCH /api/courses/[id]/status` | Replaced by real hosted courses in [course content](course-content.md#mock-removal) Phase 1: `/courses` and the home list switch to the API, this mock is deleted |
 | LeetCode contests | `/contest` (student), `/contests` (head), home rail | `GET /api/contests`, `POST /api/contest/registration`, `GET /api/contests/current/entries`, `POST /api/contests/current/results` | Phase 4 (E11) |
 | Career steps | `/career`, home rail | `PATCH /api/career/[id]` | Not planned |
 | Mentoring sessions | `/sessions` (mentor), `/mentor` (student), rails | `GET /api/sessions`; inside `/api/mentor/profile` and dashboards | S7.3, S7.4 |

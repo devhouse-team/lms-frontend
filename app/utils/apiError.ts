@@ -4,9 +4,9 @@ interface ErrorJson {
   data?: { details?: { fields?: { loc: (string | number)[], msg: string }[] } }
 }
 
-/** Reads an error from a Nitro route: `code` is the API's error.code, `field()` its validation message for one input */
+/** Reads an error from a Nitro route (null-safe): `code` is the API's error.code, `field()` its validation message for one input */
 export function apiError(e: unknown) {
-  const err = e as { statusCode?: number, data?: ErrorJson }
+  const err = (e ?? {}) as { statusCode?: number, data?: ErrorJson }
   return {
     status: err.statusCode,
     code: err.data?.statusMessage,
