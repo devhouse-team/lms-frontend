@@ -95,7 +95,7 @@ export async function cohortLessons(event: H3Event, cohortId: number): Promise<L
  */
 export async function cohortAssignments(event: H3Event, cohortId: number, lessons: LessonRef[]) {
   const found = await Promise.all(lessons.map(async ({ lesson }) => {
-    const a = await apiFind<S['StudentAssignment']>(event, `/cohorts/${cohortId}/lessons/${lesson.id}/assignment`)
+    const a = await apiFind<S['LegacyStudentAssignment']>(event, `/cohorts/${cohortId}/lessons/${lesson.id}/assignment`)
     return a ? { assignment: a, lesson } : null
   }))
   return found.filter(x => x !== null)
@@ -216,7 +216,7 @@ export async function completedStudentCohorts(event: H3Event) {
 export async function myCohortAssignments(event: H3Event, cohortId: number) {
   const released = (await cohortLessons(event, cohortId)).filter(l => l.lesson.is_released)
   const found = await Promise.all(released.map(({ lesson }) =>
-    apiFind<S['StudentAssignment']>(event, `/cohorts/${cohortId}/lessons/${lesson.id}/assignment`)))
+    apiFind<S['LegacyStudentAssignment']>(event, `/cohorts/${cohortId}/lessons/${lesson.id}/assignment`)))
   return found.filter(a => a !== null)
 }
 
