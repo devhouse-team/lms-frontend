@@ -5,7 +5,7 @@ export default defineEventHandler(async (event): Promise<AssignmentDetail> => {
   const user = await requireRole(event, 'mentee')
   const { cohortId, lessonId } = parseAssignmentKey(getRouterParam(event, 'id'))
   const [a, cohort, staff, mentors] = await Promise.all([
-    apiFetch<components['schemas']['StudentAssignment']>(event, `/cohorts/${cohortId}/lessons/${lessonId}/assignment`),
+    apiFetch<components['schemas']['LegacyStudentAssignment']>(event, `/cohorts/${cohortId}/lessons/${lessonId}/assignment`),
     apiFetch<components['schemas']['CohortRead']>(event, `/cohorts/${cohortId}`),
     listStaff(event, cohortId),
     apiFetch<components['schemas']['MentorAssignmentRead'][]>(event, `/cohorts/${cohortId}/mentors`)

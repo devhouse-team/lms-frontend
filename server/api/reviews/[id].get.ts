@@ -8,7 +8,7 @@ export default defineEventHandler(async (event): Promise<ReviewDetail> => {
   await requireRole(event, 'mentor')
   const sub = await apiFetch<S['SubmissionDetail']>(event, `/submissions/${apiId(getRouterParam(event, 'id'))}`)
   const [assignment, cohort, staff] = await Promise.all([
-    apiFind<S['StudentAssignment']>(event, `/cohorts/${sub.cohort_id}/lessons/${sub.lesson_id}/assignment`),
+    apiFind<S['LegacyStudentAssignment']>(event, `/cohorts/${sub.cohort_id}/lessons/${sub.lesson_id}/assignment`),
     apiFetch<S['CohortRead']>(event, `/cohorts/${sub.cohort_id}`),
     listStaff(event, sub.cohort_id)
   ])

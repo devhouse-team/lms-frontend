@@ -123,7 +123,7 @@ function addAssignment(l: S['LessonOutline']) {
 }
 async function editAssignment(l: S['LessonOutline']) {
   try {
-    const a = await $fetch<S['AssignmentRead']>(`/api/editor/lessons/${l.id}/assignment`)
+    const a = await $fetch<S['LegacyAssignmentRead']>(`/api/editor/lessons/${l.id}/assignment`)
     editingAssignment.value = { id: String(l.id), lessonTitle: l.title, title: a.title, description: a.instructions, dueOffsetDays: a.due_offset_days, submissions: l.assignments[0]?.submission_count ?? 0 }
     assignmentModal.value = true
   } catch (e) {

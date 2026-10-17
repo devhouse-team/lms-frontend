@@ -1,7 +1,7 @@
 import type { components } from '~~/shared/types/api'
 import type { AssignmentListItem, AssignmentsResponse } from '~~/shared/types'
 
-const item = (cohortId: number) => (a: components['schemas']['StudentAssignment']): AssignmentListItem => {
+const item = (cohortId: number) => (a: components['schemas']['LegacyStudentAssignment']): AssignmentListItem => {
   const last = [...a.submissions].sort(byVersionDesc)[0]
   return {
     id: assignmentKey(cohortId, a.lesson_id),
