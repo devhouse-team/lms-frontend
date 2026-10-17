@@ -51,17 +51,19 @@ const pastDue = computed(() => !!a.value?.dueAt && Date.parse(a.value.dueAt) < n
 /** The exam form hides at closes_at; a send already in flight is still accepted for 2 minutes */
 const windowOver = computed(() => !!a.value?.closesAt && until(a.value.closesAt) <= 0)
 const counted = computed(() => a.value?.submissions[0])
+/** An exam send (or upload) still running at closes_at keeps the form mounted, so `sent` isn't lost */
+const inFlight = ref(false)
 const examState = computed(() => {
   const x = a.value
   if (!x || x.mode !== 'exam') return undefined
   if (counted.value) return 'submitted'
   if (x.phase === 'not_open') return 'not_open'
-  if (x.phase === 'closed' || windowOver.value) return 'missed'
+  if ((x.phase === 'closed' || windowOver.value) && !inFlight.value) return 'missed'
   return 'open'
 })
 const canSend = computed(() => !!a.value?.canSubmit && !closedCohort.value && !(a.value.mode === 'exam' && windowOver.value))
 
-// ---- exam opening: refetch once at opens_at (0–3 s jitter), then every 5 s up to 6 times ---------------------------
+// ---- exam opening: refetch once at opens_at (0–3 s jitter), then retry every 5 s up to 6 times ---------------------------
 const stuck = ref(false)
 const announce = ref('')
 let retries = 0
@@ -72,7 +74,7 @@ async function refetchUntilOpen() {
     announce.value = t('exam.nowOpen')
     return
   }
-  if (++retries >= 6) return void (stuck.value = true)
+  if (++retries > 6) return void (stuck.value = true)
   pending = setTimeout(refetchUntilOpen, 5000)
 }
 watch(now, (n) => {
@@ -86,7 +88,18 @@ watch(now, (n) => {
     if (left <= 15 * 60_000 && left > 15 * 60_000 - 1000) announce.value = t('exam.fifteenLeft')
   }
 })
-onBeforeUnmount(() => clearTimeout(pending))
+// ---- exam closing: refetch at closes_at and after the 2-minute grace (a late send from another tab, the final state)
+let graceTimer: ReturnType<typeof setTimeout> | undefined
+watch(windowOver, (over) => {
+  if (!over || a.value?.mode !== 'exam' || counted.value) return
+  refresh()
+  clearTimeout(graceTimer)
+  graceTimer = setTimeout(refresh, until(a.value.closesAt!) + 125_000)
+})
+onBeforeUnmount(() => {
+  clearTimeout(pending)
+  clearTimeout(graceTimer)
+})
 
 // ---- sending --------------------------------------------------------------------------------------------
 async function onSent(trial = false) {
@@ -151,15 +164,16 @@ const MODE_ICON = { homework: 'i-lucide-notebook-pen', exam: 'i-lucide-timer', p
 
           <!-- Exam: open window, one attempt -->
           <template v-else-if="a.mode === 'exam'">
-            <section v-if="examState === 'open' && canSend" aria-labelledby="exam-submit" class="rounded-lg bg-elevated p-5 ring-1 ring-inset ring-default sm:p-6">
+            <section v-if="examState === 'open' && (canSend || inFlight)" aria-labelledby="exam-submit" class="rounded-lg bg-elevated p-5 ring-1 ring-inset ring-default sm:p-6">
               <div class="flex flex-wrap items-baseline justify-between gap-3">
                 <h2 id="exam-submit" class="text-sm font-semibold text-highlighted">{{ t('exam.submitTitle') }}</h2>
-                <p v-if="mounted" class="num text-sm" :class="until(a.closesAt!) < 15 * 60_000 ? 'text-primary' : 'text-muted'">{{ t('exam.closesIn', { value: countdown(a.closesAt!) }) }}</p>
+                <p v-if="mounted && !windowOver" class="num text-sm" :class="until(a.closesAt!) < 15 * 60_000 ? 'text-primary' : 'text-muted'">{{ t('exam.closesIn', { value: countdown(a.closesAt!) }) }}</p>
               </div>
               <p class="mt-1 text-sm text-muted">{{ t('exam.onceNote') }}</p>
-              <SubmitForm class="mt-5" :cohort-id="a.cohortId" :assignment-id="a.id" :accepts="a.accepts" :confirm-text="t('exam.confirmText')" :send-label="t('exam.send')" @sent="onSent()" @error="onSendError" />
+              <SubmitForm class="mt-5" :cohort-id="a.cohortId" :assignment-id="a.id" :accepts="a.accepts" :confirm-text="t('exam.confirmText')" :send-label="t('exam.send')" @sent="onSent()" @error="onSendError" @busy="v => (inFlight = v)" />
             </section>
             <UAlert v-else-if="examState === 'submitted'" icon="i-lucide-circle-check" color="success" variant="subtle" :description="t(counted!.isLate ? 'exam.submittedLate' : 'exam.submitted', { time: timeOf(counted!.submittedAt) })" />
+            <UAlert v-else-if="examState === 'open'" icon="i-lucide-pause" color="neutral" variant="subtle" :description="t('exam.cantSubmit')" />
             <UAlert v-else-if="examState === 'missed'" icon="i-lucide-circle-x" color="neutral" variant="subtle" :description="t('exam.missed', { time: a.closesAt ? timeOf(a.closesAt) : '' })" />
 
             <!-- Trial: prove the upload works before the window; never counts -->

@@ -19,7 +19,7 @@ const sending = ref<'accepted' | 'changes' | null>(null)
 const { toastError } = useApiErrors('content')
 /** Exams are graded once and practice only gets comments: neither can be sent back (review_decision_not_allowed) */
 const canSendBack = computed(() => data.value?.mode === 'homework')
-const scoreOk = computed(() => !data.value?.assignment.maxScore || score.value === undefined || (score.value >= 0 && score.value <= data.value.assignment.maxScore))
+const scoreOk = computed(() => !data.value?.assignment.maxScore || score.value === undefined || (Number.isInteger(score.value) && score.value >= 0 && score.value <= data.value.assignment.maxScore))
 
 async function decide(verdict: 'accepted' | 'changes') {
   feedbackError.value = null
@@ -93,7 +93,7 @@ async function decide(verdict: 'accepted' | 'changes') {
             <h2 id="verdict-title" class="text-sm font-semibold text-highlighted">{{ t('review.verdict') }}</h2>
             <p v-if="data.mode !== 'homework'" class="mt-1 text-sm text-muted">{{ t(`review.modeNote.${data.mode}`) }}</p>
             <UFormField v-if="data.assignment.maxScore && data.mode !== 'practice'" class="mt-4" :label="t('review.score', { max: data.assignment.maxScore })" :error="scoreOk ? undefined : t('review.err.score', { max: data.assignment.maxScore })">
-              <UInputNumber v-model="score" :min="0" :max="data.assignment.maxScore" :step="0.5" class="w-36" />
+              <UInputNumber v-model="score" :min="0" :max="data.assignment.maxScore" :step="1" class="w-36" />
             </UFormField>
             <UFormField class="mt-4" :label="t('review.feedback')" :help="canSendBack ? t('review.feedbackHelp') : undefined" :error="feedbackError ?? undefined" name="feedback">
               <MarkdownEditor v-model="feedback" mode="compact" :max-length="50000" :placeholder="t('review.feedbackPlaceholder')" />

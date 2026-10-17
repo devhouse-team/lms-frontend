@@ -16,7 +16,10 @@ const fmt = (iso?: string) => !iso ? t('assignment.noDue') : new Intl.DateTimeFo
 /** Practice has no deadline pressure: its own group, never in "Open" */
 const items = computed(() => (data.value?.current ?? []).filter(a => a.mode !== 'practice'))
 const practice = computed(() => (data.value?.current ?? []).filter(a => a.mode === 'practice'))
-const open = computed(() => items.value.filter(a => a.status !== 'accepted'))
+/** An exam whose window (plus the 2-minute grace) ended without a submission: nothing left to do */
+const isMissed = (a: AssignmentListItem) => a.mode === 'exam' && a.status === 'not_submitted' && !!a.closesAt && Date.parse(a.closesAt) + 120_000 < now.value
+const open = computed(() => items.value.filter(a => a.status !== 'accepted' && !isMissed(a)))
+const missed = computed(() => items.value.filter(isMissed))
 const done = computed(() => items.value.filter(a => a.status === 'accepted'))
 const isPast = (iso?: string) => !iso || new Date(iso).getTime() < now.value
 /** Due figure, or the exam's start ("Exam · Fri 14:00") */
@@ -34,7 +37,7 @@ const when = (a: AssignmentListItem) => a.mode === 'exam' && a.opensAt
           <p class="num mt-1 text-sm text-muted">{{ t('assignment.summary', { done: done.length, total: items.length }) }}</p>
         </header>
 
-        <section v-for="group in [{ key: 'open', items: open }, { key: 'done', items: done }, ...(practice.length ? [{ key: 'practice', items: practice }] : [])]" :key="group.key" :aria-labelledby="`g-${group.key}`">
+        <section v-for="group in [{ key: 'open', items: open }, { key: 'done', items: done }, ...(missed.length ? [{ key: 'missed', items: missed }] : []), ...(practice.length ? [{ key: 'practice', items: practice }] : [])]" :key="group.key" :aria-labelledby="`g-${group.key}`">
           <h2 :id="`g-${group.key}`" class="mb-3 text-sm font-semibold text-highlighted">{{ t(`assignment.group.${group.key}`) }}</h2>
           <ul v-if="group.items.length" class="divide-y divide-default rounded-lg ring-1 ring-inset ring-default">
             <li v-for="a in group.items" :key="a.id">

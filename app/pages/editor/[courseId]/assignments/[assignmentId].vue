@@ -73,7 +73,7 @@ const errors = computed(() => {
   if (state.title.trim().length < 2 || state.title.length > 200) e.title = t('editor.err.title2')
   if (!state.acceptsText && !state.acceptsLinks && !state.acceptsFiles) e.accepts = t('editor.err.accepts')
   if (!Number.isInteger(state.maxFiles) || state.maxFiles < 1 || state.maxFiles > 20) e.maxFiles = t('editor.err.maxFiles')
-  if (state.maxScore !== undefined && !(state.maxScore > 0)) e.maxScore = t('editor.err.maxScore')
+  if (state.maxScore !== undefined && !(Number.isInteger(state.maxScore) && state.maxScore >= 1)) e.maxScore = t('editor.err.maxScore')
   if (state.mode === 'exam') {
     if (!/^\d{2}:\d{2}$/.test(state.opensTime)) e.window = t('editor.err.time')
     if (!(state.duration >= 10 && state.duration <= 10_080)) e.window = t('editor.err.duration')
@@ -126,8 +126,8 @@ async function save() {
     const field = apiError(e).field
     if (c === 'exam_window_started') fieldError.value = { window: message(e) }
     else if (c === 'content_has_submissions') fieldError.value = { mode: t('content.err.modeLocked') }
-    else if (c === 'validation_error' && (field('title') || field('statement') || field('due_offset_days') || field('opens_time') || field('duration_minutes'))) {
-      fieldError.value = { title: field('title') ?? '', statement: field('statement') ?? '', window: field('opens_time') ?? field('duration_minutes') ?? '', due: field('due_offset_days') ?? '' }
+    else if (c === 'validation_error' && (field('title') || field('statement') || field('due_offset_days') || field('opens_time') || field('duration_minutes') || field('max_score'))) {
+      fieldError.value = { title: field('title') ?? '', statement: field('statement') ?? '', window: field('opens_time') ?? field('duration_minutes') ?? '', due: field('due_offset_days') ?? '', maxScore: field('max_score') ?? '' }
     } else toastError(e)
   } finally {
     saving.value = false
@@ -296,8 +296,8 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
               <UCheckboxGroup v-model="state.fileTypes" :items="FILE_GROUPS.map(g => ({ value: g, label: t(`submission.group.${g}`) }))" orientation="horizontal" />
             </UFormField>
           </template>
-          <UFormField v-if="state.mode !== 'practice'" :label="t('editor.maxScore')" :help="t('editor.maxScoreHelp')" :error="errors.maxScore">
-            <UInputNumber v-model="state.maxScore" :min="0.5" :step="0.5" class="w-36" />
+          <UFormField v-if="state.mode !== 'practice'" :label="t('editor.maxScore')" :help="t('editor.maxScoreHelp')" :error="fieldError.maxScore || errors.maxScore">
+            <UInputNumber v-model="state.maxScore" :min="1" :step="1" class="w-36" />
           </UFormField>
         </section>
 

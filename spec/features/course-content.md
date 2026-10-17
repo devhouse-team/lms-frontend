@@ -65,6 +65,13 @@ Differences from the text below (the code follows these):
   the link changes.
 - Practice sends with "Send attempt" and toasts "Attempt sent"; its page shows "Sent" / "Commented" instead of a
   status badge.
+- Exam closing: a send or upload still running at `closes_at` keeps the form mounted (`SubmitForm` emits `busy`) and
+  holds off "missed" until it lands; the page refetches at `closes_at` and again 2 min 5 s later. An open exam the
+  student can't send to (paused enrollment, `can_submit: false`) shows a notice. On `/assignments` an exam missed
+  after the grace moves to its own "Missed" group.
+- Scores are whole numbers (max score from 1, a review score from 0 to the max).
+- `scripts/zoned-time.check.ts` checks the zone conversions (Almaty, Berlin spring gap and autumn overlap):
+  `node --experimental-strip-types scripts/zoned-time.check.ts`.
 
 ## Decisions this spec relies on
 
@@ -838,8 +845,8 @@ a browser check, or the named check.
 - [x] Practice: unlimited submissions; the solution appears right after the first; practice isn't in the queue
   unless "Include practice" is on. (e2e) ✓ e2e-smoke + browser check
 - [x] Accepted formats and limits shape the form (files-only exam shows no text or links; 1 PDF max). (e2e) ✓ e2e-smoke (text refused) + browser check (no text or link fields, `accept=".pdf"`)
-- [ ] An `after_due` solution shows "Solution opens {date}" before and the material after; a `manual` one opens
-  only after "Release now" in that cohort and stays hidden in another cohort. (e2e) Open: the `manual` part ✓ e2e-smoke (released in one cohort, hidden in another); `after_due` not run (needs a passed due day).
+- [x] An `after_due` solution shows "Solution opens {date}" before and the material after; a `manual` one opens
+  only after "Release now" in that cohort and stays hidden in another cohort. (e2e) ✓ e2e-smoke: `manual` released in one cohort, hidden in another; `after_due` open for a homework whose due day passed (cohort started 7 days ago, 1-day offset), locked for a 30-day one.
 - [x] Exam review offers Accept (with score when set) and no "Request changes". ✓ browser check + e2e-smoke (`review_decision_not_allowed`, score 8 saved)
 - [x] Changing an exam's window after it opened in a cohort shows the field error. ✓ browser check (assignment editor and cohort override)
 - [x] Exam times show in the cohort timezone with the label, plus the viewer's time when different. ✓ browser check (viewer in Europe/Berlin)

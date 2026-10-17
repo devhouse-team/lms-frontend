@@ -520,6 +520,16 @@ ok(s == 200 and h2['solutions'][0]['isReleased'] and h2['solutions'][0]['body'] 
 s, msol = mentor(f'/api/cohorts/{cid}/solutions')
 ok(s == 200 and msol and not any(x['canRelease'] for x in msol), 'a plain mentor sees solutions read-only', [x['canRelease'] for x in msol] if isinstance(msol, list) else msol)
 
+# after_due: the cohort started 7 days ago, so a 1-day due offset has passed; a 30-day one hasn't
+s, hp = head(f'/api/editor/lessons/{L1}/assignments', 'POST', {**HW, 'title': 'Past due', 'mode': 'homework', 'due_offset_days': 1})
+s2, hf = head(f'/api/editor/lessons/{L1}/assignments', 'POST', {**HW, 'title': 'Future due', 'mode': 'homework', 'due_offset_days': 30})
+s3, ap = head(f'/api/editor/lessons/{L1}/materials', 'POST', {'title': 'Past solution', 'kind': 'markdown', 'tags': [], 'body': 'past answer', 'url': None, 'file_ids': [], 'is_published': True, 'solution_of_id': hp['id'], 'release': 'after_due'})
+s4, af = head(f'/api/editor/lessons/{L1}/materials', 'POST', {'title': 'Future solution', 'kind': 'markdown', 'tags': [], 'body': 'future answer', 'url': None, 'file_ids': [], 'is_published': True, 'solution_of_id': hf['id'], 'release': 'after_due'})
+s5, vp = stud(f"/api/assignments/{cid}/{hp['id']}")
+s6, vf = stud(f"/api/assignments/{cid}/{hf['id']}")
+ok((s, s2, s3, s4) == (201, 201, 201, 201) and vp['solutions'][0]['isReleased'] and vp['solutions'][0]['body'] == 'past answer' and not vf['solutions'][0]['isReleased'] and not vf['solutions'][0].get('body'),
+   'after_due solution: open once the due day passed, locked before it', (vp.get('solutions'), vf.get('solutions')))
+
 s, tz = head('/api/cohorts', 'POST', {'name': f'TZ-{RUN}', 'programId': pid, 'startsOn': day(5), 'timezone': 'Europe/Berlin'})
 s2, tzd = head(f"/api/cohorts/{tz['id']}")
 s3, r3 = head(f'/api/cohorts/{cid}', 'PATCH', {'timezone': 'Europe/Berlin'})

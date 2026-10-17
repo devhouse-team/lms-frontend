@@ -3,7 +3,7 @@ import type { OkResponse } from '~~/shared/types'
 
 /** Exams and practice accept only (API: review_decision_not_allowed); a score when the assignment has max_score */
 const body = z.discriminatedUnion('verdict', [
-  z.object({ verdict: z.literal('accepted'), feedback: z.string().trim().max(50_000).optional(), score: z.number().min(0).nullable().optional() }),
+  z.object({ verdict: z.literal('accepted'), feedback: z.string().trim().max(50_000).optional(), score: z.number().int().min(0).nullable().optional() }),
   z.object({ verdict: z.literal('changes'), feedback: z.string().trim().min(2).max(50_000) })
 ])
 

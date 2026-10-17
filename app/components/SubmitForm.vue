@@ -15,7 +15,7 @@ const props = defineProps<{
   confirmText?: string
   sendLabel?: string
 }>()
-const emit = defineEmits<{ sent: [], error: [e: unknown] }>()
+const emit = defineEmits<{ sent: [], error: [e: unknown], busy: [busy: boolean] }>()
 const { t, locale } = useI18n()
 const toast = useToast()
 const { upload } = useStorageUpload()
@@ -62,6 +62,8 @@ function start(item: Item) {
 const counted = computed(() => files.value.filter(f => f.state !== 'error').length)
 const removeFile = (key: number) => (files.value = files.value.filter(f => f.key !== key))
 const busy = computed(() => files.value.some(f => f.state === 'uploading'))
+/** Lets the exam page keep the form mounted past closes_at while a send is in flight */
+watch(() => sending.value || busy.value, v => emit('busy', v))
 
 const cleanLinks = computed(() => links.value.map(l => l.trim()).filter(Boolean))
 const badLink = computed(() => cleanLinks.value.find(l => !/^https?:\/\/\S+\.\S+/i.test(l)))
