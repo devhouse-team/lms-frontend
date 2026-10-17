@@ -8,7 +8,8 @@ Everyone with an account, their role and where they are, plus pending invites.
 
 | Route | Who | What it shows / does |
 |---|---|---|
-| `/people` | head | Tabs all / students / mentors / leadership with counts, search by name, email, username or cohort. Table: name + email, role ("not in a cohort" when none), cohort / program. Rail: pending [invites](invites.md). "Invite" button. |
+| `/people` | head | Tabs all / students / mentors / leadership with counts, search by name, email, username or cohort. Table: name + email, role ("not in a cohort" when none), cohort / program. Rail: pending [invites](invites.md). "Invite" button. Names link to the profile. |
+| `/people/{id}` | head | One person: avatar, name, email, username, derived role, admin and email-verified badges. "As a student": every cohort they were enrolled in (current first) with status, date of the last status change and, for current enrollments, their mentor. "As staff": cohorts where they are mentor or reviewer. Unknown, deactivated or non-numeric ids show "Person not found". |
 
 ## Behavior
 
@@ -29,11 +30,13 @@ as mentor/mentee/none (the API doesn't expose their roles: O6).
 | UI call (Nitro) | API calls | Notes |
 |---|---|---|
 | `GET /api/people` | `GET /users/` (all pages of 100), `GET /cohorts/`, per cohort `…/staff` + `…/enrollments`, `GET /invites/` | Also feeds the mentor and student pickers |
+| `GET /api/people/{id}` | `GET /users/` and the same cohort relations; per current enrollment `GET /cohorts/{id}/mentors` | The API has no user lookup by id, so the person is found in the list (404 when absent). Shared code: `server/utils/people.ts` |
 
 ## Acceptance criteria
 
 - [x] The list includes newly accepted mentors and registered students with derived roles.
 - [x] Pending invites appear in the rail; accepted ones don't.
+- [ ] A name in the list opens `/people/{id}` with the right cohorts, statuses and mentor; a mentor or student gets 403 there; `/people/invite` still opens the invite form. (Typechecked; not yet run against a backend.)
 
 ## Known gaps
 
