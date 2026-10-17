@@ -794,8 +794,8 @@ a browser check, or the named check.
   block and a table renders correctly (screenshot); a PDF opens inline on desktop and as Open / Download on a phone
   viewport; a YouTube link plays embedded; a zip shows name, size and Download. (e2e for the data, browser check for
   rendering) ✓ e2e-smoke + browser check (desktop and iPhone 13)
-- [ ] A markdown image `file:<id>` loads through the Nitro file route; after leaving the page open 10 minutes, a lazy
-  image further down and a Download still work; no `s3.` URL appears in the page HTML.
+- [x] A markdown image `file:<id>` loads through the Nitro file route; after leaving the page open 10 minutes, a lazy
+  image further down and a Download still work; no `s3.` URL appears in the page HTML. ✓ browser check (page open 10 minutes, then a lazy image and a Download)
 - [x] Markdown with `<script>`, `<img onerror>`, `javascript:` links and `<iframe>` renders inert (unit check of
   `renderMarkdown` with these inputs; `v-html` appears only in `MarkdownView.vue`). ✓ browser check of `renderMarkdown` through the editor preview; grep: one `v-html`
 - [x] Mark complete flips at once, survives a reload, updates the sidebar check and the home figure; in a finished
