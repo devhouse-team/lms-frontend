@@ -338,7 +338,8 @@ ok(s == 200 and any(o['id'] == pcid for o in opts) and all(o['status'] != 'finis
 
 # --- assignments and reviews -------------------------------------------------------------
 s, det = head(f'/api/cohorts/{cid}')
-ok(len(det['lessons']) == 3, 'cohort got the curriculum course and its lessons', len(det['lessons']))
+s, cc = api(f'/cohorts/{cid}/courses')
+ok(any(x['course_id'] == course['id'] and x['lesson_count'] == 3 for x in cc), 'cohort got the curriculum course and its lessons', cc)
 
 # --- course editor through Nitro (spec course-content.md) -----------------------------------
 CID = course['id']
@@ -383,8 +384,9 @@ s, r = head('/api/files', 'POST', {'filename': 'a.exe', 'size': 10, 'purpose': '
 s2, r2 = head('/api/files', 'POST', {'filename': 'big.zip', 'size': 30 * 1024 * 1024, 'purpose': 'submission'})
 s3, r3 = head('/api/files', 'POST', {'filename': 'notes.ts', 'size': 10, 'purpose': 'submission'})
 ok(r.get('statusMessage') == 'validation_error' and r2.get('statusMessage') == 'file_too_large' and s3 == 200, 'upload rules: .exe and 30 MB refused before the API, .ts accepted', (r, r2, s3))
-s, r = head('/api/assignments', 'POST', {'lessonId': det['lessons'][0]['id'], 'title': 'Todo app', 'description': 'Build it', 'dueOffsetDays': 30})
-ok(s == 201, 'attach assignment to a lesson', r)
+HW = {'statement': 'Build it', 'file_ids': [], 'is_published': True, 'accepts_text': True, 'accepts_links': True, 'accepts_files': True, 'max_files': 10, 'file_types': [], 'trial_enabled': False}
+s, hw = head(f'/api/editor/lessons/{L1}/assignments', 'POST', {**HW, 'title': 'Todo app', 'mode': 'homework', 'due_offset_days': 30})
+ok(s == 201 and hw['mode'] == 'homework', 'homework assignment through the editor', hw)
 
 stud = Bff()
 s, r = stud('/api/auth/login', 'POST', {'login': f'{student_u}@example.com', 'password': 'Str0ng-pass-123!'})
@@ -400,8 +402,10 @@ ok(r['status'] == 'archived' and d2['cohort']['program']['title'] == d['cohort']
 s, r = head(f'/api/programs/{pid}/activate', 'POST')
 ok(r['status'] == 'active', 'restore', r)
 s, lst = stud('/api/assignments')
-ok(s == 200 and len(lst['current']) == 1 and lst['archive'] == [], 'student assignment list', lst)
-aid = lst['current'][0]['id']
+ok(s == 200 and len(lst['current']) == 1 and lst['current'][0]['mode'] == 'homework' and lst['archive'] == [], 'student assignment list (one call per cohort)', lst)
+aid = lst['current'][0]['to'].replace('/assignments/', '')
+s, r = stud(f'/api/assignments/resolve/{cid}-{L1}')
+ok(s == 200 and r['to'] == f'/assignments/{aid}', 'old /assignments/{cohort}-{lesson} links resolve to the new page', r)
 
 # --- student reads the course --------------------------------------------------------------
 s, mc = stud('/api/courses')
@@ -446,7 +450,7 @@ s, rd = mentor(rv['waiting'][0]['to'].replace('/reviews/', '/api/reviews/'))
 st, loc, _ = location(mentor, f"/api/files/submissions/{rd['submission']['id']}/{f1}")
 ok(s == 200 and len(rd['submission']['files']) == 2 and rd['submission']['body'] and st == 302, 'review shows the files (inline through the route) and the note', (rd.get('submission'), st))
 s, r = head(f'/api/editor/lessons/{L1}', 'DELETE')
-s2, r2 = head(f'/api/assignments/{L1}', 'DELETE')
+s2, r2 = head(f"/api/editor/assignments/{hw['id']}", 'DELETE')
 ok(r.get('statusMessage') == 'content_has_submissions' and r2.get('statusMessage') == 'content_has_submissions', 'deleting a lesson or assignment with submissions is refused', (r, r2))
 s, roster = head(f'/api/cohorts/{cid}/roster')
 s1row = next(x for x in roster if x['id'] == S1)
@@ -454,6 +458,91 @@ ok(s1row['waiting'] == 1 and s1row['lastActivityAt'], 'roster counts the waiting
 s, dash = head('/api/dashboard/head')
 load = {m['id']: m for m in dash['mentorLoad']}
 ok(s == 200 and load.get(A, {}).get('waiting') == 1, 'head mentor load per mentor', dash['mentorLoad'])
+
+# --- assignments v2: exam with trials and a short window, practice, solutions (spec Phase 2) ----------------------
+import datetime as dt
+iso = lambda secs: (dt.datetime.now(dt.timezone.utc) + dt.timedelta(seconds=secs)).isoformat()
+s, ex = head(f'/api/editor/lessons/{L1}/assignments', 'POST', {**HW, 'title': 'Midterm', 'mode': 'exam', 'statement': 'Solve **all**', 'accepts_text': False, 'accepts_links': False, 'max_files': 1, 'file_types': ['pdf'], 'max_score': 10, 'opens_offset_days': 30, 'opens_time': '10:00', 'duration_minutes': 60, 'trial_enabled': True})
+s2, r = head(f"/api/cohorts/{cid}/exams/{ex['id']}/window", 'PUT', {'opensAt': iso(25), 'closesAt': iso(40)})
+ok(s == 201 and s2 == 200, 'exam created; this cohort gets its own short window', (ex, r))
+EX = f"/api/assignments/{cid}/{ex['id']}"
+s, e1 = stud(EX)
+ok(s == 200 and e1['phase'] == 'not_open' and e1['statement'] is None and e1['canTrial'] and not e1['canSubmit'] and e1['accepts']['maxFiles'] == 1, 'exam before the window: no statement, trial possible', e1)
+for i in range(3):
+    s, r = stud(f'{EX}/submissions', 'POST', {'fileIds': [upload(stud, f'trial{i}.pdf', PDF, 'submission')], 'isTrial': True})
+s2, r2 = stud(f'{EX}/submissions', 'POST', {'fileIds': [upload(stud, 'trial4.pdf', PDF, 'submission')], 'isTrial': True})
+s3, e1 = stud(EX)
+ok(s == 201 and r2.get('statusMessage') == 'trial_limit' and len(e1['trials']) == 3 and e1['trials'][0]['isTrial'], 'three trials accepted, the fourth refused', (r, r2))
+s, r = stud(f'{EX}/submissions', 'POST', {'body': 'text answer'})
+ok(r.get('statusMessage') in ('format_not_accepted', 'exam_not_open'), 'a files-only exam refuses text', r)
+s, rv = mentor('/api/reviews')
+ok(not any(x['title'] == 'Midterm' for x in rv['waiting']), 'trials never reach the review queue', rv['waiting'])
+time.sleep(27)
+s, e2 = stud(EX)
+ok(e2['phase'] == 'open' and e2['statement'] == 'Solve **all**' and e2['canSubmit'] and not e2['canTrial'], 'window open: statement visible, one attempt, no trials', e2.get('phase'))
+s, r = stud(f'{EX}/submissions', 'POST', {'fileIds': [upload(stud, 'answer.pdf', PDF, 'submission')]})
+s2, r2 = stud(f'{EX}/submissions', 'POST', {'fileIds': [upload(stud, 'again.pdf', PDF, 'submission')]})
+ok(s == 201 and r2.get('statusMessage') == 'attempt_used' and s2 == 409, 'one exam submission; a second answers attempt_used', (r, r2))
+s, rv = mentor('/api/reviews')
+er = next(x for x in rv['waiting'] if x['title'] == 'Midterm')
+s, rd = mentor(er['to'].replace('/reviews/', '/api/reviews/'))
+s2, r2 = mentor(er['to'].replace('/reviews/', '/api/reviews/'), 'POST', {'verdict': 'changes', 'feedback': 'redo'})
+s3, r3 = mentor(er['to'].replace('/reviews/', '/api/reviews/'), 'POST', {'verdict': 'accepted', 'feedback': 'Good', 'score': 8})
+s4, e3 = stud(EX)
+ok(rd['mode'] == 'exam' and len(rd['trials']) == 3 and rd['assignment']['maxScore'] == 10 and r2.get('statusMessage') == 'review_decision_not_allowed' and s3 == 200 and e3['submissions'][0]['score'] == 8, 'exam review: trials shown, accept with a score only', (r2, r3))
+
+s, pr = head(f'/api/editor/lessons/{L1}/assignments', 'POST', {**HW, 'title': 'Drill', 'mode': 'practice'})
+s2, sol = head(f'/api/editor/lessons/{L1}/materials', 'POST', {'title': 'Drill solution', 'kind': 'markdown', 'tags': [], 'body': 'answer: 42', 'url': None, 'file_ids': [], 'is_published': True, 'solution_of_id': pr['id']})
+PR = f"/api/assignments/{cid}/{pr['id']}"
+s3, p1 = stud(PR)
+ok(s == 201 and sol['release'] == 'after_submit' and p1['solutions'] and not p1['solutions'][0]['isReleased'], 'practice: its solution is listed, locked until a first attempt', (sol.get('release'), p1.get('solutions')))
+s, lv = stud(f'/api/courses/{cid}/lessons/{L1}')
+s2, al = stud('/api/assignments')
+ok({'homework', 'exam', 'practice'} <= {x['mode'] for x in lv['assignments']} and {'homework', 'exam', 'practice'} <= {x['mode'] for x in al['current']}, 'one lesson, several assignments: in its block and in /assignments', [x['mode'] for x in lv['assignments']])
+s, r = stud(f'{PR}/submissions', 'POST', {'body': 'try 1'})
+s2, r2 = stud(f'{PR}/submissions', 'POST', {'body': 'try 2'})
+s3, p2 = stud(PR)
+ok(s == 201 and s2 == 201 and len(p2['submissions']) == 2 and p2['solutions'][0]['isReleased'] and p2['solutions'][0]['body'] == 'answer: 42', 'practice: unlimited attempts, solution after the first', p2.get('solutions'))
+s, rv = mentor('/api/reviews')
+s2, rv2 = mentor('/api/reviews?practice=1')
+ok(not any(x['mode'] == 'practice' for x in rv['waiting']) and any(x['mode'] == 'practice' for x in rv2['waiting']), 'practice is out of the queue unless asked for', [x['mode'] for x in rv2['waiting']])
+
+s, ms = head(f'/api/editor/lessons/{L1}/materials', 'POST', {'title': 'Todo solution', 'kind': 'markdown', 'tags': [], 'body': 'the todo answer', 'url': None, 'file_ids': [], 'is_published': True, 'solution_of_id': hw['id'], 'release': 'manual'})
+s2, h1 = stud(f'/api/assignments/{aid}')
+s3, sols = head(f'/api/cohorts/{cid}/solutions')
+row_ = next((x for x in sols if x['materialId'] == str(ms['id'])), None)
+ok(s == 201 and not h1['solutions'][0]['isReleased'] and row_ and row_['canRelease'] and not row_['isReleased'], 'manual solution: hidden, the head may release it', (h1.get('solutions'), row_))
+s, r = head(f"/api/cohorts/{cid}/solutions/{ms['id']}", 'PUT')
+s2, h2 = stud(f'/api/assignments/{aid}')
+s3, other = head(f'/api/cohorts/{pcid}/solutions')
+orow = next((x for x in other if x['materialId'] == str(ms['id'])), None)
+ok(s == 200 and h2['solutions'][0]['isReleased'] and h2['solutions'][0]['body'] == 'the todo answer' and orow and not orow['isReleased'] and not orow['releasedAt'], 'release now: open in this cohort, still hidden in another', (h2.get('solutions'), orow))
+s, msol = mentor(f'/api/cohorts/{cid}/solutions')
+ok(s == 200 and msol and not any(x['canRelease'] for x in msol), 'a plain mentor sees solutions read-only', [x['canRelease'] for x in msol] if isinstance(msol, list) else msol)
+
+# after_due: the cohort started 7 days ago, so a 1-day due offset has passed; a 30-day one hasn't
+s, hp = head(f'/api/editor/lessons/{L1}/assignments', 'POST', {**HW, 'title': 'Past due', 'mode': 'homework', 'due_offset_days': 1})
+s2, hf = head(f'/api/editor/lessons/{L1}/assignments', 'POST', {**HW, 'title': 'Future due', 'mode': 'homework', 'due_offset_days': 30})
+s3, ap = head(f'/api/editor/lessons/{L1}/materials', 'POST', {'title': 'Past solution', 'kind': 'markdown', 'tags': [], 'body': 'past answer', 'url': None, 'file_ids': [], 'is_published': True, 'solution_of_id': hp['id'], 'release': 'after_due'})
+s4, af = head(f'/api/editor/lessons/{L1}/materials', 'POST', {'title': 'Future solution', 'kind': 'markdown', 'tags': [], 'body': 'future answer', 'url': None, 'file_ids': [], 'is_published': True, 'solution_of_id': hf['id'], 'release': 'after_due'})
+s5, vp = stud(f"/api/assignments/{cid}/{hp['id']}")
+s6, vf = stud(f"/api/assignments/{cid}/{hf['id']}")
+ok((s, s2, s3, s4) == (201, 201, 201, 201) and vp['solutions'][0]['isReleased'] and vp['solutions'][0]['body'] == 'past answer' and not vf['solutions'][0]['isReleased'] and not vf['solutions'][0].get('body'),
+   'after_due solution: open once the due day passed, locked before it', (vp.get('solutions'), vf.get('solutions')))
+
+s, tz = head('/api/cohorts', 'POST', {'name': f'TZ-{RUN}', 'programId': pid, 'startsOn': day(5), 'timezone': 'Europe/Berlin'})
+s2, tzd = head(f"/api/cohorts/{tz['id']}")
+s3, r3 = head(f'/api/cohorts/{cid}', 'PATCH', {'timezone': 'Europe/Berlin'})
+ok(s == 201 and tzd['timezone'] == 'Europe/Berlin' and r3.get('statusMessage') == 'cohort_started', 'cohort timezone: set on create, locked once active', (tzd.get('timezone'), r3))
+
+# The window closes (25 s + 15 s) plus the 2-minute grace: a student who didn't submit has missed it
+S4c = Bff()
+s, r = S4c('/api/auth/login', 'POST', {'login': f'stud4x{RUN}', 'password': 'Str0ng-pass-123!'})
+S4c('/api/auth/role', 'POST', {'role': 'mentee'})  # invited with the mentor role, so the student view is a switch away
+closes = dt.datetime.fromisoformat(e2['closesAt'].replace('Z', '+00:00'))
+time.sleep(max(0, (closes - dt.datetime.now(dt.timezone.utc)).total_seconds() + 125))
+s, m4 = S4c(EX)
+ok(s == 200 and m4['phase'] == 'closed' and not m4['canSubmit'] and m4['statement'] and not m4['submissions'], 'after the window: closed, statement stays, nothing to send (missed)', (s, m4))
 
 # --- finish --------------------------------------------------------------------------------
 s, r = head(f'/api/cohorts/{cid}/finish', 'POST')

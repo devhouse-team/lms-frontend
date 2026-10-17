@@ -16,7 +16,9 @@ const ROUTES: [string, RegExp][] = [
   ['PUT', new RegExp(`^modules/${ID}/lessons/order$`)],
   ['POST', new RegExp(`^lessons/${ID}/materials$`)],
   ['PUT', new RegExp(`^lessons/${ID}/materials/order$`)],
-  ['GET', new RegExp(`^lessons/${ID}/assignment$`)],
+  ['POST', new RegExp(`^lessons/${ID}/assignments$`)],
+  ['PUT', new RegExp(`^lessons/${ID}/assignments/order$`)],
+  ['GET|PATCH|DELETE', new RegExp(`^assignments/${ID}$`)],
   ['GET|PATCH|DELETE', new RegExp(`^materials/${ID}$`)]
 ]
 

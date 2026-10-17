@@ -10,7 +10,7 @@ submissions with files, exams in a time window, solutions that open at the right
 a student reads, watches and submits everything for a week without leaving the LMS; an editor builds a lesson with
 math, code, a PDF and a video in one sitting; nothing on these pages contradicts what the API will accept.
 
-Status: **Phase 1 built** (2026-10-17); Phases 2 and 3 not built (course content v2, 2026-10-16). Decisions: product owner 2026-10-16 (PO1–PO6 below) and
+Status: **Phases 1 and 2 built** (2026-10-17); Phase 3 not built (course content v2, 2026-10-16). Decisions: product owner 2026-10-16 (PO1–PO6 below) and
 the defaults in the decisions doc (D-…). Contract: `../backend/spec/content.md` and `../backend/openapi.json`
 (`npm run api:types`). Endpoint, field and error-code names below are **exactly those of backend spec/content.md**
 (reconciled 2026-10-16); the generated types win and this file gets corrected where they differ.
@@ -43,6 +43,35 @@ Differences from the text below (the code follows these):
   `isEmbedUrl`, lazy, also in previews). Markdown images accept only `https:` and our exact file routes; links accept
   http(s), mailto, `#` and those routes. `MarkdownView` drops stale renders and falls back to plain text when a
   renderer chunk can't load.
+
+### Phase 2 as built
+
+Differences from the text below (the code follows these):
+
+- **Every Nitro route is off the singular assignment endpoints** (grep finds no `/lessons/{l}/assignment`,
+  `/cohorts/{c}/lessons/{l}/assignment` or `/cohorts/{c}/lessons/{l}/submissions`); the backend can drop them in the
+  coordinated release. `AssignmentFormModal`, `AssignmentsManager` and the `/api/assignments` POST/PATCH/DELETE routes
+  are gone; assignments are authored only in the course editor.
+- The cohort page and `/cohort` list the cohort's assignments read-only (`CohortAssignments`), then "Exam windows"
+  (`CohortExamWindows`) and "Solutions" (`CohortSolutions`). The exam list comes from the cohort detail (one
+  `GET /cohorts/{c}/assignments`), so there is no separate `GET /api/cohorts/[id]/exams`. Window actions show on the
+  head / lead cohort page; mentors see windows read-only; solution actions follow `can_release`.
+- Old links: `/assignments/{c}-{l}` is a page that asks `GET /api/assignments/resolve/[key]` and replaces the URL.
+- Times: exam windows format in the cohort's zone (`app/utils/zonedTime.ts` converts the override's cohort-local
+  inputs to UTC); due days format in UTC (D5); countdowns, "your time" and local submission times render after mount
+  (`useServerClock`, `ClientOnly`), so a viewer in another zone gets no hydration mismatch.
+- Statement attachments attach at once in the assignment editor (as material files). The material editor gains
+  "Solution of" and "Opens" (release), with the rules the API would refuse disabled and a default rule picked when
+  the link changes.
+- Practice sends with "Send attempt" and toasts "Attempt sent"; its page shows "Sent" / "Commented" instead of a
+  status badge.
+- Exam closing: a send or upload still running at `closes_at` keeps the form mounted (`SubmitForm` emits `busy`) and
+  holds off "missed" until it lands; the page refetches at `closes_at` and again 2 min 5 s later. An open exam the
+  student can't send to (paused enrollment, `can_submit: false`) shows a notice. On `/assignments` an exam missed
+  after the grace moves to its own "Missed" group.
+- Scores are whole numbers (max score from 1, a review score from 0 to the max).
+- `scripts/zoned-time.check.ts` checks the zone conversions (Almaty, Berlin spring gap and autumn overlap):
+  `node --experimental-strip-types scripts/zoned-time.check.ts`.
 
 ## Decisions this spec relies on
 
@@ -772,8 +801,8 @@ a browser check, or the named check.
   block and a table renders correctly (screenshot); a PDF opens inline on desktop and as Open / Download on a phone
   viewport; a YouTube link plays embedded; a zip shows name, size and Download. (e2e for the data, browser check for
   rendering) ✓ e2e-smoke + browser check (desktop and iPhone 13)
-- [ ] A markdown image `file:<id>` loads through the Nitro file route; after leaving the page open 10 minutes, a lazy
-  image further down and a Download still work; no `s3.` URL appears in the page HTML.
+- [x] A markdown image `file:<id>` loads through the Nitro file route; after leaving the page open 10 minutes, a lazy
+  image further down and a Download still work; no `s3.` URL appears in the page HTML. ✓ browser check (page open 10 minutes, then a lazy image and a Download)
 - [x] Markdown with `<script>`, `<img onerror>`, `javascript:` links and `<iframe>` renders inert (unit check of
   `renderMarkdown` with these inputs; `v-html` appears only in `MarkdownView.vue`). ✓ browser check of `renderMarkdown` through the editor preview; grep: one `v-html`
 - [x] Mark complete flips at once, survives a reload, updates the sidebar check and the home figure; in a finished
@@ -806,25 +835,25 @@ a browser check, or the named check.
 
 ### Phase 2: modes, exams, practice, solutions
 
-- [ ] A lesson has two assignments; both show in its assignments block and in `/assignments`. (e2e)
-- [ ] Exam before the window: countdown, no statement in the response, trial attempt accepted and shown as "Trial
+- [x] A lesson has two assignments; both show in its assignments block and in `/assignments`. (e2e) ✓ e2e-smoke (homework, exam and practice in one lesson) + browser check
+- [x] Exam before the window: countdown, no statement in the response, trial attempt accepted and shown as "Trial
   received"; a fourth trial is refused (`trial_limit`); no trial block once the window opens; the trial isn't in the
-  mentor's queue. (e2e)
-- [ ] Exam inside the window: statement visible, one submission after a confirm; a second answers "already
-  submitted". After the window: "Missed" for a student who didn't submit. (e2e with a short window)
-- [ ] The page opens the statement within seconds of the window opening without a manual reload.
-- [ ] Practice: unlimited submissions; the solution appears right after the first; practice isn't in the queue
-  unless "Include practice" is on. (e2e)
-- [ ] Accepted formats and limits shape the form (files-only exam shows no text or links; 1 PDF max). (e2e)
-- [ ] An `after_due` solution shows "Solution opens {date}" before and the material after; a `manual` one opens
-  only after "Release now" in that cohort and stays hidden in another cohort. (e2e)
-- [ ] Exam review offers Accept (with score when set) and no "Request changes".
-- [ ] Changing an exam's window after it opened in a cohort shows the field error.
-- [ ] Exam times show in the cohort timezone with the label, plus the viewer's time when different.
-- [ ] Old `/assignments/{c}-{l}` links redirect to the new page.
-- [ ] No Nitro route calls `/lessons/{l}/assignment`, `/cohorts/{c}/lessons/{l}/assignment` or
-  `/cohorts/{c}/lessons/{l}/submissions` (grep), so the backend can drop them in the same release.
-- [ ] A head overrides one cohort's exam window; a mentor without editor rights sees Solutions read-only.
+  mentor's queue. (e2e) ✓ e2e-smoke + browser check
+- [x] Exam inside the window: statement visible, one submission after a confirm; a second answers "already
+  submitted". After the window: "Missed" for a student who didn't submit. (e2e with a short window) ✓ e2e-smoke (25 s window, 2-minute grace) + browser check (confirm, "Submitted at")
+- [x] The page opens the statement within seconds of the window opening without a manual reload. ✓ browser check
+- [x] Practice: unlimited submissions; the solution appears right after the first; practice isn't in the queue
+  unless "Include practice" is on. (e2e) ✓ e2e-smoke + browser check
+- [x] Accepted formats and limits shape the form (files-only exam shows no text or links; 1 PDF max). (e2e) ✓ e2e-smoke (text refused) + browser check (no text or link fields, `accept=".pdf"`)
+- [x] An `after_due` solution shows "Solution opens {date}" before and the material after; a `manual` one opens
+  only after "Release now" in that cohort and stays hidden in another cohort. (e2e) ✓ e2e-smoke: `manual` released in one cohort, hidden in another; `after_due` open for a homework whose due day passed (cohort started 7 days ago, 1-day offset), locked for a 30-day one.
+- [x] Exam review offers Accept (with score when set) and no "Request changes". ✓ browser check + e2e-smoke (`review_decision_not_allowed`, score 8 saved)
+- [x] Changing an exam's window after it opened in a cohort shows the field error. ✓ browser check (assignment editor and cohort override)
+- [x] Exam times show in the cohort timezone with the label, plus the viewer's time when different. ✓ browser check (viewer in Europe/Berlin)
+- [x] Old `/assignments/{c}-{l}` links redirect to the new page. ✓ e2e-smoke + browser check
+- [x] No Nitro route calls `/lessons/{l}/assignment`, `/cohorts/{c}/lessons/{l}/assignment` or
+  `/cohorts/{c}/lessons/{l}/submissions` (grep), so the backend can drop them in the same release. ✓ grep
+- [x] A head overrides one cohort's exam window; a mentor without editor rights sees Solutions read-only. ✓ e2e-smoke (override) + browser check (mentor read-only)
 
 ### Phase 3: navigation and polish
 
@@ -836,7 +865,7 @@ a browser check, or the named check.
 
 ### All phases
 
-- [ ] Every code in the error table has `en` and `ru` messages and shows as the table says (key check script).
+- [x] Every code in the error table has `en` and `ru` messages and shows as the table says (key check script). ✓ key check (`validation_error` shows the API's field message, as the table says)
 - [ ] Keyboard only: contents sidebar, reorder buttons, editor toolbar, submit form and exam confirm are usable;
   focus is visible.
 - [ ] Phone viewport (390 px): no sideways page scroll on course, lesson, assignment and editor pages.

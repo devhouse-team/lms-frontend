@@ -39,6 +39,8 @@ const scopes = computed(() => [{ value: 'mine', label: t('cohort.mine') }, { val
       </template>
     </UCollapsible>
     <CohortRoster :cohort-id="c.id" :rows="rows" :mentors="[]" :assignments-total="c.assignments.length" :manage="false" />
-    <AssignmentsManager :assignments="c.assignments" :lessons="c.lessons" :editable="c.canEditAssignments && c.status !== 'finished'" @changed="emit('changed')" />
+    <CohortAssignments :assignments="c.assignments" :timezone="c.timezone" />
+    <CohortExamWindows :cohort-id="c.id" :exams="c.assignments.filter(a => a.mode === 'exam')" :timezone="c.timezone" :manage="false" />
+    <CohortSolutions :cohort-id="c.id" :cohort-name="c.name" />
   </section>
 </template>

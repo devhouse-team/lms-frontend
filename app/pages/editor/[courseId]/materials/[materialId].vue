@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { components } from '~~/shared/types/api'
-import type { FileMeta, MaterialTag } from '~~/shared/types'
+import type { FileMeta, MaterialRelease, MaterialTag } from '~~/shared/types'
+import type { CourseOutlineApi } from '~/composables/useCourseEditor'
 import { MATERIAL_TAGS } from '~~/shared/types'
 
 type S = components['schemas']
@@ -24,7 +25,7 @@ useHead({ title: () => `${m.value?.title ?? t('nav.courses')} · ${t('editor.tit
 const denied = computed(() => [403, 404].includes(error.value?.statusCode ?? 0))
 const base = `/api/files/materials/${materialId}`
 
-const state = reactive({ title: '', body: '', url: '', tags: [] as MaterialTag[], published: false })
+const state = reactive({ title: '', body: '', url: '', tags: [] as MaterialTag[], published: false, solutionOf: null as number | null, release: 'with_lesson' as MaterialRelease })
 const saved = ref('')
 const snapshot = () => JSON.stringify(state)
 /** Attached files; changed only by attach / detach and by loading the material */
@@ -33,7 +34,7 @@ const fileList = ref<S['FileMeta'][]>([])
 function reset() {
   const x = m.value
   if (!x) return
-  Object.assign(state, { title: x.title, body: x.body, url: x.url ?? '', tags: [...x.tags], published: x.is_published })
+  Object.assign(state, { title: x.title, body: x.body, url: x.url ?? '', tags: [...x.tags], published: x.is_published, solutionOf: x.solution_of_id, release: x.release })
   fileList.value = x.files
   saved.value = snapshot()
 }
@@ -53,6 +54,33 @@ const urlError = computed(() => {
 const titleError = computed(() => (state.title.trim().length >= 1 && state.title.length <= 200 ? undefined : t('editor.err.title')))
 const tagItems = computed(() => MATERIAL_TAGS.map(tag => ({ value: tag, label: t(`material.tag.${tag}`) })))
 
+// ---- solution of an assignment, and when it opens (backend content.md, Solutions and release) ---------------------
+const { data: outline } = await useFetch<CourseOutlineApi>(`/api/editor/courses/${courseId}`, { key: `editor-outline:${courseId}` })
+const courseAssignments = computed(() => (outline.value?.modules ?? []).flatMap(m => m.lessons.flatMap(l => l.assignments)))
+const solutionItems = computed(() => [
+  { value: 0, label: t('release.notSolution') },
+  ...courseAssignments.value.map(x => ({ value: x.id, label: x.title, description: t(`lesson.mode.${x.mode}`) }))
+])
+const solutionOfModel = computed({ get: () => state.solutionOf ?? 0, set: (v: number) => { state.solutionOf = v || null } })
+const linked = computed(() => courseAssignments.value.find(x => x.id === state.solutionOf))
+/** Which rules the API accepts for this material; the others show disabled with why */
+const releaseItems = computed(() => {
+  const x = linked.value
+  if (!x) return [{ value: 'with_lesson', label: t('release.with_lesson') }, { value: 'manual', label: t('release.manual') }]
+  const dueOk = x.mode === 'exam' || (x.mode === 'homework' && x.due_offset_days !== null)
+  return [
+    { value: 'after_due', label: t('release.after_due'), disabled: !dueOk, description: dueOk ? undefined : t('release.needsDue') },
+    { value: 'after_submit', label: t('release.after_submit'), disabled: x.mode !== 'practice', description: x.mode === 'practice' ? undefined : t('release.practiceOnly') },
+    { value: 'manual', label: t('release.manual') }
+  ]
+})
+// Linking or unlinking picks the API's default rule for the new state, so the save never sends an invalid pair
+watch(() => state.solutionOf, (id, before) => {
+  if (id === before || saved.value === '') return
+  const x = courseAssignments.value.find(y => y.id === id)
+  state.release = !x ? 'with_lesson' : x.mode === 'practice' ? 'after_submit' : (x.mode === 'exam' || x.due_offset_days !== null) ? 'after_due' : 'manual'
+})
+
 // ---- save text fields ---------------------------------------------------------------------------
 const saving = ref(false)
 const fieldError = ref<Record<string, string>>({})
@@ -64,7 +92,9 @@ async function save() {
     body: state.body,
     url: kind.value === 'video' || kind.value === 'link' ? state.url.trim() : undefined,
     tags: state.tags,
-    is_published: state.published
+    is_published: state.published,
+    solution_of_id: state.solutionOf,
+    release: state.release
   }).filter(([k, v]) => v !== undefined && JSON.stringify(v) !== JSON.stringify((x as Record<string, unknown>)[k] ?? (k === 'url' ? '' : undefined))))
   if (!Object.keys(body).length) return
   saving.value = true
@@ -78,6 +108,7 @@ async function save() {
   } catch (e) {
     const { code, field } = apiError(e)
     if (code === 'video_host_not_allowed') fieldError.value = { url: message(e) }
+    else if (code === 'release_invalid' || code === 'solution_needs_due' || code === 'different_course') fieldError.value = { release: message(e) }
     else if (code === 'validation_error' && (field('body') || field('title') || field('url'))) fieldError.value = { body: field('body') ?? '', title: field('title') ?? '', url: field('url') ?? '' }
     else toastError(e)
   } finally {
@@ -183,6 +214,15 @@ const back = computed(() => `/editor/${courseId}${m.value?.lesson_id ? `#lesson-
         <UFormField :label="t('editor.tags')" :help="t('editor.tagsHelp')">
           <USelectMenu v-model="state.tags" :items="tagItems" value-key="value" multiple :max="5" class="w-full sm:w-96" :placeholder="t('editor.tagsPlaceholder')" />
         </UFormField>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <UFormField :label="t('release.solutionOf')" :help="t('release.solutionOfHelp')">
+            <USelectMenu v-model="solutionOfModel" :items="solutionItems" value-key="value" class="w-full" />
+          </UFormField>
+          <UFormField :label="t('release.label')" :error="fieldError.release || undefined">
+            <USelect v-model="state.release" :items="releaseItems" class="w-full" />
+          </UFormField>
+        </div>
 
         <UFormField v-if="m.kind === 'video' || m.kind === 'link'" :label="m.kind === 'video' ? t('editor.videoUrl') : t('editor.url')" :error="fieldError.url || urlError" :help="m.kind === 'video' && !urlError ? t('editor.videoHelp') : undefined">
           <UInput v-model="state.url" type="url" inputmode="url" class="w-full" />

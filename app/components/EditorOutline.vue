@@ -1,19 +1,17 @@
 <script setup lang="ts">
 import type { components } from '~~/shared/types/api'
-import type { CohortLesson, ManagedAssignment } from '~~/shared/types'
 import type { PromptField } from '~/composables/useCourseEditor'
 
 type S = components['schemas']
 
 /**
  * The authoring outline (spec course-content.md, Course editor › Outline): course pages, modules with their lessons,
- * each lesson's materials and assignment. Up / down reorder sends the full order; moving across modules goes through
+ * each lesson's materials and assignments. Up / down reorder sends the full order; moving across modules goes through
  * "Move to module…". Edits are live in running cohorts.
  */
 const { t } = useI18n()
 const toast = useToast()
-const { toastError } = useApiErrors('content')
-const { courseId, outline, call, refresh } = useCourseEditor()
+const { outline, call } = useCourseEditor()
 const o = computed(() => outline.value!)
 const modules = computed(() => [...o.value.modules].sort((a, b) => a.position - b.position))
 const lessonsOf = (m: S['ModuleOutline']) => [...m.lessons].sort((a, b) => a.position - b.position)
@@ -111,43 +109,6 @@ const lessonMenu = (l: S['LessonOutline']) => [[
   { label: t('common.delete'), icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => { deleting.value = { kind: 'lesson', id: l.id, title: l.title } } }
 ]]
 
-// ---- the lesson's assignment (Phase 1: at most one, today's modal) ----------------------------------------
-const lessonsForModal = computed<CohortLesson[]>(() => modules.value.flatMap(m => m.lessons.map(l => ({ id: String(l.id), title: l.title, courseTitle: m.title, hasAssignment: l.assignments.length > 0 }))))
-const assignmentModal = ref(false)
-const assignmentLesson = ref<string>()
-const editingAssignment = ref<ManagedAssignment>()
-function addAssignment(l: S['LessonOutline']) {
-  editingAssignment.value = undefined
-  assignmentLesson.value = String(l.id)
-  assignmentModal.value = true
-}
-async function editAssignment(l: S['LessonOutline']) {
-  try {
-    const a = await $fetch<S['LegacyAssignmentRead']>(`/api/editor/lessons/${l.id}/assignment`)
-    editingAssignment.value = { id: String(l.id), lessonTitle: l.title, title: a.title, description: a.instructions, dueOffsetDays: a.due_offset_days, submissions: l.assignments[0]?.submission_count ?? 0 }
-    assignmentModal.value = true
-  } catch (e) {
-    toastError(e)
-  }
-}
-const deletingAssignment = ref<S['LessonOutline']>()
-const deleteAssignmentOpen = computed({ get: () => !!deletingAssignment.value, set: (v) => { if (!v) deletingAssignment.value = undefined } })
-async function confirmDeleteAssignment() {
-  const l = deletingAssignment.value!
-  deletingAssignment.value = undefined
-  try {
-    await $fetch(`/api/assignments/${l.id}`, { method: 'DELETE' })
-    toast.add({ title: t('assignments.deleted'), icon: 'i-lucide-check', color: 'success' })
-  } catch (e) {
-    toastError(e)
-  }
-  invalidateContent(`editor-outline:${courseId}`)
-  await refresh()
-}
-const onAssignmentSaved = async () => {
-  invalidateContent(`editor-outline:${courseId}`)
-  await refresh()
-}
 </script>
 
 <template>
@@ -211,14 +172,7 @@ const onAssignmentSaved = async () => {
               </div>
               <div class="space-y-2">
                 <p class="text-xs font-medium text-muted">{{ t('editor.assignmentTitle') }}</p>
-                <div v-for="a in l.assignments" :key="a.id" class="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md px-3 py-2 ring-1 ring-inset ring-default">
-                  <UBadge :label="t('lesson.mode.homework')" color="neutral" variant="outline" size="sm" />
-                  <span class="min-w-0 flex-1 truncate text-sm text-highlighted">{{ a.title }}</span>
-                  <span class="num text-xs text-muted">{{ a.due_offset_days === null ? t('editor.noDue') : t('editor.dueAfter', { n: a.due_offset_days }) }} · {{ t('editor.submissions', a.submission_count) }}</span>
-                  <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.editItem', { title: a.title })" @click="editAssignment(l)" />
-                  <UButton icon="i-lucide-trash-2" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.deleteItem', { title: a.title })" @click="deletingAssignment = l" />
-                </div>
-                <UButton v-if="!l.assignments.length" :label="t('editor.addAssignment')" icon="i-lucide-plus" color="neutral" variant="ghost" size="xs" @click="addAssignment(l)" />
+                <EditorAssignments :lesson-id="l.id" :assignments="l.assignments" />
               </div>
             </div>
           </li>
@@ -249,16 +203,6 @@ const onAssignmentSaved = async () => {
       <template #footer>
         <UButton :label="t('common.cancel')" color="neutral" variant="ghost" @click="deleteOpen = false" />
         <UButton :label="t('common.delete')" color="error" @click="confirmDelete" />
-      </template>
-    </UModal>
-    <AssignmentFormModal v-model:open="assignmentModal" :lessons="lessonsForModal" :assignment="editingAssignment" :lesson-id="assignmentLesson" @saved="onAssignmentSaved" />
-    <UModal v-model:open="deleteAssignmentOpen" :title="t('assignments.confirmTitle')">
-      <template #body>
-        <p class="text-sm">{{ t('assignments.confirmDelete', { title: deletingAssignment?.assignments[0]?.title ?? '' }) }}</p>
-      </template>
-      <template #footer>
-        <UButton :label="t('common.cancel')" color="neutral" variant="ghost" @click="deleteAssignmentOpen = false" />
-        <UButton :label="t('common.delete')" color="error" @click="confirmDeleteAssignment" />
       </template>
     </UModal>
   </div>

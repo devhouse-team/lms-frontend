@@ -1,3 +1,5 @@
+import type { FileGroup } from '../utils/fileTypes'
+
 export type Role = 'mentee' | 'mentor' | 'head'
 export type ProgramSlug = 'frontend' | 'backend' | 'mobile' | 'ml' | 'algorithms'
 
@@ -177,6 +179,10 @@ export interface FileMeta {
 
 export interface SubmissionView {
   id: string
+  version: number
+  /** A trial never counts and is never reviewed */
+  isTrial: boolean
+  isLate: boolean
   links: string[]
   /** Markdown */
   body?: string
@@ -184,17 +190,34 @@ export interface SubmissionView {
   submittedAt: string
   status: SubmissionStatus
   feedback?: string
+  score?: number | null
   reviewedAt?: string
   reviewer?: Person
 }
 
-export interface AssignmentListItem {
-  /** `${cohortId}-${lessonId}` */
-  id: string
-  title: string
+export type AssignmentMode = 'homework' | 'exam' | 'practice'
+
+/** An assignment's window and due day as the API computes them for one cohort */
+export interface AssignmentTiming {
+  mode: AssignmentMode
+  /** Homework: end of the UTC due day */
   dueAt?: string
+  /** Exam window (UTC instants) */
+  opensAt: string | null
+  closesAt: string | null
+}
+
+export interface AssignmentListItem extends AssignmentTiming {
+  /** The API's assignment id */
+  id: string
+  cohortId: string
+  /** The cohort's zone, for exam times */
+  timezone: string
+  /** `/assignments/{cohortId}/{assignmentId}` */
+  to: string
+  title: string
+  lessonTitle: string
   status: AssignmentStatus
-  lastSubmittedAt?: string
 }
 
 export interface AssignmentArchive {
@@ -205,39 +228,73 @@ export interface AssignmentArchive {
 }
 
 export interface AssignmentsResponse {
-  /** From cohorts where the enrollment is active */
+  /** From cohorts where the enrollment is active; practice items are listed apart by the page */
   current: AssignmentListItem[]
   /** One group per finished cohort the student completed; read-only */
   archive: AssignmentArchive[]
 }
 
-export interface AssignmentDetail {
+export interface AcceptedFormats {
+  text: boolean
+  links: boolean
+  files: boolean
+  maxFiles: number
+  /** Empty: any allowed type */
+  fileTypes: FileGroup[]
+}
+
+export type AssignmentPhase = 'open' | 'past_due' | 'not_open' | 'closed'
+
+/** One assignment for a student in one cohort (GET /cohorts/{c}/assignments/{a}) */
+export interface AssignmentDetail extends AssignmentTiming {
   id: string
+  cohortId: string
   title: string
-  description: string
-  dueAt?: string
+  /** Markdown; null before an exam opens */
+  statement: string | null
+  /** Statement attachments; empty before an exam opens */
+  files: FileMeta[]
+  accepts: AcceptedFormats
+  maxScore: number | null
+  trialEnabled: boolean
+  dueOn: string | null
+  /** The cohort's IANA timezone (exam times) */
+  timezone: string
+  /** The API's clock at response time, for countdowns */
+  serverNow: string
+  phase: AssignmentPhase
+  canSubmit: boolean
+  canTrial: boolean
   cohortName: string
   /** Submitting is open only in an active cohort */
   cohort: Pick<CohortTiming, 'status' | 'startsOn' | 'endsOn' | 'finishedAt'>
   mentor: Person | null
   status: AssignmentStatus
-  /** Newest first */
+  /** Counted attempts, newest first */
   submissions: SubmissionView[]
+  /** Exam trials, newest first */
+  trials: SubmissionView[]
+  /** Solutions: released ones with content, the rest locked with their hint */
+  solutions: MaterialView[]
 }
 
 export interface ReviewListItem extends ReviewItem {
   status: SubmissionStatus
+  mode: AssignmentMode
   reviewedAt?: string
 }
 
 export interface ReviewDetail {
   id: string
-  assignment: { id: string, title: string, description: string, dueAt?: string }
+  mode: AssignmentMode
+  assignment: { id: string, title: string, statement: string, files: FileMeta[], filesBase: string, dueAt?: string, maxScore: number | null }
   mentee: Person
   cohortName: string
   submission: SubmissionView
-  /** Earlier attempts on the same assignment, newest first */
+  /** Earlier counted attempts on the same assignment, newest first */
   history: SubmissionView[]
+  /** The student's exam trials, newest first */
+  trials: SubmissionView[]
 }
 
 export interface CohortOption {
@@ -280,24 +337,14 @@ export interface StaffMember extends Person {
   role: StaffRole
 }
 
-/** An assignment attached to a lesson; `id` is the lesson id */
-export interface ManagedAssignment {
+/** An assignment of a cohort's courses as staff see it (GET /cohorts/{c}/assignments) */
+export interface CohortAssignment extends AssignmentTiming {
   id: string
+  courseId: string
+  title: string
   lessonTitle: string
-  title: string
-  description: string
-  /** Days after the lesson opens */
-  dueOffsetDays: number | null
-  /** For this cohort: lesson release + offset */
-  dueAt?: string
-  submissions: number
-}
-
-export interface CohortLesson {
-  id: string
-  title: string
-  courseTitle: string
-  hasAssignment: boolean
+  /** Exam: the cohort override, or the course's relative window */
+  windowSource: 'relative' | 'override' | null
 }
 
 /** Header, staff and assignments of one cohort; the roster is fetched separately */
@@ -306,12 +353,10 @@ export interface CohortDetail extends CohortTiming {
   name: string
   programId: string
   programTitle: string
+  /** IANA zone for exam times; editable while planned */
+  timezone: string
   staff: StaffMember[]
-  assignments: ManagedAssignment[]
-  /** Lessons of the cohort's courses, for attaching assignments */
-  lessons: CohortLesson[]
-  /** Whether this user may add, edit and delete assignments (course.update) */
-  canEditAssignments: boolean
+  assignments: CohortAssignment[]
 }
 
 /** A staffed cohort on the mentor's page */
@@ -379,11 +424,16 @@ export interface MaterialSummaryView {
   isReleased: boolean
 }
 
-/** The lesson's assignment as a row (Phase 1: at most one; `id` is today's `${cohortId}-${lessonId}` key) */
+/** One of the lesson's assignments as a row */
 export interface LessonAssignmentView {
   id: string
+  /** `/assignments/{cohortId}/{assignmentId}` */
+  to: string
   title: string
+  mode: AssignmentMode
   dueOn: string | null
+  opensAt: string | null
+  closesAt: string | null
   status: AssignmentStatus
 }
 
@@ -409,6 +459,26 @@ export interface ContentCohort {
   status: CohortStatus
   startsOn: string
   endsOn: string
+  /** IANA zone for exam times */
+  timezone: string
+}
+
+export type MaterialRelease = 'with_lesson' | 'after_due' | 'after_submit' | 'manual'
+
+/** A solution in one cohort: its release rule and state (GET /cohorts/{c}/solutions) */
+export interface CohortSolution {
+  materialId: string
+  title: string
+  kind: MaterialKind
+  assignment: { id: string, title: string, mode: AssignmentMode }
+  lessonTitle: string | null
+  release: MaterialRelease
+  isReleased: boolean
+  releasesOn: string | null
+  /** A manual release in this cohort, if any */
+  releasedAt: string | null
+  releasedBy: string | null
+  canRelease: boolean
 }
 
 /** Sidebar and header of a course in a cohort, from one outline call */
@@ -444,7 +514,7 @@ export interface CourseRowView {
   totalLessons: number
   /** The student's completed lessons; null for staff */
   doneLessons: number | null
-  nextDeadline: { title: string, dueOn: string, assignmentId: string } | null
+  nextDeadline: { title: string, dueOn: string, to: string } | null
 }
 
 export interface CourseGroup {
@@ -600,6 +670,8 @@ export interface CohortInput {
   startsOn: string
   /** Create: optional, the API defaults it from the program's duration */
   endsOn?: string
+  /** IANA zone for exam times; create, or edit while planned */
+  timezone?: string
 }
 
 /** Body for PATCH /api/enrollments/:enrollmentId */

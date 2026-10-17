@@ -21,7 +21,7 @@ export default defineEventHandler(async (event): Promise<LessonView> => {
     releasedOn: l.released_on,
     completed: l.completed,
     materials: [...l.materials].sort((a, b) => a.position - b.position).map(materialView),
-    assignments: l.assignments.map(lessonAssignment(cohortId, lessonId)),
+    assignments: l.assignments.map(lessonAssignment(cohortId)),
     completeClosed: cohort.status !== 'active' ? (cohort.status === 'finished' ? 'finished' : 'planned') : rel.enrollment === 'paused' ? 'paused' : null,
     staff: rel.staff
   }

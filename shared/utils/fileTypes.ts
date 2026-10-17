@@ -70,3 +70,23 @@ export function fileKind(filename: string): { label: string, icon: string } {
   if (CODE.includes(ext)) return { label: ext.toUpperCase(), icon: 'i-lucide-file-code' }
   return { label: ext.toUpperCase() || 'FILE', icon: 'i-lucide-file' }
 }
+
+/** An assignment's `file_types` groups (backend content.md, Accepted formats); empty = any allowed type */
+export type FileGroup = 'pdf' | 'image' | 'archive' | 'document' | 'text' | 'notebook'
+export const FILE_GROUPS: FileGroup[] = ['pdf', 'image', 'archive', 'document', 'text', 'notebook']
+const GROUP_EXT: Record<FileGroup, string[]> = {
+  pdf: ['pdf'],
+  image: ['png', 'jpg', 'jpeg', 'gif', 'webp'],
+  archive: ['zip'],
+  document: ['docx', 'xlsx', 'pptx'],
+  text: ['txt', 'md', 'markdown', 'csv', ...CODE],
+  notebook: ['ipynb']
+}
+
+/** Whether a filename falls in one of the groups (no groups: any allowed type) */
+export const inGroups = (filename: string, groups: FileGroup[]) =>
+  !groups.length || groups.some(g => GROUP_EXT[g].includes(extensionOf(filename)))
+
+/** `accept` attribute for a submission limited to groups */
+export const acceptForGroups = (groups: FileGroup[]) =>
+  groups.length ? groups.flatMap(g => GROUP_EXT[g]).map(e => `.${e}`).join(',') : acceptFor('submission')

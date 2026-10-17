@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { AssignmentListItem } from '~~/shared/types'
+
 definePageMeta({ roles: ['mentee'] })
 
 const { t, locale } = useI18n()
@@ -8,12 +10,22 @@ useHead({ title: () => `${t('nav.assignments')} · dev.house` })
 
 const { data, status, refresh } = await useFetch('/api/assignments', { key: 'assignments' })
 const { short } = useCohortFormat()
-const fmt = (iso?: string) => !iso ? t('assignment.noDue') : new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'short' }).format(new Date(iso))
+/** Due days are UTC days (D5): shown in UTC so every zone sees the same date */
+const fmt = (iso?: string) => !iso ? t('assignment.noDue') : new Intl.DateTimeFormat(locale.value, { timeZone: 'UTC', day: 'numeric', month: 'short' }).format(new Date(iso))
 
-const items = computed(() => data.value?.current ?? [])
-const open = computed(() => items.value.filter(a => a.status !== 'accepted'))
+/** Practice has no deadline pressure: its own group, never in "Open" */
+const items = computed(() => (data.value?.current ?? []).filter(a => a.mode !== 'practice'))
+const practice = computed(() => (data.value?.current ?? []).filter(a => a.mode === 'practice'))
+/** An exam whose window (plus the 2-minute grace) ended without a submission: nothing left to do */
+const isMissed = (a: AssignmentListItem) => a.mode === 'exam' && a.status === 'not_submitted' && !!a.closesAt && Date.parse(a.closesAt) + 120_000 < now.value
+const open = computed(() => items.value.filter(a => a.status !== 'accepted' && !isMissed(a)))
+const missed = computed(() => items.value.filter(isMissed))
 const done = computed(() => items.value.filter(a => a.status === 'accepted'))
 const isPast = (iso?: string) => !iso || new Date(iso).getTime() < now.value
+/** Due figure, or the exam's start ("Exam · Fri 14:00") */
+const when = (a: AssignmentListItem) => a.mode === 'exam' && a.opensAt
+  ? t('assignment.examAt', { time: new Intl.DateTimeFormat(locale.value, { timeZone: a.timezone, weekday: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(a.opensAt)) })
+  : a.status === 'accepted' || isPast(a.dueAt) ? fmt(a.dueAt) : left(a.dueAt!)
 </script>
 
 <template>
@@ -25,15 +37,19 @@ const isPast = (iso?: string) => !iso || new Date(iso).getTime() < now.value
           <p class="num mt-1 text-sm text-muted">{{ t('assignment.summary', { done: done.length, total: items.length }) }}</p>
         </header>
 
-        <section v-for="group in [{ key: 'open', items: open }, { key: 'done', items: done }]" :key="group.key" :aria-labelledby="`g-${group.key}`">
+        <section v-for="group in [{ key: 'open', items: open }, { key: 'done', items: done }, ...(missed.length ? [{ key: 'missed', items: missed }] : []), ...(practice.length ? [{ key: 'practice', items: practice }] : [])]" :key="group.key" :aria-labelledby="`g-${group.key}`">
           <h2 :id="`g-${group.key}`" class="mb-3 text-sm font-semibold text-highlighted">{{ t(`assignment.group.${group.key}`) }}</h2>
           <ul v-if="group.items.length" class="divide-y divide-default rounded-lg ring-1 ring-inset ring-default">
             <li v-for="a in group.items" :key="a.id">
-              <NuxtLink :to="`/assignments/${a.id}`" class="group flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 transition-colors duration-150 ease-out first:rounded-t-lg last:rounded-b-lg hover:bg-elevated">
-                <span class="min-w-0 flex-1 basis-48 truncate text-sm text-highlighted">{{ a.title }}</span>
-                <StatusBadge :status="a.status" />
-                <span class="num w-24 shrink-0 text-right text-xs" :class="a.status !== 'accepted' && !isPast(a.dueAt) && urgent(a.dueAt!) ? 'text-primary' : 'text-muted'">
-                  {{ a.status === 'accepted' || isPast(a.dueAt) ? fmt(a.dueAt) : left(a.dueAt!) }}
+              <NuxtLink :to="a.to" class="group flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3 transition-colors duration-150 ease-out first:rounded-t-lg last:rounded-b-lg hover:bg-elevated">
+                <span class="min-w-0 flex-1 basis-48">
+                  <span class="block truncate text-sm text-highlighted">{{ a.title }}</span>
+                  <span class="block truncate text-xs text-muted">{{ a.lessonTitle }}</span>
+                </span>
+                <UBadge v-if="a.mode !== 'homework'" :label="t(`lesson.mode.${a.mode}`)" color="neutral" variant="outline" size="sm" />
+                <StatusBadge v-if="a.mode !== 'practice'" :status="a.status" />
+                <span v-if="a.mode !== 'practice'" class="num w-28 shrink-0 text-right text-xs" :class="a.status !== 'accepted' && a.mode === 'homework' && !isPast(a.dueAt) && urgent(a.dueAt!) ? 'text-primary' : 'text-muted'">
+                  {{ when(a) }}
                 </span>
                 <UIcon name="i-lucide-chevron-right" class="size-4 shrink-0 text-dimmed transition-transform duration-150 ease-out group-hover:translate-x-0.5" />
               </NuxtLink>
@@ -58,7 +74,7 @@ const isPast = (iso?: string) => !iso || new Date(iso).getTime() < now.value
           <template #content>
             <ul v-if="g.items.length" class="divide-y divide-default border-t border-default">
               <li v-for="a in g.items" :key="a.id">
-                <NuxtLink :to="`/assignments/${a.id}`" class="group flex items-center gap-3 px-4 py-3 transition-colors duration-150 ease-out last:rounded-b-lg hover:bg-elevated">
+                <NuxtLink :to="a.to" class="group flex items-center gap-3 px-4 py-3 transition-colors duration-150 ease-out last:rounded-b-lg hover:bg-elevated">
                   <span class="min-w-0 flex-1 truncate text-sm text-muted">{{ a.title }}</span>
                   <StatusBadge :status="a.status" />
                   <UIcon name="i-lucide-chevron-right" class="size-4 shrink-0 text-dimmed" />
