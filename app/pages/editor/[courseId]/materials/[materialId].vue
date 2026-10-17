@@ -7,8 +7,9 @@ type S = components['schemas']
 
 /**
  * Material editor (spec course-content.md, Material editor): title, kind-specific body / file / URL, tags, published.
- * Files attach and detach at once (PATCH `file_ids` with the full list) so previews resolve; text saves explicitly
- * (button or ⌘/Ctrl+S). Leaving with unsaved text asks first.
+ * Files attach and detach at once (PATCH `file_ids` with the full list, one call at a time) so previews resolve;
+ * they live in their own ref, so attaching never touches unsaved text. Text saves explicitly (button or ⌘/Ctrl+S).
+ * Leaving with unsaved text asks first.
  */
 const route = useRoute()
 const { t } = useI18n()
@@ -26,16 +27,20 @@ const base = `/api/files/materials/${materialId}`
 const state = reactive({ title: '', body: '', url: '', tags: [] as MaterialTag[], published: false })
 const saved = ref('')
 const snapshot = () => JSON.stringify(state)
+/** Attached files; changed only by attach / detach and by loading the material */
+const fileList = ref<S['FileMeta'][]>([])
+/** Text fields from the server: on first load and after a successful save, never after a file change */
 function reset() {
   const x = m.value
   if (!x) return
   Object.assign(state, { title: x.title, body: x.body, url: x.url ?? '', tags: [...x.tags], published: x.is_published })
+  fileList.value = x.files
   saved.value = snapshot()
 }
-watch(m, reset, { immediate: true })
+watch(() => m.value?.id, reset, { immediate: true })
 const dirty = computed(() => saved.value !== '' && snapshot() !== saved.value)
 
-const files = computed<FileMeta[]>(() => (m.value?.files ?? []).map(f => ({ id: String(f.id), filename: f.filename, contentType: f.content_type, size: f.size, viewable: f.viewable })))
+const files = computed<FileMeta[]>(() => fileList.value.map(f => ({ id: String(f.id), filename: f.filename, contentType: f.content_type, size: f.size, viewable: f.viewable })))
 const kind = computed(() => m.value?.kind)
 const bodyMax = computed(() => (kind.value === 'markdown' || kind.value === 'video' ? 200_000 : 5000))
 const embed = computed(() => (kind.value === 'video' && state.url ? toEmbed(state.url) : null))
@@ -69,6 +74,7 @@ async function save() {
     toast.add({ title: t('editor.saved'), icon: 'i-lucide-check', color: 'success' })
     invalidateContent(`editor-material:${materialId}`)
     await refresh()
+    reset()
   } catch (e) {
     const { code, field } = apiError(e)
     if (code === 'video_host_not_allowed') fieldError.value = { url: message(e) }
@@ -86,12 +92,21 @@ function onKey(e: KeyboardEvent) {
 }
 
 // ---- files: attach / detach at once ------------------------------------------------------------------
-const attaching = ref(false)
-async function setFiles(ids: number[]) {
-  const res = await $fetch<S['MaterialRead']>(`/api/editor/materials/${materialId}`, { method: 'PATCH', body: { file_ids: ids } })
-  m.value = { ...m.value!, files: res.files }
-  invalidateContent(`editor-material:${materialId}`)
-  return res
+const attaching = ref(0)
+/**
+ * File-list changes run one after another: each PATCH sends the full list, so two parallel ones (several images
+ * pasted at once) would drop each other's file. `change` gets the current ids and returns the new list.
+ */
+let queue: Promise<unknown> = Promise.resolve()
+function setFiles(change: (ids: number[]) => number[]) {
+  const run = queue.then(async () => {
+    const res = await $fetch<S['MaterialRead']>(`/api/editor/materials/${materialId}`, { method: 'PATCH', body: { file_ids: change(fileList.value.map(f => f.id)) } })
+    fileList.value = res.files
+    invalidateContent(`editor-material:${materialId}`)
+    return res
+  })
+  queue = run.catch(() => {})
+  return run
 }
 /** Upload and attach; resolves to the new file's metadata (used by the markdown editor for images too) */
 async function attach(file: File, purpose: UploadPurpose): Promise<FileMeta | null> {
@@ -100,18 +115,18 @@ async function attach(file: File, purpose: UploadPurpose): Promise<FileMeta | nu
     toast.add({ title: t(check.reason === 'type' ? 'editor.err.fileType' : 'editor.err.fileSize', { name: file.name }), color: 'error', icon: 'i-lucide-circle-alert' })
     return null
   }
-  attaching.value = true
+  attaching.value++
   try {
     const id = Number(await upload(file, purpose))
     const single = kind.value === 'pdf' || kind.value === 'image'
-    const res = await setFiles(single ? [id] : [...(m.value?.files ?? []).map(f => f.id), id])
+    const res = await setFiles(ids => (single ? [id] : [...ids, id]))
     const f = res.files.find(x => x.id === id)!
     return { id: String(f.id), filename: f.filename, contentType: f.content_type, size: f.size, viewable: f.viewable }
   } catch (e) {
     toastError(e)
     return null
   } finally {
-    attaching.value = false
+    attaching.value--
   }
 }
 const uploadImage = (file: File) => attach(file, 'content_image')
@@ -124,7 +139,7 @@ async function onPick(e: Event) {
 async function detach(f: FileMeta) {
   if (state.body.includes(`file:${f.id}`) && !confirm(t('editor.detachReferenced', { name: f.filename }))) return
   try {
-    await setFiles((m.value?.files ?? []).map(x => x.id).filter(id => String(id) !== f.id))
+    await setFiles(ids => ids.filter(id => String(id) !== f.id))
   } catch (e) {
     toastError(e)
   }
@@ -172,9 +187,7 @@ const back = computed(() => `/editor/${courseId}${m.value?.lesson_id ? `#lesson-
         <UFormField v-if="m.kind === 'video' || m.kind === 'link'" :label="m.kind === 'video' ? t('editor.videoUrl') : t('editor.url')" :error="fieldError.url || urlError" :help="m.kind === 'video' && !urlError ? t('editor.videoHelp') : undefined">
           <UInput v-model="state.url" type="url" inputmode="url" class="w-full" />
         </UFormField>
-        <div v-if="embed" class="aspect-video max-w-3xl overflow-hidden rounded-lg bg-black ring-1 ring-inset ring-default">
-          <iframe :src="embed.embedUrl" :title="state.title" class="size-full" allow="fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" />
-        </div>
+        <VideoEmbed v-if="embed" :src="embed.embedUrl" :title="state.title" />
 
         <UFormField v-if="maxFiles" :label="m.kind === 'markdown' ? t('editor.attachments') : m.kind === 'video' ? t('editor.captions') : maxFiles === 1 ? t('editor.file') : t('editor.files')">
           <div class="space-y-2">
@@ -185,7 +198,7 @@ const back = computed(() => `/editor/${courseId}${m.value?.lesson_id ? `#lesson-
             </div>
             <label v-if="files.length < maxFiles || maxFiles === 1" class="inline-flex">
               <input type="file" class="sr-only" :accept="accept" :multiple="maxFiles > 1" @change="onPick">
-              <UButton as="span" :label="files.length && maxFiles === 1 ? t('editor.replaceFile') : t('editor.chooseFile')" :loading="attaching" icon="i-lucide-upload" color="neutral" variant="outline" size="sm" />
+              <UButton as="span" :label="files.length && maxFiles === 1 ? t('editor.replaceFile') : t('editor.chooseFile')" :loading="attaching > 0" icon="i-lucide-upload" color="neutral" variant="outline" size="sm" />
             </label>
           </div>
         </UFormField>

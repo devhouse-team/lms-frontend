@@ -25,7 +25,7 @@ export function toEmbed(raw: string): { host: 'youtube' | 'vimeo' | 'drive' | 'l
   if (host === 'vimeo.com' || host === 'player.vimeo.com') {
     const [id, hash] = host === 'vimeo.com' ? [parts[0], parts[1]] : parts[0] === 'video' ? [parts[1], u.searchParams.get('h') ?? undefined] : []
     if (!id || !/^\d+$/.test(id)) return null
-    return { host: 'vimeo', embedUrl: `https://player.vimeo.com/video/${id}${hash ? `?h=${hash}` : ''}` }
+    return { host: 'vimeo', embedUrl: `https://player.vimeo.com/video/${id}${hash ? `?h=${encodeURIComponent(hash)}` : ''}` }
   }
   if (host === 'drive.google.com' && parts[0] === 'file' && parts[1] === 'd' && parts[2]) {
     return { host: 'drive', embedUrl: `https://drive.google.com/file/d/${parts[2]}/preview` }
@@ -42,4 +42,15 @@ function seconds(t: string | null) {
   if (/^\d+$/.test(t)) return Number(t)
   const m = /^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/.exec(t)
   return m ? Number(m[1] ?? 0) * 3600 + Number(m[2] ?? 0) * 60 + Number(m[3] ?? 0) : 0
+}
+
+/** Hosts an embed URL may point at (the API's `embed_url` and `toEmbed()` both produce only these) */
+const EMBED_HOSTS = ['www.youtube-nocookie.com', 'player.vimeo.com', 'drive.google.com', 'www.loom.com']
+export function isEmbedUrl(url: string) {
+  try {
+    const u = new URL(url)
+    return u.protocol === 'https:' && EMBED_HOSTS.includes(u.hostname)
+  } catch {
+    return false
+  }
 }

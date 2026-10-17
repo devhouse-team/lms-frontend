@@ -13,7 +13,7 @@ type S = components['schemas']
 const { t } = useI18n()
 const toast = useToast()
 const { toastError } = useApiErrors('content')
-const { outline, call, refresh } = useCourseEditor()
+const { courseId, outline, call, refresh } = useCourseEditor()
 const o = computed(() => outline.value!)
 const modules = computed(() => [...o.value.modules].sort((a, b) => a.position - b.position))
 const lessonsOf = (m: S['ModuleOutline']) => [...m.lessons].sort((a, b) => a.position - b.position)
@@ -141,11 +141,11 @@ async function confirmDeleteAssignment() {
   } catch (e) {
     toastError(e)
   }
-  invalidateContent()
+  invalidateContent(`editor-outline:${courseId}`)
   await refresh()
 }
 const onAssignmentSaved = async () => {
-  invalidateContent()
+  invalidateContent(`editor-outline:${courseId}`)
   await refresh()
 }
 </script>

@@ -9,7 +9,7 @@ const { t, locale } = useI18n()
 const toast = useToast()
 const { upload } = useStorageUpload()
 
-interface Item { key: number, name: string, size: number, id?: string, state: 'uploading' | 'done' | 'error' }
+interface Item { key: number, file: File, name: string, size: number, id?: string, state: 'uploading' | 'done' | 'error' }
 const files = ref<Item[]>([])
 const body = ref('')
 const links = ref<string[]>([''])
@@ -26,7 +26,7 @@ async function onPick(e: Event) {
   const picked = [...(input.files ?? [])]
   input.value = ''
   for (const f of picked) {
-    if (files.value.length >= MAX_FILES) {
+    if (counted.value >= MAX_FILES) {
       toast.add({ title: t('submission.err.maxFiles', { n: MAX_FILES }), color: 'error', icon: 'i-lucide-circle-alert' })
       break
     }
@@ -35,14 +35,20 @@ async function onPick(e: Event) {
       toast.add({ title: check.reason === 'type' ? t('submission.err.fileType', { name: f.name }) : t('submission.err.fileSize', { name: f.name }), color: 'error', icon: 'i-lucide-circle-alert' })
       continue
     }
-    const item = reactive<Item>({ key: ++seq, name: f.name, size: f.size, state: 'uploading' })
+    const item = reactive<Item>({ key: ++seq, file: f, name: f.name, size: f.size, state: 'uploading' })
     files.value.push(item)
-    upload(f, 'submission').then((id) => {
-      item.id = id
-      item.state = 'done'
-    }).catch(() => (item.state = 'error'))
+    start(item)
   }
 }
+function start(item: Item) {
+  item.state = 'uploading'
+  upload(item.file, 'submission').then((id) => {
+    item.id = id
+    item.state = 'done'
+  }).catch(() => (item.state = 'error'))
+}
+/** Failed uploads don't count towards the limit: they're retried or removed */
+const counted = computed(() => files.value.filter(f => f.state !== 'error').length)
 const removeFile = (key: number) => (files.value = files.value.filter(f => f.key !== key))
 const busy = computed(() => files.value.some(f => f.state === 'uploading'))
 
@@ -51,6 +57,7 @@ const badLink = computed(() => cleanLinks.value.find(l => !/^https?:\/\/\S+\.\S+
 
 async function send() {
   error.value = undefined
+  if (files.value.some(f => f.state === 'error')) return void (error.value = t('submission.err.failedFiles'))
   const fileIds = files.value.filter(f => f.state === 'done').map(f => f.id!)
   if (!fileIds.length && !body.value.trim() && !cleanLinks.value.length) return void (error.value = t('submission.err.empty'))
   if (badLink.value) return void (error.value = t('submission.err.url'))
@@ -80,11 +87,12 @@ async function send() {
           <span class="num shrink-0 text-xs" :class="f.state === 'error' ? 'text-error' : 'text-muted'">
             {{ f.state === 'error' ? t('submission.uploadFailed') : f.state === 'uploading' ? t('submission.uploading') : formatBytes(f.size, locale) }}
           </span>
+          <UButton v-if="f.state === 'error'" :label="t('common.retry')" color="neutral" variant="outline" size="xs" @click="start(f)" />
           <UButton icon="i-lucide-x" color="neutral" variant="ghost" size="xs" :aria-label="t('submission.removeFile', { name: f.name })" @click="removeFile(f.key)" />
         </li>
       </ul>
       <input ref="fileInput" type="file" multiple class="sr-only" tabindex="-1" :accept="acceptFor('submission')" @change="onPick">
-      <UButton :label="t('submission.addFiles')" icon="i-lucide-paperclip" color="neutral" variant="outline" size="sm" :disabled="files.length >= MAX_FILES" @click="fileInput?.click()" />
+      <UButton :label="t('submission.addFiles')" icon="i-lucide-paperclip" color="neutral" variant="outline" size="sm" :disabled="counted >= MAX_FILES" @click="fileInput?.click()" />
       <p class="text-xs text-muted">{{ t('submission.filesHint', { n: MAX_FILES }) }}</p>
     </div>
 

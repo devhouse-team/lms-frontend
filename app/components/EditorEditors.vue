@@ -7,7 +7,7 @@ type S = components['schemas']
 /** Who edits this course: added editors (removable) and program leads (read-only, "via program") */
 const { t } = useI18n()
 const { courseId, call } = useCourseEditor()
-const { data: editors, refresh } = await useFetch<S['CourseEditorRead'][]>(`/api/editor/courses/${courseId}/editors`, { key: `course-editors:${courseId}`, default: () => [] })
+const { data: editors, error, refresh } = await useFetch<S['CourseEditorRead'][]>(`/api/editor/courses/${courseId}/editors`, { key: `course-editors:${courseId}`, default: () => [] })
 const { data: people, status: peopleStatus, execute: loadPeople } = useLazyFetch<PersonOption[]>('/api/people/options', {
   key: 'people-options', immediate: false, server: false, default: () => []
 })
@@ -37,7 +37,15 @@ async function remove(e: S['CourseEditorRead']) {
 
 <template>
   <div class="max-w-2xl space-y-3">
-    <ul v-if="editors.length" class="divide-y divide-default rounded-lg ring-1 ring-inset ring-default">
+    <UAlert
+      v-if="error"
+      color="error"
+      variant="subtle"
+      icon="i-lucide-circle-alert"
+      :description="error.statusCode === 403 ? t('content.err.permission_denied') : t('home.loadError')"
+      :actions="[{ label: t('common.retry'), color: 'neutral', variant: 'outline', onClick: () => { refresh() } }]"
+    />
+    <ul v-else-if="editors.length" class="divide-y divide-default rounded-lg ring-1 ring-inset ring-default">
       <li v-for="e in editors" :key="`${e.user.id}-${e.source}`" class="flex items-center gap-3 px-4 py-3">
         <UAvatar :alt="e.user.name" size="sm" />
         <span class="min-w-0 flex-1">
@@ -48,7 +56,7 @@ async function remove(e: S['CourseEditorRead']) {
       </li>
     </ul>
     <p v-else class="text-sm text-muted">{{ t('editor.noEditors') }}</p>
-    <UButton :label="t('editor.addEditor')" icon="i-lucide-user-plus" color="neutral" variant="outline" size="sm" @click="openAdd" />
+    <UButton v-if="!error" :label="t('editor.addEditor')" icon="i-lucide-user-plus" color="neutral" variant="outline" size="sm" @click="openAdd" />
 
     <UModal v-model:open="adding" :title="t('editor.addEditor')">
       <template #body>

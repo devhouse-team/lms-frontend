@@ -17,7 +17,13 @@ export default defineEventHandler(async (event): Promise<FileTicket> => {
   const { filename, size, purpose } = await readValidatedBody(event, body.parse)
   const check = checkUpload(filename, size, purpose)
   if (!check.ok) {
-    throw createError({ statusCode: 422, statusMessage: check.reason === 'size' ? 'file_too_large' : 'validation_error', data: { details: { max_bytes: check.maxBytes } } })
+    // Same shape as the API's 422: `details.fields` lets apiError().field() point at the input
+    const field = check.reason === 'size' ? 'size' : 'filename'
+    throw createError({
+      statusCode: 422,
+      statusMessage: check.reason === 'size' ? 'file_too_large' : 'validation_error',
+      data: { details: { max_bytes: check.maxBytes, fields: [{ loc: ['body', field], msg: check.reason === 'size' ? `File over ${check.maxBytes} bytes` : 'File type not allowed' }] } }
+    })
   }
   const t = await apiFetch<components['schemas']['UploadTicket']>(event, '/files/', { method: 'POST', body: { filename, content_type: check.contentType, size, purpose } })
   return { fileId: String(t.file.id), uploadUrl: t.upload_url, headers: t.headers }

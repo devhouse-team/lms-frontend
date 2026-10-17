@@ -49,9 +49,7 @@
     "queueEmpty": "All caught up. Check in with your mentor or pick your next course.",
     "queueEmptyAction": "Open courses",
     "courses": "External courses",
-    "coursesHint": "Courses live on other sites. Track your progress here.",
     "coursesEmpty": "Add a link to a course you are taking and track your progress.",
-    "coursesDone": "{done} of {total} done",
     "mentor": "Mentor",
     "mentorNext": "Next session",
     "cohort": "Cohort",
@@ -66,7 +64,6 @@
     "careerDone": "{done} of {total}",
     "loadError": "Could not load your data",
     "loadErrorHint": "Check your connection and try again.",
-    "statusError": "Could not save the course status",
     "mentorNone": "No mentor assigned yet. The academy will let you know.",
     "noCohort": "You are not in an active cohort yet. The academy will add you and let you know.",
     "summaryPlanned": "Starts {date} · cohort {cohort}",
@@ -249,7 +246,8 @@
       "empty": "Add a file, text or link.",
       "fileType": "{name}: this file type isn't allowed.",
       "fileSize": "{name}: files up to 25 MB. Videos go on YouTube or Vimeo and are added as a link.",
-      "maxFiles": "Up to {n} files."
+      "maxFiles": "Up to {n} files.",
+      "failedFiles": "Some files failed to upload: retry or remove them."
     },
     "closedFinished": "This cohort finished on {date}. Submissions are closed; your mentor can still review work you already sent.",
     "closedPlanned": "Submissions open when the cohort starts: {date}",

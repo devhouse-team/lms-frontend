@@ -55,6 +55,8 @@ const loadKatex = () => (katexP ??= Promise.all([
   import('katex/dist/katex.min.css')
 ]).then(([ext]) => ext))
 
+const IMG_SRC = /^(?:https:\/\/[^\s"]+|\/api\/files\/(?:cohorts\/\d+\/materials|materials|submissions)\/\d+\/\d+)$/
+
 let purifyP: Promise<typeof import('dompurify').default> | undefined
 const loadPurify = () => (purifyP ??= import('dompurify').then(({ default: purify }) => {
   // External links open in a new tab without referrer; images load lazily
@@ -66,7 +68,11 @@ const loadPurify = () => (purifyP ??= import('dompurify').then(({ default: purif
         node.setAttribute('rel', 'noopener noreferrer nofollow')
       }
     }
-    if (node.tagName === 'IMG') node.setAttribute('loading', 'lazy')
+    if (node.tagName === 'IMG') {
+      // Images: https or exactly one of our file routes; never http or another app path
+      if (!IMG_SRC.test(node.getAttribute('src') ?? '')) node.removeAttribute('src')
+      node.setAttribute('loading', 'lazy')
+    }
   })
   return purify
 }))
@@ -121,6 +127,6 @@ export async function renderMarkdown(src: string, opts: RenderOptions = {}) {
     USE_PROFILES: { html: true, svg: true, mathMl: true },
     FORBID_TAGS: ['style', 'iframe', 'object', 'embed', 'form', 'textarea', 'select'],
     SANITIZE_NAMED_PROPS: true,
-    ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|\/api\/files\/|#)/i
+    ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|#|\/api\/files\/(?:cohorts\/\d+\/materials|materials|submissions)\/\d+\/\d+$)/i
   })
 }

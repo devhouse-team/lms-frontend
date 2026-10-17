@@ -10,12 +10,24 @@ const { t } = useI18n()
 const toast = useToast()
 
 const html = ref<string>()
+const failed = ref(false)
+/** Only the latest render may land: an older one (KaTeX still loading) must not overwrite a newer text */
+let seq = 0
 async function render() {
-  html.value = await renderMarkdown(props.source, {
-    files: props.files,
-    base: props.base,
-    labels: { copy: t('content.copy'), missingFile: id => t('content.missingFile', { id }) }
-  })
+  const mine = ++seq
+  try {
+    const out = await renderMarkdown(props.source, {
+      files: props.files,
+      base: props.base,
+      labels: { copy: t('content.copy'), missingFile: id => t('content.missingFile', { id }) }
+    })
+    if (mine !== seq) return
+    html.value = out
+    failed.value = false
+  } catch {
+    // A renderer chunk failed to load (offline, new deploy): show the source as plain text
+    if (mine === seq) failed.value = true
+  }
 }
 onMounted(render)
 watch(() => [props.source, props.files, props.base], render)
@@ -35,7 +47,8 @@ async function onClick(e: MouseEvent) {
 
 <template>
   <!-- eslint-disable-next-line vue/no-v-html -- sanitized by DOMPurify in renderMarkdown (spec: the only v-html) -->
-  <div v-if="html !== undefined" class="md-body" @click="onClick" v-html="html" />
+  <p v-if="failed" class="md-body whitespace-pre-line">{{ source }}</p>
+  <div v-else-if="html !== undefined" class="md-body" @click="onClick" v-html="html" />
   <div v-else class="max-w-[72ch] space-y-2" aria-busy="true">
     <USkeleton class="h-4 w-11/12" />
     <USkeleton class="h-4 w-10/12" />
