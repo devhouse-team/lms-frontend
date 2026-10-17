@@ -8,7 +8,9 @@ export const cohortCreateBody = z.object({
   programId: z.string().min(1),
   startsOn: day,
   /** Create: optional, the API defaults it from the program's duration */
-  endsOn: day.optional()
+  endsOn: day.optional(),
+  /** IANA zone for exam times (the API validates the name); create, or edit while planned */
+  timezone: z.string().min(1).max(64).optional()
 })
 
 /** Only the fields that changed; never null (the API would 500 on null before v2, and refuses it now) */

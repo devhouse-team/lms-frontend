@@ -24,14 +24,14 @@ export default defineEventHandler(async (event): Promise<CoursesResponse> => {
     const c = listed.find(x => x.id === id)
     if (!c) return []
     return [{
-      cohort: { id: String(c.id), name: c.name, status: c.status, startsOn: c.starts_on, endsOn: c.ends_on, week: c.week, totalWeeks: c.total_weeks, finishedAt: c.finished_at },
+      cohort: { id: String(c.id), name: c.name, status: c.status, startsOn: c.starts_on, endsOn: c.ends_on, timezone: c.timezone, week: c.week, totalWeeks: c.total_weeks, finishedAt: c.finished_at },
       courses: groups[i]!.filter(r => r.course.is_published).map(r => ({
         courseId: String(r.course_id),
         title: r.course.title,
         releasedLessons: r.released_lesson_count,
         totalLessons: r.lesson_count,
         doneLessons: r.completed_lesson_count ?? null,
-        nextDeadline: r.next_deadline ? { title: r.next_deadline.title, dueOn: r.next_deadline.due_on, assignmentId: assignmentKey(id, r.next_deadline.lesson_id) } : null
+        nextDeadline: r.next_deadline ? { title: r.next_deadline.title, dueOn: r.next_deadline.due_on, to: assignmentPath(id, r.next_deadline.assignment_id) } : null
       }))
     }]
   })

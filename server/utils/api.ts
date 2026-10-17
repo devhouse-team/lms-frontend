@@ -19,7 +19,7 @@ export interface ApiOptions {
 }
 
 /** Backend codes the pages treat as "already exists / already done" (409 in the old mock API) */
-const CONFLICT = new Set(['submission_pending', 'enrollment_exists', 'user_exists', 'slug_taken', 'course_slug_taken', 'invalid_transition', 'not_reviewable'])
+const CONFLICT = new Set(['submission_pending', 'enrollment_exists', 'user_exists', 'slug_taken', 'course_slug_taken', 'invalid_transition', 'not_reviewable', 'attempt_used'])
 
 const baseURL = () => useRuntimeConfig().apiBase
 

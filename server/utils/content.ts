@@ -26,15 +26,19 @@ export const materialView = (m: S['MaterialForCohort']): MaterialView => ({
 export const materialSummary = (m: S['MaterialForCohortSummary']): MaterialSummaryView =>
   ({ id: String(m.id), title: m.title, kind: m.kind, tags: m.tags, isReleased: m.is_released })
 
-export const lessonAssignment = (cohortId: number, lessonId: number) => (a: S['AssignmentForCohortSummary']): LessonAssignmentView => ({
-  id: assignmentKey(cohortId, lessonId),
+export const lessonAssignment = (cohortId: number) => (a: S['AssignmentForCohortSummary']): LessonAssignmentView => ({
+  id: String(a.id),
+  to: assignmentPath(cohortId, a.id),
   title: a.title,
+  mode: a.mode,
   dueOn: a.due_on,
+  opensAt: a.opens_at,
+  closesAt: a.closes_at,
   status: a.my_status ? toUiStatus(a.my_status) : 'not_submitted'
 })
 
 export const contentCohort = (c: S['OutlineCohort']): ContentCohort =>
-  ({ id: String(c.id), name: c.name, status: c.status as ContentCohort['status'], startsOn: c.starts_on, endsOn: c.ends_on })
+  ({ id: String(c.id), name: c.name, status: c.status as ContentCohort['status'], startsOn: c.starts_on, endsOn: c.ends_on, timezone: c.timezone })
 
 /** My relation to a cohort: a student reads in order and marks lessons; anyone else (staff, editor) reads ahead */
 export async function cohortRelation(event: H3Event, cohortId: number) {
@@ -60,7 +64,7 @@ export function outlineView(o: S['CohortCourseOutline'], staff: boolean): Course
         releasedOn: l.released_on,
         isReleased: l.is_released,
         completed: l.completed,
-        assignments: l.assignments.map(lessonAssignment(o.cohort.id, l.id))
+        assignments: l.assignments.map(lessonAssignment(o.cohort.id))
       }))
     })),
     staff

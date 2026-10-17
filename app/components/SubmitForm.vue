@@ -1,9 +1,20 @@
 <script setup lang="ts">
+import type { AcceptedFormats } from '~~/shared/types'
+
 /**
- * Homework submit form (spec course-content.md, Submit form, Phase 1): files (any allowed type, ≤ 10, 25 MB each,
- * uploaded on select), a markdown note and links (≤ 10). At least one part. A failed send keeps everything.
+ * Submit form shared by every mode (spec course-content.md, Submit form), built from the assignment's accepted formats:
+ * files (uploaded on select, limited by count and type groups, 25 MB each), a markdown note and links (≤ 10), only the
+ * parts the assignment accepts. At least one part. A failed send keeps everything. `confirmText` asks first (exams).
  */
-const props = defineProps<{ assignmentId: string }>()
+const props = defineProps<{
+  cohortId: string
+  assignmentId: string
+  accepts: AcceptedFormats
+  /** An exam trial: never counts */
+  trial?: boolean
+  confirmText?: string
+  sendLabel?: string
+}>()
 const emit = defineEmits<{ sent: [], error: [e: unknown] }>()
 const { t, locale } = useI18n()
 const toast = useToast()
@@ -14,8 +25,8 @@ const files = ref<Item[]>([])
 const body = ref('')
 const links = ref<string[]>([''])
 const sending = ref(false)
+const confirming = ref(false)
 const error = ref<string>()
-const MAX_FILES = 10
 /** Bound, not static: a static `//` inside v-for breaks vue-tsc's generated code */
 const LINK_PLACEHOLDER = 'https://github.com/…'
 let seq = 0
@@ -26,13 +37,13 @@ async function onPick(e: Event) {
   const picked = [...(input.files ?? [])]
   input.value = ''
   for (const f of picked) {
-    if (counted.value >= MAX_FILES) {
-      toast.add({ title: t('submission.err.maxFiles', { n: MAX_FILES }), color: 'error', icon: 'i-lucide-circle-alert' })
+    if (counted.value >= props.accepts.maxFiles) {
+      toast.add({ title: t('submission.err.maxFiles', { n: props.accepts.maxFiles }), color: 'error', icon: 'i-lucide-circle-alert' })
       break
     }
     const check = checkUpload(f.name, f.size, 'submission')
-    if (!check.ok) {
-      toast.add({ title: check.reason === 'type' ? t('submission.err.fileType', { name: f.name }) : t('submission.err.fileSize', { name: f.name }), color: 'error', icon: 'i-lucide-circle-alert' })
+    if (!check.ok || !inGroups(f.name, props.accepts.fileTypes)) {
+      toast.add({ title: check.ok || check.reason === 'type' ? t('submission.err.fileType', { name: f.name }) : t('submission.err.fileSize', { name: f.name }), color: 'error', icon: 'i-lucide-circle-alert' })
       continue
     }
     const item = reactive<Item>({ key: ++seq, file: f, name: f.name, size: f.size, state: 'uploading' })
@@ -54,16 +65,40 @@ const busy = computed(() => files.value.some(f => f.state === 'uploading'))
 
 const cleanLinks = computed(() => links.value.map(l => l.trim()).filter(Boolean))
 const badLink = computed(() => cleanLinks.value.find(l => !/^https?:\/\/\S+\.\S+/i.test(l)))
+const typesHint = computed(() => (props.accepts.fileTypes.length ? props.accepts.fileTypes.map(g => t(`submission.group.${g}`)).join(', ') : t('submission.anyType')))
 
-async function send() {
+/** Only the accepted parts are sent */
+function payload() {
+  return {
+    body: props.accepts.text ? body.value : '',
+    links: props.accepts.links ? cleanLinks.value : [],
+    fileIds: props.accepts.files ? files.value.filter(f => f.state === 'done').map(f => f.id!) : [],
+    isTrial: !!props.trial
+  }
+}
+
+function check() {
   error.value = undefined
   if (files.value.some(f => f.state === 'error')) return void (error.value = t('submission.err.failedFiles'))
-  const fileIds = files.value.filter(f => f.state === 'done').map(f => f.id!)
-  if (!fileIds.length && !body.value.trim() && !cleanLinks.value.length) return void (error.value = t('submission.err.empty'))
-  if (badLink.value) return void (error.value = t('submission.err.url'))
+  const p = payload()
+  if (!p.fileIds.length && !p.body.trim() && !p.links.length) return void (error.value = t(props.accepts.files && !props.accepts.text && !props.accepts.links ? 'submission.err.emptyFiles' : 'submission.err.empty'))
+  if (props.accepts.links && badLink.value) return void (error.value = t('submission.err.url'))
+  return p
+}
+
+function onSend() {
+  if (!check()) return
+  if (props.confirmText) confirming.value = true
+  else send()
+}
+
+async function send() {
+  const p = check()
+  confirming.value = false
+  if (!p) return
   sending.value = true
   try {
-    await $fetch(`/api/assignments/${props.assignmentId}/submissions`, { method: 'POST', body: { body: body.value, links: cleanLinks.value, fileIds } })
+    await $fetch(`/api/assignments/${props.cohortId}/${props.assignmentId}/submissions`, { method: 'POST', body: p })
     files.value = []
     body.value = ''
     links.value = ['']
@@ -78,7 +113,7 @@ async function send() {
 
 <template>
   <div class="space-y-5">
-    <div class="space-y-2">
+    <div v-if="accepts.files" class="space-y-2">
       <p class="text-sm font-medium text-highlighted">{{ t('submission.files') }}</p>
       <ul v-if="files.length" class="space-y-1.5">
         <li v-for="f in files" :key="f.key" class="flex items-center gap-3 rounded-lg px-3 py-2 ring-1 ring-inset ring-default">
@@ -91,18 +126,18 @@ async function send() {
           <UButton icon="i-lucide-x" color="neutral" variant="ghost" size="xs" :aria-label="t('submission.removeFile', { name: f.name })" @click="removeFile(f.key)" />
         </li>
       </ul>
-      <input ref="fileInput" type="file" multiple class="sr-only" tabindex="-1" :accept="acceptFor('submission')" @change="onPick">
-      <UButton :label="t('submission.addFiles')" icon="i-lucide-paperclip" color="neutral" variant="outline" size="sm" :disabled="counted >= MAX_FILES" @click="fileInput?.click()" />
-      <p class="text-xs text-muted">{{ t('submission.filesHint', { n: MAX_FILES }) }}</p>
+      <input ref="fileInput" type="file" :multiple="accepts.maxFiles > 1" class="sr-only" tabindex="-1" :accept="acceptForGroups(accepts.fileTypes)" @change="onPick">
+      <UButton :label="t('submission.addFiles')" icon="i-lucide-paperclip" color="neutral" variant="outline" size="sm" :disabled="counted >= accepts.maxFiles" @click="fileInput?.click()" />
+      <p class="text-xs text-muted">{{ t('submission.filesLimits', { n: accepts.maxFiles, types: typesHint }, accepts.maxFiles) }}</p>
     </div>
 
-    <div class="space-y-2">
-      <p class="text-sm font-medium text-highlighted">{{ t('submission.note') }} <span class="font-normal text-muted">· {{ t('common.optional') }}</span></p>
+    <div v-if="accepts.text" class="space-y-2">
+      <p class="text-sm font-medium text-highlighted">{{ t('submission.note') }} <span v-if="accepts.files || accepts.links" class="font-normal text-muted">· {{ t('common.optional') }}</span></p>
       <MarkdownEditor v-model="body" mode="compact" :max-length="50000" :placeholder="t('submission.notePlaceholder')" />
     </div>
 
-    <div class="space-y-2">
-      <p class="text-sm font-medium text-highlighted">{{ t('submission.links') }} <span class="font-normal text-muted">· {{ t('common.optional') }}</span></p>
+    <div v-if="accepts.links" class="space-y-2">
+      <p class="text-sm font-medium text-highlighted">{{ t('submission.links') }} <span v-if="accepts.files || accepts.text" class="font-normal text-muted">· {{ t('common.optional') }}</span></p>
       <div v-for="(link, index) in links" :key="index" class="flex gap-2">
         <UInput :model-value="link" type="url" inputmode="url" :placeholder="LINK_PLACEHOLDER" class="w-full" :aria-label="t('submission.link', { n: index + 1 })" @update:model-value="v => (links[index] = String(v))" />
         <UButton v-if="links.length > 1" icon="i-lucide-x" color="neutral" variant="ghost" :aria-label="t('submission.removeLink')" @click="links.splice(index, 1)" />
@@ -111,6 +146,16 @@ async function send() {
     </div>
 
     <p v-if="error" class="text-sm text-error" role="alert">{{ error }}</p>
-    <UButton :label="t('submission.send')" icon="i-lucide-send" color="primary" size="lg" :loading="sending" :disabled="busy" @click="send" />
+    <UButton :label="sendLabel ?? t('submission.send')" icon="i-lucide-send" :color="trial ? 'neutral' : 'primary'" :variant="trial ? 'outline' : 'solid'" size="lg" :loading="sending" :disabled="busy" @click="onSend" />
+
+    <UModal v-if="confirmText" v-model:open="confirming" :title="t('exam.confirmTitle')">
+      <template #body>
+        <p class="text-sm">{{ confirmText }}</p>
+      </template>
+      <template #footer>
+        <UButton :label="t('common.cancel')" color="neutral" variant="ghost" @click="confirming = false" />
+        <UButton :label="t('exam.confirmSend')" color="primary" :loading="sending" @click="send" />
+      </template>
+    </UModal>
   </div>
 </template>

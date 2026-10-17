@@ -3,10 +3,11 @@ import type { LessonView } from '~~/shared/types'
 
 /** Lesson (session) page: materials in order, its assignment, mark complete. Spec: course-content.md, Lesson page. */
 const route = useRoute()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const toast = useToast()
 const { short, long } = useCohortFormat()
 const NuxtLink = resolveComponent('NuxtLink')
+const examAt = (iso: string, tz: string) => new Intl.DateTimeFormat(locale.value, { timeZone: tz, weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
 const cohortId = computed(() => String(route.params.cohortId))
 const courseId = computed(() => String(route.params.courseId))
 const lessonId = computed(() => String(route.params.lessonId))
@@ -73,19 +74,20 @@ async function toggleDone() {
           <MaterialBlock v-for="m in lesson.materials" :key="m.id" :material="m" :base="base(m.id)" />
 
           <section v-if="lesson.assignments.length" aria-labelledby="hw-title" class="space-y-3">
-            <h2 id="hw-title" class="text-sm font-semibold text-highlighted">{{ t('lesson.assignments') }}</h2>
+            <h2 id="hw-title" class="text-sm font-semibold text-highlighted">{{ t('lesson.assignments', lesson.assignments.length) }}</h2>
             <ul class="divide-y divide-default rounded-lg ring-1 ring-inset ring-default">
               <li v-for="a in lesson.assignments" :key="a.id">
                 <component
                   :is="lesson.staff ? 'div' : NuxtLink"
-                  :to="lesson.staff ? undefined : `/assignments/${a.id}`"
+                  :to="lesson.staff ? undefined : a.to"
                   class="group flex items-center gap-3 px-4 py-3"
                   :class="!lesson.staff && 'transition-colors duration-150 ease-out hover:bg-elevated'"
                 >
-                  <UBadge :label="t('lesson.mode.homework')" color="neutral" variant="outline" size="sm" />
+                  <UBadge :label="t(`lesson.mode.${a.mode}`)" color="neutral" variant="outline" size="sm" />
                   <span class="min-w-0 flex-1 truncate text-sm text-highlighted">{{ a.title }}</span>
-                  <StatusBadge v-if="!lesson.staff" :status="a.status" />
-                  <span v-if="a.dueOn" class="num shrink-0 text-xs text-muted">{{ t('course.due', { date: short(a.dueOn) }) }}</span>
+                  <StatusBadge v-if="!lesson.staff && a.mode !== 'practice'" :status="a.status" />
+                  <span v-if="a.mode === 'exam' && a.opensAt" class="num shrink-0 text-xs text-muted">{{ examAt(a.opensAt, o.cohort.timezone) }}</span>
+                  <span v-else-if="a.mode === 'homework' && a.dueOn" class="num shrink-0 text-xs text-muted">{{ t('course.due', { date: short(a.dueOn) }) }}</span>
                   <UIcon v-if="!lesson.staff" name="i-lucide-chevron-right" class="size-4 shrink-0 text-dimmed transition-transform duration-150 ease-out group-hover:translate-x-0.5" aria-hidden="true" />
                 </component>
               </li>

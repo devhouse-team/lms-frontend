@@ -39,8 +39,11 @@ const schema = computed(() => z.object({
   .refine(v => !v.startsOn || !v.endsOn || v.endsOn > v.startsOn, { message: t('cohorts.err.endBeforeStart'), path: ['endsOn'] })
   .refine(v => !v.endsOn || (props.cohort && !active.value) || v.endsOn >= today(), { message: t('cohorts.err.cohort_ends_in_past'), path: ['endsOn'] }))
 
-interface State { name: string, programId?: string, startsOn: string, endsOn: string }
-const state = reactive<State>({ name: '', startsOn: '', endsOn: '' })
+interface State { name: string, programId?: string, startsOn: string, endsOn: string, timezone: string }
+const state = reactive<State>({ name: '', startsOn: '', endsOn: '', timezone: 'Asia/Almaty' })
+/** Exam times use the cohort's zone; it can change only while the cohort is planned (API: cohort_started) */
+const zones = Intl.supportedValuesOf('timeZone')
+const zoneLocked = computed(() => !!props.cohort && props.cohort.status !== 'planned')
 const form = useTemplateRef('form')
 const saving = ref(false)
 /** Create: the end date follows start + program duration until it is edited by hand */
@@ -51,8 +54,8 @@ watch(open, (isOpen) => {
   if (!props.cohort && !props.program) loadOptions()
   const c = props.cohort
   Object.assign(state, c
-    ? { name: c.name, programId: c.programId, startsOn: c.startsOn, endsOn: c.endsOn }
-    : { name: '', programId: props.program?.id, startsOn: '', endsOn: '' })
+    ? { name: c.name, programId: c.programId, startsOn: c.startsOn, endsOn: c.endsOn, timezone: c.timezone }
+    : { name: '', programId: props.program?.id, startsOn: '', endsOn: '', timezone: 'Asia/Almaty' })
   endTouched.value = false
 })
 
@@ -67,7 +70,7 @@ const startHint = computed(() => {
 })
 
 /** API field names → form fields, for validation_error and the coded errors */
-const FIELD: Record<string, keyof State> = { name: 'name', starts_on: 'startsOn', ends_on: 'endsOn' }
+const FIELD: Record<string, keyof State> = { name: 'name', starts_on: 'startsOn', ends_on: 'endsOn', timezone: 'timezone' }
 const CODE_FIELD: Record<string, keyof State> = { cohort_name_taken: 'name', cohort_started: 'startsOn', cohort_ends_in_past: 'endsOn', program_not_active: 'programId' }
 
 function showError(e: unknown) {
@@ -85,9 +88,9 @@ function showError(e: unknown) {
 async function onSubmit() {
   const c = props.cohort
   const body = c
-    ? Object.fromEntries(Object.entries({ name: state.name.trim(), startsOn: state.startsOn, endsOn: state.endsOn })
-        .filter(([k, v]) => v !== (k === 'name' ? c.name : k === 'startsOn' ? c.startsOn : c.endsOn)))
-    : { name: state.name.trim(), programId: state.programId, startsOn: state.startsOn, ...(state.endsOn ? { endsOn: state.endsOn } : {}) }
+    ? Object.fromEntries(Object.entries({ name: state.name.trim(), startsOn: state.startsOn, endsOn: state.endsOn, timezone: state.timezone })
+        .filter(([k, v]) => v !== c[k as 'name' | 'startsOn' | 'endsOn' | 'timezone']))
+    : { name: state.name.trim(), programId: state.programId, startsOn: state.startsOn, timezone: state.timezone, ...(state.endsOn ? { endsOn: state.endsOn } : {}) }
   if (c && !Object.keys(body).length) {
     open.value = false // nothing changed: nothing to send
     return
@@ -142,6 +145,9 @@ async function onSubmit() {
             <UInput v-model="state.endsOn" type="date" :min="active || !cohort ? today() : state.startsOn || undefined" class="w-full" @update:model-value="endTouched = true" />
           </UFormField>
         </div>
+        <UFormField :label="t('cohorts.timezone')" name="timezone" :help="zoneLocked ? t('cohorts.timezoneLocked') : t('cohorts.timezoneHelp')">
+          <USelectMenu v-model="state.timezone" :items="zones" :disabled="zoneLocked" :search-input="{ placeholder: t('people.search') }" class="w-full" />
+        </UFormField>
       </UForm>
     </template>
     <template #footer>

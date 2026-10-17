@@ -31,7 +31,7 @@ export default defineEventHandler(async (event): Promise<StudentDashboard> => {
   const todo = (c?.deadlines ?? [])
     .filter(d => d.status === null || d.status === 'changes_requested')
     .sort((a, b) => a.due_on.localeCompare(b.due_on))
-    .map((d): QueueItem => ({ id: String(d.lesson_id), kind: 'assignment', title: d.assignment_title, at: dueAt(d.due_on), to: `/assignments/${assignmentKey(c!.cohort_id, d.lesson_id)}` }))
+    .map((d): QueueItem => ({ id: String(d.lesson_id), kind: 'assignment', title: d.assignment_title, at: dueAt(d.due_on), to: assignmentPath(c!.cohort_id, d.assignment_id) }))
   const [first, ...rest] = todo
   const feedback = c?.recent_feedback.length ?? 0
 

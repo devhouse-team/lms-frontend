@@ -3,7 +3,7 @@ import type { CourseOutlineView } from '~~/shared/types'
 
 /** Course home: header figures, description, Continue, upcoming work. Spec: course-content.md, Course home. */
 const route = useRoute()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { short, long } = useCohortFormat()
 const cohortId = computed(() => String(route.params.cohortId))
 const courseId = computed(() => String(route.params.courseId))
@@ -19,12 +19,14 @@ const continueWith = (o: CourseOutlineView) => {
   const next = lessons.find(l => l.isReleased && !l.completed)
   return next ? { lesson: next, open: true } : (lessons.find(l => !l.isReleased) ? { lesson: lessons.find(l => !l.isReleased)!, open: false } : null)
 }
+/** Next 3 due days and exam windows from today (practice has no deadline) */
 const upcoming = (o: CourseOutlineView) => outlineLessons(o)
-  .flatMap(l => l.assignments.filter(a => a.dueOn && a.dueOn >= todayUtc()).map(a => ({ ...a, lesson: l })))
-  .sort((a, b) => a.dueOn!.localeCompare(b.dueOn!))
+  .flatMap(l => l.assignments.filter(a => (a.mode === 'exam' ? (a.closesAt ?? '') >= new Date().toISOString() : a.mode === 'homework' && a.dueOn && a.dueOn >= todayUtc())).map(a => ({ ...a, lesson: l, at: a.mode === 'exam' ? a.opensAt! : a.dueOn! })))
+  .sort((a, b) => a.at.localeCompare(b.at))
   .slice(0, 3)
-const nextDue = (o: CourseOutlineView) => upcoming(o).find(a => a.status === 'not_submitted' || a.status === 'changes')
+const nextDue = (o: CourseOutlineView) => upcoming(o).find(a => a.mode === 'homework' && (a.status === 'not_submitted' || a.status === 'changes'))
 const { statusBadge } = useCohortFormat()
+const examAt = (iso: string, tz: string) => new Intl.DateTimeFormat(locale.value, { timeZone: tz, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
 </script>
 
 <template>
@@ -70,13 +72,14 @@ const { statusBadge } = useCohortFormat()
           <h2 id="upcoming-title" class="mb-3 text-sm font-semibold text-highlighted">{{ t('course.upcoming') }}</h2>
           <ul class="divide-y divide-default rounded-lg ring-1 ring-inset ring-default">
             <li v-for="a in upcoming(o)" :key="a.id">
-              <NuxtLink :to="`/assignments/${a.id}`" class="group flex items-center gap-3 px-4 py-3 transition-colors duration-150 ease-out hover:bg-elevated">
+              <NuxtLink :to="a.to" class="group flex items-center gap-3 px-4 py-3 transition-colors duration-150 ease-out hover:bg-elevated">
                 <span class="min-w-0 flex-1">
                   <span class="block truncate text-sm text-highlighted">{{ a.title }}</span>
                   <span class="block truncate text-xs text-muted">{{ a.lesson.title }}</span>
                 </span>
+                <UBadge v-if="a.mode === 'exam'" :label="t('lesson.mode.exam')" color="neutral" variant="outline" size="sm" />
                 <StatusBadge :status="a.status" />
-                <span class="num shrink-0 text-xs text-muted">{{ short(a.dueOn!) }}</span>
+                <span class="num shrink-0 text-xs text-muted">{{ a.mode === 'exam' ? examAt(a.at, o.cohort.timezone) : short(a.at) }}</span>
                 <UIcon name="i-lucide-chevron-right" class="size-4 shrink-0 text-dimmed transition-transform duration-150 ease-out group-hover:translate-x-0.5" aria-hidden="true" />
               </NuxtLink>
             </li>

@@ -7,8 +7,9 @@ import type { CourseOutlineView } from '~~/shared/types'
  */
 const props = defineProps<{ outline: CourseOutlineView, lessonId?: string, pageId?: string }>()
 const emit = defineEmits<{ navigate: [] }>()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const NuxtLink = resolveComponent('NuxtLink')
+const examTime = (iso: string) => new Intl.DateTimeFormat(locale.value, { timeZone: props.outline.cohort.timezone, hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
 const { short } = useCohortFormat()
 
 const base = computed(() => `/courses/${props.outline.cohort.id}/${props.outline.id}`)
@@ -79,7 +80,9 @@ const toggle = (id: string) => (open.value.has(id) ? open.value.delete(id) : ope
               </span>
               <span v-else-if="l.completed" class="sr-only">{{ t('course.done') }}</span>
             </span>
-            <span v-if="l.isReleased && openDeadline(l)" class="num shrink-0 text-xs text-muted">{{ t('course.due', { date: short(openDeadline(l)!.dueOn!) }) }}</span>
+            <span v-if="l.isReleased && openDeadline(l)" class="num shrink-0 text-xs text-muted">
+              {{ openDeadline(l)!.kind === 'exam' ? t('course.examAt', { time: examTime(openDeadline(l)!.at) }) : t('course.due', { date: short(openDeadline(l)!.at) }) }}
+            </span>
           </component>
         </li>
       </ul>

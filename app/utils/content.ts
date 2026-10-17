@@ -12,7 +12,9 @@ export const todayUtc = () => new Date().toISOString().slice(0, 10)
 /** Every lesson of the outline in order, with its module */
 export const outlineLessons = (o: CourseOutlineView) => o.modules.flatMap(m => m.lessons.map(l => ({ ...l, moduleId: m.id, moduleTitle: m.title })))
 
-/** The lesson's nearest open deadline: an assignment not yet sent or sent back, due today or later */
+/** The lesson's nearest open item: an upcoming exam window, or homework not yet sent or sent back, due today or later */
 export const openDeadline = (l: OutlineLesson) => l.assignments
-  .filter(a => a.dueOn && a.dueOn >= todayUtc() && (a.status === 'not_submitted' || a.status === 'changes'))
-  .sort((a, b) => a.dueOn!.localeCompare(b.dueOn!))[0]
+  .filter(a => a.status === 'not_submitted' || a.status === 'changes')
+  .flatMap((a): { kind: 'exam' | 'due', at: string }[] => (a.mode === 'exam' && a.closesAt && a.closesAt >= new Date().toISOString() ? [{ kind: 'exam', at: a.opensAt! }]
+    : a.mode === 'homework' && a.dueOn && a.dueOn >= todayUtc() ? [{ kind: 'due', at: a.dueOn }] : []))
+  .sort((a, b) => a.at.localeCompare(b.at))[0]

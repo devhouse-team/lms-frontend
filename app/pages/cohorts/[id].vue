@@ -136,7 +136,9 @@ const onStale = () => refreshAll()
           @add="adding = true"
         />
 
-        <AssignmentsManager :assignments="data.assignments" :lessons="data.lessons" :editable="data.canEditAssignments && !finished" @changed="refresh()" />
+        <CohortAssignments :assignments="data.assignments" :timezone="data.timezone" />
+        <CohortExamWindows :cohort-id="data.id" :exams="data.assignments.filter(a => a.mode === 'exam')" :timezone="data.timezone" :manage="!finished" @changed="refresh()" />
+        <CohortSolutions :cohort-id="data.id" :cohort-name="data.name" />
       </div>
     </HomeState>
 

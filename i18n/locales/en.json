@@ -216,16 +216,19 @@
     "summary": "{done} of {total} accepted",
     "group": {
       "open": "Open",
-      "done": "Accepted"
+      "done": "Accepted",
+      "practice": "Practice"
     },
     "empty": {
       "open": "All assignments are accepted.",
-      "done": "Nothing accepted yet."
+      "done": "Nothing accepted yet.",
+      "practice": "No practice yet."
     },
     "noDue": "No deadline",
     "archive": "Archive · {cohort}",
     "archiveEmpty": "No assignments in this cohort.",
-    "noCurrent": "No current assignments."
+    "noCurrent": "No current assignments.",
+    "examAt": "Exam · {time}"
   },
   "submission": {
     "submit": "Submit your work",
@@ -247,7 +250,8 @@
       "fileType": "{name}: this file type isn't allowed.",
       "fileSize": "{name}: files up to 25 MB. Videos go on YouTube or Vimeo and are added as a link.",
       "maxFiles": "Up to {n} files.",
-      "failedFiles": "Some files failed to upload: retry or remove them."
+      "failedFiles": "Some files failed to upload: retry or remove them.",
+      "emptyFiles": "Attach at least one file."
     },
     "closedFinished": "This cohort finished on {date}. Submissions are closed; your mentor can still review work you already sent.",
     "closedPlanned": "Submissions open when the cohort starts: {date}",
@@ -261,7 +265,18 @@
     "removeFile": "Remove {name}",
     "uploading": "Uploading…",
     "uploadFailed": "Upload failed",
-    "lateNotice": "The due date has passed. You can still send; it will be marked late."
+    "lateNotice": "The due date has passed. You can still send; it will be marked late.",
+    "anyType": "any allowed type",
+    "filesLimits": "Up to {n} file, {types}, 25 MB. | Up to {n} files, {types}, 25 MB each.",
+    "score": "{score} points",
+    "group": {
+      "pdf": "PDF",
+      "image": "images",
+      "archive": "ZIP",
+      "document": "Office documents",
+      "text": "code and text",
+      "notebook": "Jupyter notebooks"
+    }
   },
   "review": {
     "notFound": "Submission not found",
@@ -282,9 +297,22 @@
     "due": "Due: {date}",
     "err": {
       "feedbackRequired": "Write what needs fixing",
-      "already": "This submission was already reviewed"
+      "already": "This submission was already reviewed",
+      "commentRequired": "Write a comment first.",
+      "score": "From 0 to {max}"
     },
-    "reviewedOn": "reviewed {date}"
+    "reviewedOn": "reviewed {date}",
+    "grade": "Accept and grade",
+    "leaveFeedback": "Leave feedback",
+    "commentedToast": "Feedback sent",
+    "late": "late",
+    "score": "Score (out of {max})",
+    "trials": "Trial attempts",
+    "trialsNote": "Test uploads before the exam. They don't count.",
+    "modeNote": {
+      "exam": "Exams are graded once: no \"send back\".",
+      "practice": "Practice needs no review; a comment is optional."
+    }
   },
   "inviteForm": {
     "title": "Invite to the academy",
@@ -375,7 +403,9 @@
   "reviews": {
     "waiting": "Waiting",
     "reviewed": "Reviewed",
-    "noneReviewed": "No reviewed submissions yet."
+    "noneReviewed": "No reviewed submissions yet.",
+    "includePractice": "Include practice",
+    "practiceGroup": "Practice"
   },
   "roster": {
     "mentee": "Student",
@@ -448,34 +478,8 @@
   },
   "assignments": {
     "manage": "Assignments",
-    "add": "Add assignment",
     "none": "No assignments yet.",
     "due": "due {date}",
-    "submissions": "submissions: {n}",
-    "delete": "Delete assignment",
-    "confirmTitle": "Delete assignment?",
-    "confirmDelete": "\"{title}\" will be deleted permanently.",
-    "editNamed": "Edit: {title}",
-    "deleteNamed": "Delete: {title}",
-    "deleted": "Assignment deleted",
-    "hasSubmissions": "Can't delete: this assignment already has submissions.",
-    "created": "Assignment created",
-    "saved": "Changes saved",
-    "createTitle": "New assignment",
-    "editTitle": "Edit assignment",
-    "title": "Title",
-    "description": "Instructions",
-    "err": {
-      "title": "Enter a title (2+ characters)",
-      "description": "Add a description",
-      "dueOffset": "0 to 365 days",
-      "lesson": "Choose a lesson"
-    },
-    "lesson": "Lesson",
-    "lessonPlaceholder": "Choose a lesson",
-    "noLessons": "Assignments attach to lessons of the cohort's courses. No free lessons: attach a course to the cohort or add lessons to it.",
-    "dueOffset": "Due, days after the lesson opens",
-    "dueOffsetHint": "Leave empty for no deadline",
     "noDue": "no deadline",
     "inLesson": "lesson “{lesson}”"
   },
@@ -552,7 +556,10 @@
     "createdNoCourses": "Cohort created. The program has no courses, so none were attached.",
     "noActivePrograms": "No active programs. Activate one on the Programs page.",
     "noActiveProgramsLead": "None of your programs is active.",
-    "endsOnHelp": "Empty: {n} week from the start. | Empty: {n} weeks from the start."
+    "endsOnHelp": "Empty: {n} week from the start. | Empty: {n} weeks from the start.",
+    "timezone": "Timezone",
+    "timezoneHelp": "Exam windows are shown and set in this zone.",
+    "timezoneLocked": "The cohort has started; its timezone is fixed."
   },
   "programs": {
     "hint": "Course templates that cohorts are created from.",
@@ -884,7 +891,29 @@
       "course_slug_taken": "Another course uses this address.",
       "student_cannot_be_staff": "This person studies in a cohort of this course.",
       "user_not_found": "This person can't be added (account inactive or removed).",
-      "cohort_not_found": "Cohort not found"
+      "cohort_not_found": "Cohort not found",
+      "modeLocked": "The mode can't change after students have submitted.",
+      "exam_not_open": "The exam hasn't opened yet.",
+      "exam_closed": "The exam window has closed; your answer wasn't accepted. Tell your mentor.",
+      "attempt_used": "You've already submitted this exam.",
+      "trial_not_allowed": "Trial attempts are only possible before the exam opens.",
+      "trial_limit": "You've used all 3 trial attempts.",
+      "format_not_accepted": "This assignment doesn't accept that.",
+      "review_decision_not_allowed": "Exams and practice can only be accepted, not sent back.",
+      "exam_window_started": "The exam has already opened in a cohort; change it for that cohort only.",
+      "exam_window_closed": "This exam's window has closed.",
+      "cohort_finished": "This cohort has finished and is read-only.",
+      "release_invalid": "This release rule doesn't fit this material.",
+      "solution_needs_due": "The assignment has no due date; choose another rule.",
+      "release_not_found": "This material has no manual release here.",
+      "cohort_started": "The cohort has started; this can no longer change.",
+      "format": {
+        "text": "This assignment doesn't accept text.",
+        "links": "This assignment doesn't accept links.",
+        "files": "This assignment doesn't accept files.",
+        "max_files": "Too many files for this assignment.",
+        "file_type": "This file type isn't allowed here."
+      }
     }
   },
   "course": {
@@ -902,10 +931,11 @@
     "notFound": "Course not found",
     "toList": "Back to courses",
     "finishedBanner": "This cohort finished on {date}. You can still read everything; submitting is closed.",
-    "plannedBanner": "This cohort starts on {date}."
+    "plannedBanner": "This cohort starts on {date}.",
+    "examAt": "exam {time}"
   },
   "lesson": {
-    "assignments": "Assignment",
+    "assignments": "Assignment | Assignments",
     "empty": "Nothing here yet.",
     "markComplete": "Mark complete",
     "undo": "Undo",
@@ -1056,7 +1086,15 @@
       "videoHost": "Only YouTube, Vimeo, Google Drive and Loom links can be embedded.",
       "fileType": "{name}: this file type isn't allowed here.",
       "fileSize": "{name} is too large.",
-      "upload": "{name} didn't upload. Try again."
+      "upload": "{name} didn't upload. Try again.",
+      "title2": "2 to 200 characters",
+      "accepts": "Accept at least one: files, text or links.",
+      "maxFiles": "1 to 20",
+      "maxScore": "More than 0",
+      "time": "HH:MM",
+      "duration": "10 to 10 080 minutes",
+      "offset": "0 or more days",
+      "maxAttachments": "Up to 20 files per statement."
     },
     "md": {
       "toolbar": "Formatting",
@@ -1082,6 +1120,124 @@
       "replaceConfirm": "Replace the current text with the file?",
       "tooLong": "The file is longer than {n} characters.",
       "unresolved": "{n} image points to a file on your computer. Upload it here and replace the path. | {n} images point to files on your computer. Upload them here and replace the paths."
-    }
+    },
+    "assignmentTitle_": "Assignment",
+    "lesson": "Lesson",
+    "mode": "Mode",
+    "modeHelp": {
+      "homework": "Due a number of days after the lesson opens; resubmit after \"changes requested\".",
+      "exam": "One attempt in a time window; optional trial uploads before it.",
+      "practice": "Unlimited attempts, no deadline; the solution opens after the first one."
+    },
+    "timing": "Due date",
+    "window": "Exam window",
+    "dueOffset": "Due, days after the lesson opens",
+    "dueOffsetHelp": "Empty: no deadline.",
+    "opensOffset": "Opens, days after the lesson",
+    "opensTime": "At (cohort time)",
+    "duration": "Duration, minutes",
+    "windowHelp": "In each cohort's timezone. Once the exam has opened in a cohort, change that cohort's window on its page instead.",
+    "trial": "Trial attempt",
+    "trialHelp": "Let students send up to 3 test submissions before the exam. They never count.",
+    "practiceTiming": "Practice has no deadline.",
+    "statement": "Statement",
+    "examStatementNote": "Students see the statement and its files only when the window opens.",
+    "attachFiles": "Attach files",
+    "formats": "What students send",
+    "accept": {
+      "files": "Files",
+      "text": "Text",
+      "links": "Links"
+    },
+    "maxFiles": "Up to files",
+    "maxFilesHelp": "1–20, 25 MB each.",
+    "fileTypes": "File types",
+    "fileTypesHelp": "None checked: any allowed type.",
+    "maxScore": "Max score",
+    "maxScoreHelp": "Optional. When set, the review asks for a score.",
+    "addSolution": "Add solution",
+    "noSolutions": "No solution yet.",
+    "solutionTitle": "{title} · solution",
+    "examSummary": "day {day}, {time}, {min} min"
+  },
+  "exam": {
+    "opensIn": "Opens in",
+    "window": "Exam window",
+    "yourTime": "Your time: {time}",
+    "beforeNote": "The statement appears when the window opens. You can submit once.",
+    "reload": "The exam should be open now. Reload the page.",
+    "nowOpen": "The exam is open.",
+    "fifteenLeft": "15 minutes left.",
+    "submitTitle": "Your answer",
+    "closesIn": "Closes in {value}",
+    "onceNote": "You can submit only once. A send started before the end is accepted for 2 more minutes and marked late.",
+    "confirmTitle": "Send your answer?",
+    "confirmText": "Send your exam answer? You can submit only once and can't change it afterwards.",
+    "confirmSend": "Send",
+    "send": "Send answer",
+    "sent": "Answer sent",
+    "submitted": "Submitted at {time}.",
+    "submittedLate": "Submitted at {time}, late.",
+    "missed": "The window closed at {time}. You didn't submit.",
+    "trialTitle": "Check your upload",
+    "trialNote": "Trial — doesn't count. Send a test file to make sure your upload works.",
+    "trialsUsed": "{n} of 3 trials used",
+    "trialReceived": "Trial received: {files} at {time}. Your upload works.",
+    "trialSend": "Send a trial",
+    "trialSent": "Trial received",
+    "trialBadge": "Trial"
+  },
+  "examWindows": {
+    "title": "Exam windows",
+    "override": "set for this cohort",
+    "relative": "from the course",
+    "change": "Change for this cohort",
+    "reset": "Use the course's window",
+    "editTitle": "Window · {title}",
+    "editNote": "Times in {tz}.",
+    "opens": "Opens",
+    "closes": "Closes",
+    "order": "The end must be after the start.",
+    "onlyLater": "Only a later end can be set now.",
+    "saved": "Window saved",
+    "resetDone": "Back to the course's window"
+  },
+  "practice": {
+    "submit": "Send an attempt",
+    "again": "Send another attempt",
+    "hint": "Practice as often as you like. The solution opens after your first attempt.",
+    "noDue": "No deadline",
+    "sent": "Sent",
+    "commented": "Commented",
+    "send": "Send attempt",
+    "sentToast": "Attempt sent"
+  },
+  "release": {
+    "label": "Opens",
+    "solutionOf": "Solution of",
+    "solutionOfHelp": "Makes this material the solution of an assignment.",
+    "notSolution": "Not a solution",
+    "with_lesson": "With the lesson",
+    "after_due": "After the due date",
+    "after_submit": "After the student's first attempt",
+    "manual": "Manually, per cohort",
+    "needsDue": "The assignment has no due date",
+    "practiceOnly": "Practice only"
+  },
+  "solution": {
+    "title": "Solution",
+    "cohortTitle": "Solutions",
+    "none": "No solutions in this cohort yet.",
+    "released": "Released",
+    "releasedBy": "Released {date} by {name}",
+    "opensOn": "Opens {date}",
+    "afterSubmit": "After each student's first attempt",
+    "hidden": "Hidden (manual)",
+    "releaseNow": "Release now",
+    "hideAgain": "Hide again",
+    "releaseTitle": "Release the solution",
+    "releaseConfirm": "Students of {cohort} will see \"{title}\" at once.",
+    "releasedToast": "Solution released",
+    "hiddenToast": "Solution hidden again"
   }
 }
