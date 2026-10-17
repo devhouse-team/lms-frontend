@@ -25,8 +25,6 @@ const leadItems = computed(() => [
   ...people.value.map(p => ({ value: p.id, label: p.name, description: p.email, avatar: { src: p.avatar, alt: p.name } }))
 ])
 
-const COVER_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
-const COVER_MAX = 5 * 1024 * 1024
 const months = (weeks: number) => Math.round(weeks / 4.345)
 
 const schema = computed(() => z.object({
@@ -79,10 +77,10 @@ async function onFile(e: Event) {
   input.value = ''
   if (!file) return
   form.value?.clear('cover')
-  const error = !COVER_TYPES.includes(file.type) ? t('programs.err.coverType') : file.size > COVER_MAX ? t('programs.err.coverSize') : undefined
-  if (error) return form.value?.setErrors([{ name: 'cover', message: error }])
+  const check = checkUpload(file.name, file.size, 'cover')
+  if (!check.ok) return form.value?.setErrors([{ name: 'cover', message: t(check.reason === 'type' ? 'programs.err.coverType' : 'programs.err.coverSize') }])
   try {
-    coverFileId.value = await upload(file)
+    coverFileId.value = await upload(file, 'cover')
     setPreview(URL.createObjectURL(file))
   } catch (err) {
     // The earlier choice (kept, new or removed) stays as it was
@@ -166,10 +164,7 @@ async function onSubmit() {
           <UInput v-model="state.slug" autocomplete="off" spellcheck="false" class="w-full font-mono" @update:model-value="onSlug" />
         </UFormField>
         <UFormField :label="t('programs.form.description')" name="description" :help="t('programs.form.descriptionHelp')">
-          <UTextarea v-model="state.description" autoresize :rows="3" :maxrows="12" class="w-full" />
-          <template v-if="state.description.length >= 4500" #hint>
-            <span class="num" :class="state.description.length > 5000 ? 'text-error' : ''">{{ state.description.length }}/5000</span>
-          </template>
+          <MarkdownEditor v-model="state.description" mode="compact" :max-length="5000" />
         </UFormField>
         <UFormField
           :label="t('programs.form.duration')"
@@ -184,7 +179,7 @@ async function onSubmit() {
           <div class="flex flex-wrap items-center gap-3">
             <ProgramCover v-if="preview" :src="preview" :title="state.title" class="aspect-video w-36 rounded-md ring-1 ring-default" />
             <div class="flex flex-wrap gap-2">
-              <input ref="fileInput" type="file" :accept="COVER_TYPES.join(',')" class="sr-only" tabindex="-1" @change="onFile">
+              <input ref="fileInput" type="file" :accept="acceptFor('cover')" class="sr-only" tabindex="-1" @change="onFile">
               <UButton :label="uploading ? t('programs.form.uploading') : t('programs.form.coverChoose')" :loading="uploading" icon="i-lucide-image-up" color="neutral" variant="outline" size="sm" @click="fileInput?.click()" />
               <UButton v-if="preview && !uploading" :label="t('programs.form.coverRemove')" icon="i-lucide-x" color="neutral" variant="ghost" size="sm" @click="removeCover" />
             </div>

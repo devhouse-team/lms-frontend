@@ -1102,7 +1102,9 @@ export interface paths {
         put?: never;
         /**
          * Start Upload
-         * @description Announce a file and get a presigned PUT URL (15 min). Max 25 MB; documents, images, archives.
+         * @description Announce a file and get a presigned PUT URL (15 min).
+         *
+         *     `purpose` sets who may upload and the limits: cover/content_image 5 MB images, content 100 MB, submission 25 MB.
          */
         post: operations["start_upload"];
         delete?: never;
@@ -1160,7 +1162,7 @@ export interface paths {
         };
         /**
          * List Courses
-         * @description For the curriculum picker: ``course.update``, ``program.update`` or leading a program.
+         * @description Pickers (`course.update`, `program.update`, program leads) see every course; editors only their own.
          */
         get: operations["list_courses"];
         put?: never;
@@ -1181,7 +1183,7 @@ export interface paths {
         };
         /**
          * Course Outline
-         * @description The course with every module and lesson, published or not.
+         * @description The course with pages, modules, lessons, materials and assignments, published or not.
          */
         get: operations["course_outline"];
         put?: never;
@@ -1191,6 +1193,47 @@ export interface paths {
         head?: never;
         /** Update Course */
         patch: operations["update_course"];
+        trace?: never;
+    };
+    "/api/v1/courses/{course_id}/editors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Editors
+         * @description Editors, and program leads whose curriculum has the course (derived, not removable here).
+         */
+        get: operations["list_editors"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/courses/{course_id}/editors/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Add Editor
+         * @description Idempotent. Not for students of a cohort that teaches the course.
+         */
+        put: operations["add_editor"];
+        post?: never;
+        /** Remove Editor */
+        delete: operations["remove_editor"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/courses/{course_id}/modules": {
@@ -1210,6 +1253,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/courses/{course_id}/modules/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Order Modules
+         * @description Exactly the course's modules, each once.
+         */
+        put: operations["order_modules"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/modules/{module_id}": {
         parameters: {
             query?: never;
@@ -1220,7 +1283,10 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Delete Module */
+        /**
+         * Delete Module
+         * @description Refused (`content_has_submissions`) while an assignment in it has submissions.
+         */
         delete: operations["delete_module"];
         options?: never;
         head?: never;
@@ -1237,11 +1303,25 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Create Lesson
-         * @description ``content.type`` picks the lesson kind: text (markdown), video (embed URL), file (uploaded file id), link.
-         */
+        /** Create Lesson */
         post: operations["create_lesson"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/modules/{module_id}/lessons/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Order Lessons */
+        put: operations["order_lessons"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1259,12 +1339,131 @@ export interface paths {
         get: operations["get_lesson"];
         put?: never;
         post?: never;
-        /** Delete Lesson */
+        /**
+         * Delete Lesson
+         * @description Refused (`content_has_submissions`) while its assignment has submissions.
+         */
         delete: operations["delete_lesson"];
         options?: never;
         head?: never;
-        /** Update Lesson */
+        /**
+         * Update Lesson
+         * @description `module_id` moves the lesson within its course (`different_course` otherwise).
+         */
         patch: operations["update_lesson"];
+        trace?: never;
+    };
+    "/api/v1/lessons/{lesson_id}/materials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Lesson Material */
+        post: operations["create_lesson_material"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/lessons/{lesson_id}/materials/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Order Lesson Materials */
+        put: operations["order_lesson_materials"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/courses/{course_id}/materials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Page
+         * @description A course page (syllabus, grading, ...): a material without a lesson. At most 20 per course.
+         */
+        post: operations["create_page"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/courses/{course_id}/pages/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Order Pages */
+        put: operations["order_pages"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/materials/{material_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Material */
+        get: operations["get_material"];
+        put?: never;
+        post?: never;
+        /** Delete Material */
+        delete: operations["delete_material"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Material
+         * @description `file_ids` replaces the attached files; `lesson_id` moves it within the course (`null`: make it a page).
+         */
+        patch: operations["update_material"];
+        trace?: never;
+    };
+    "/api/v1/materials/{material_id}/files/{file_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Editor Material File
+         * @description Editor preview of an attached file, in any publish state.
+         */
+        get: operations["editor_material_file"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/cohorts/{cohort_id}/courses": {
@@ -1274,7 +1473,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Cohort Courses */
+        /**
+         * Cohort Courses
+         * @description Courses of the cohort with lesson counts and, for students, progress and the next homework deadline.
+         */
         get: operations["cohort_courses"];
         put?: never;
         post?: never;
@@ -1314,7 +1516,7 @@ export interface paths {
         };
         /**
          * Cohort Outline
-         * @description Published lessons with the date each opens for this cohort (the course player's sidebar).
+         * @description Course pages, and published lessons with the date each opens, their materials and assignment (no bodies).
          */
         get: operations["cohort_outline"];
         put?: never;
@@ -1334,9 +1536,49 @@ export interface paths {
         };
         /**
          * Cohort Lesson
-         * @description A released lesson's content. ``lesson_locked`` (403) before its release date, except for staff.
+         * @description A released lesson with its published materials. `lesson_locked` (403) before release, except for staff, editors.
          */
         get: operations["cohort_lesson"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cohorts/{cohort_id}/materials/{material_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cohort Material
+         * @description One published material (a course page, or one in an open lesson). Bodies are raw markdown.
+         */
+        get: operations["cohort_material"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cohorts/{cohort_id}/materials/{material_id}/files/{file_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cohort Material File
+         * @description Open or download a file attached to the material; access is checked as for the material itself.
+         */
+        get: operations["cohort_material_file"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1430,7 +1672,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Assignment */
+        /**
+         * Get Assignment
+         * @description Whoever may author the lesson's course.
+         */
         get: operations["get_assignment"];
         /**
          * Set Assignment
@@ -1438,7 +1683,10 @@ export interface paths {
          */
         put: operations["set_assignment"];
         post?: never;
-        /** Delete Assignment */
+        /**
+         * Delete Assignment
+         * @description Refused (`content_has_submissions`) once anyone has submitted.
+         */
         delete: operations["delete_assignment"];
         options?: never;
         head?: never;
@@ -1457,6 +1705,26 @@ export interface paths {
          * @description For its author and the people who review them.
          */
         get: operations["get_submission"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/submissions/{submission_id}/files/{file_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Submission File
+         * @description Open or download a file of a submission; readable by whoever may read the submission.
+         */
+        get: operations["submission_file"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1726,6 +1994,27 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AssignmentForCohortSummary */
+        AssignmentForCohortSummary: {
+            /** Id */
+            id: number;
+            /** Title */
+            title: string;
+            /**
+             * Mode
+             * @default homework
+             * @constant
+             */
+            mode: "homework";
+            /** Due On */
+            due_on: string | null;
+            /** Opens At */
+            opens_at?: string | null;
+            /** Closes At */
+            closes_at?: string | null;
+            /** @description Status of the caller's latest submission; null if none */
+            my_status: components["schemas"]["SubmissionStatus"] | null;
+        };
         /** AssignmentRead */
         AssignmentRead: {
             /** Id */
@@ -1740,6 +2029,37 @@ export interface components {
             due_offset_days: number | null;
             /** Max Score */
             max_score: number | null;
+        };
+        /**
+         * AssignmentSummary
+         * @description The lesson's assignment as the course outline shows it. P1: at most one, always homework.
+         */
+        AssignmentSummary: {
+            /** Id */
+            id: number;
+            /** Title */
+            title: string;
+            /**
+             * Mode
+             * @default homework
+             * @constant
+             */
+            mode: "homework";
+            /**
+             * Is Published
+             * @default true
+             */
+            is_published: boolean;
+            /** Due Offset Days */
+            due_offset_days: number | null;
+            /** Opens Offset Days */
+            opens_offset_days?: number | null;
+            /** Opens Time */
+            opens_time?: string | null;
+            /** Duration Minutes */
+            duration_minutes?: number | null;
+            /** Submission Count */
+            submission_count: number;
         };
         /** AssignmentWrite */
         AssignmentWrite: {
@@ -1822,6 +2142,9 @@ export interface components {
              * Format: date
              */
             starts_on: string;
+            cohort: components["schemas"]["OutlineCohort"];
+            /** Pages */
+            pages: components["schemas"]["MaterialForCohortSummary"][];
             /** Modules */
             modules: components["schemas"]["ReleasedModule"][];
         };
@@ -1834,6 +2157,25 @@ export interface components {
             /** Start Offset Days */
             start_offset_days: number;
             course: components["schemas"]["CourseRead"];
+            /**
+             * Lesson Count
+             * @description Published lessons
+             * @default 0
+             */
+            lesson_count: number;
+            /**
+             * Released Lesson Count
+             * @description Published lessons already open in this cohort
+             * @default 0
+             */
+            released_lesson_count: number;
+            /**
+             * Completed Lesson Count
+             * @description The caller's; null for non-students
+             */
+            completed_lesson_count?: number | null;
+            /** @description The caller's next unsubmitted homework; null for non-students */
+            next_deadline?: components["schemas"]["NextDeadline"] | null;
         };
         /** CohortCreate */
         CohortCreate: {
@@ -1989,6 +2331,7 @@ export interface components {
             slug: string;
             /**
              * Description
+             * @description Markdown
              * @default
              */
             description: string;
@@ -1997,6 +2340,35 @@ export interface components {
              * @default false
              */
             is_published: boolean;
+        };
+        /** CourseEditorRead */
+        CourseEditorRead: {
+            user: components["schemas"]["EditorUser"];
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "editor" | "program_lead";
+            /** Program Id */
+            program_id?: number | null;
+        };
+        /** CourseListItem */
+        CourseListItem: {
+            /** Id */
+            id: number;
+            /** Title */
+            title: string;
+            /** Slug */
+            slug: string;
+            /** Description */
+            description: string;
+            /** Is Published */
+            is_published: boolean;
+            /**
+             * Can Edit
+             * @description The caller may author this course
+             */
+            can_edit: boolean;
         };
         /** CourseOutline */
         CourseOutline: {
@@ -2010,6 +2382,17 @@ export interface components {
             description: string;
             /** Is Published */
             is_published: boolean;
+            /** Can Edit */
+            can_edit: boolean;
+            /** Can Manage Editors */
+            can_manage_editors: boolean;
+            /**
+             * Cohort Count
+             * @description Cohorts that aren't finished and teach this course
+             */
+            cohort_count: number;
+            /** Pages */
+            pages: components["schemas"]["MaterialSummary"][];
             /** Modules */
             modules: components["schemas"]["ModuleOutline"][];
         };
@@ -2032,7 +2415,10 @@ export interface components {
             title?: string | null;
             /** Slug */
             slug?: string | null;
-            /** Description */
+            /**
+             * Description
+             * @description Markdown
+             */
             description?: string | null;
             /** Is Published */
             is_published?: boolean | null;
@@ -2050,6 +2436,13 @@ export interface components {
             due_on: string;
             /** Status */
             status: string | null;
+        };
+        /** EditorUser */
+        EditorUser: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
         };
         /** EnrollmentCreate */
         EnrollmentCreate: {
@@ -2143,32 +2536,41 @@ export interface components {
              */
             reviewed_at: string;
         };
-        /** FileContent */
-        FileContent: {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "file";
-            /** File Id */
-            file_id: number;
-            /**
-             * Description
-             * @default
-             */
-            description: string;
-        };
         /** FileCreate */
         FileCreate: {
             /** Filename */
             filename: string;
             /**
+             * @description Decides who may upload, which types and how large; `cover` when omitted
+             * @default cover
+             */
+            purpose: components["schemas"]["Purpose"];
+            /**
              * Content Type
              * @enum {string}
              */
-            content_type: "application/pdf" | "application/vnd.openxmlformats-officedocument.presentationml.presentation" | "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" | "application/vnd.openxmlformats-officedocument.wordprocessingml.document" | "application/zip" | "image/gif" | "image/jpeg" | "image/png" | "image/webp" | "text/csv" | "text/markdown" | "text/plain";
+            content_type: "application/pdf" | "application/vnd.openxmlformats-officedocument.presentationml.presentation" | "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" | "application/vnd.openxmlformats-officedocument.wordprocessingml.document" | "application/x-ipynb+json" | "application/zip" | "image/gif" | "image/jpeg" | "image/png" | "image/webp" | "text/csv" | "text/markdown" | "text/plain" | "text/vtt";
             /** Size */
             size: number;
+        };
+        /**
+         * FileMeta
+         * @description What a page needs to show a file. Bytes come through a redirect endpoint, never a link in the object.
+         */
+        FileMeta: {
+            /** Id */
+            id: number;
+            /** Filename */
+            filename: string;
+            /** Content Type */
+            content_type: string;
+            /** Size */
+            size: number;
+            /**
+             * Viewable
+             * @description The type opens inline; otherwise the redirect always downloads
+             */
+            viewable: boolean;
         };
         /** FileRead */
         FileRead: {
@@ -2180,6 +2582,11 @@ export interface components {
             content_type: string;
             /** Size */
             size: number;
+            /**
+             * Viewable
+             * @default false
+             */
+            viewable: boolean;
             status: components["schemas"]["FileStatus"];
             /**
              * Created At
@@ -2273,8 +2680,12 @@ export interface components {
         LessonCreate: {
             /** Title */
             title: string;
-            /** Content */
-            content: components["schemas"]["TextContent"] | components["schemas"]["VideoContent"] | components["schemas"]["FileContent"] | components["schemas"]["LinkContent"];
+            /**
+             * Summary
+             * @description Markdown
+             * @default
+             */
+            summary: string;
             /**
              * Position
              * @default 0
@@ -2294,20 +2705,12 @@ export interface components {
             module_id: number;
             /** Title */
             title: string;
-            type: components["schemas"]["LessonType"];
+            /** Summary */
+            summary: string;
             /** Position */
             position: number;
             /** Is Published */
             is_published: boolean;
-            /** Content */
-            content: {
-                [key: string]: unknown;
-            };
-            /**
-             * Download Url
-             * @description For file lessons: a 5-minute link
-             */
-            download_url?: string | null;
             /**
              * Released On
              * Format: date
@@ -2315,6 +2718,36 @@ export interface components {
             released_on: string;
             /** Updated At */
             updated_at?: string | null;
+            /** Completed */
+            completed: boolean;
+            /** Materials */
+            materials: components["schemas"]["MaterialForCohort"][];
+            /** Assignments */
+            assignments: components["schemas"]["AssignmentForCohortSummary"][];
+        };
+        /** LessonOrder */
+        LessonOrder: {
+            /** Lesson Ids */
+            lesson_ids: number[];
+        };
+        /** LessonOutline */
+        LessonOutline: {
+            /** Id */
+            id: number;
+            /** Module Id */
+            module_id: number;
+            /** Title */
+            title: string;
+            /** Summary */
+            summary: string;
+            /** Position */
+            position: number;
+            /** Is Published */
+            is_published: boolean;
+            /** Materials */
+            materials: components["schemas"]["MaterialSummary"][];
+            /** Assignments */
+            assignments: components["schemas"]["AssignmentSummary"][];
         };
         /** LessonRead */
         LessonRead: {
@@ -2324,20 +2757,14 @@ export interface components {
             module_id: number;
             /** Title */
             title: string;
-            type: components["schemas"]["LessonType"];
+            /** Summary */
+            summary: string;
             /** Position */
             position: number;
             /** Is Published */
             is_published: boolean;
-            /** Content */
-            content: {
-                [key: string]: unknown;
-            };
-            /**
-             * Download Url
-             * @description For file lessons: a 5-minute link
-             */
-            download_url?: string | null;
+            /** Materials */
+            materials: components["schemas"]["MaterialRead"][];
         };
         /** LessonSummary */
         LessonSummary: {
@@ -2347,45 +2774,223 @@ export interface components {
             module_id: number;
             /** Title */
             title: string;
-            type: components["schemas"]["LessonType"];
+            /** Summary */
+            summary: string;
             /** Position */
             position: number;
             /** Is Published */
             is_published: boolean;
         };
-        /**
-         * LessonType
-         * @enum {string}
-         */
-        LessonType: "text" | "video" | "file" | "link";
         /** LessonUpdate */
         LessonUpdate: {
             /** Title */
             title?: string | null;
-            /** Content */
-            content?: (components["schemas"]["TextContent"] | components["schemas"]["VideoContent"] | components["schemas"]["FileContent"] | components["schemas"]["LinkContent"]) | null;
+            /**
+             * Summary
+             * @description Markdown
+             */
+            summary?: string | null;
+            /**
+             * Module Id
+             * @description Move to another module of the same course
+             */
+            module_id?: number | null;
             /** Position */
             position?: number | null;
             /** Is Published */
             is_published?: boolean | null;
         };
-        /** LinkContent */
-        LinkContent: {
+        /** MaterialCreate */
+        MaterialCreate: {
+            /** Title */
+            title: string;
+            kind: components["schemas"]["MaterialKind"];
             /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
+             * Tags
+             * @default []
              */
-            type: "link";
+            tags: components["schemas"]["MaterialTag"][];
             /**
-             * Url
-             * Format: uri
-             */
-            url: string;
-            /**
-             * Label
+             * Body
+             * @description Markdown; per-kind limits apply
              * @default
              */
-            label: string;
+            body: string;
+            /**
+             * Url
+             * @description `video` (allowlisted https) and `link` only
+             */
+            url?: string | null;
+            /**
+             * File Ids
+             * @description Ordered; each must be your own finished upload
+             * @default []
+             */
+            file_ids: number[];
+            /**
+             * Position
+             * @description Default: end of the list
+             */
+            position?: number | null;
+            /**
+             * Is Published
+             * @default false
+             */
+            is_published: boolean;
+        };
+        /** MaterialForCohort */
+        MaterialForCohort: {
+            /** Id */
+            id: number;
+            /** Lesson Id */
+            lesson_id: number | null;
+            /** Title */
+            title: string;
+            kind: components["schemas"]["MaterialKind"];
+            /** Tags */
+            tags: components["schemas"]["MaterialTag"][];
+            /** Position */
+            position: number;
+            /**
+             * Is Released
+             * @default true
+             */
+            is_released: boolean;
+            /** Releases On */
+            releases_on?: string | null;
+            /** Release Hint */
+            release_hint?: string | null;
+            /** Updated At */
+            updated_at?: string | null;
+            /** Body */
+            body: string | null;
+            /** Url */
+            url: string | null;
+            /** Embed Url */
+            embed_url: string | null;
+            /**
+             * Files
+             * @description Metadata only; bytes through `GET /cohorts/{c}/materials/{m}/files/{f}`
+             */
+            files: components["schemas"]["FileMeta"][];
+        };
+        /** MaterialForCohortSummary */
+        MaterialForCohortSummary: {
+            /** Id */
+            id: number;
+            /** Lesson Id */
+            lesson_id: number | null;
+            /** Title */
+            title: string;
+            kind: components["schemas"]["MaterialKind"];
+            /** Tags */
+            tags: components["schemas"]["MaterialTag"][];
+            /** Position */
+            position: number;
+            /**
+             * Is Released
+             * @default true
+             */
+            is_released: boolean;
+            /** Releases On */
+            releases_on?: string | null;
+            /** Release Hint */
+            release_hint?: string | null;
+            /** Updated At */
+            updated_at?: string | null;
+        };
+        /**
+         * MaterialKind
+         * @enum {string}
+         */
+        MaterialKind: "markdown" | "pdf" | "video" | "file" | "link" | "image";
+        /** MaterialOrder */
+        MaterialOrder: {
+            /** Material Ids */
+            material_ids: number[];
+        };
+        /** MaterialRead */
+        MaterialRead: {
+            /** Id */
+            id: number;
+            /** Course Id */
+            course_id: number;
+            /** Lesson Id */
+            lesson_id: number | null;
+            /** Title */
+            title: string;
+            kind: components["schemas"]["MaterialKind"];
+            /** Tags */
+            tags: components["schemas"]["MaterialTag"][];
+            /** Position */
+            position: number;
+            /** Is Published */
+            is_published: boolean;
+            /** Updated At */
+            updated_at?: string | null;
+            /** Body */
+            body: string;
+            /** Url */
+            url: string | null;
+            /**
+             * Embed Url
+             * @description Where to point the iframe of a `video`; null if unrecognised
+             */
+            embed_url: string | null;
+            /** Files */
+            files: components["schemas"]["FileMeta"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** MaterialSummary */
+        MaterialSummary: {
+            /** Id */
+            id: number;
+            /** Course Id */
+            course_id: number;
+            /** Lesson Id */
+            lesson_id: number | null;
+            /** Title */
+            title: string;
+            kind: components["schemas"]["MaterialKind"];
+            /** Tags */
+            tags: components["schemas"]["MaterialTag"][];
+            /** Position */
+            position: number;
+            /** Is Published */
+            is_published: boolean;
+            /** Updated At */
+            updated_at?: string | null;
+        };
+        /**
+         * MaterialTag
+         * @enum {string}
+         */
+        MaterialTag: "lecture_notes" | "slides" | "reading" | "lecture_video" | "recitation" | "code" | "practice" | "problem_set" | "solution" | "exam" | "exam_review" | "syllabus" | "other";
+        /**
+         * MaterialUpdate
+         * @description ``kind`` can't change. ``file_ids`` replaces the whole ordered list; ``lesson_id: null`` makes a course page.
+         */
+        MaterialUpdate: {
+            /** Title */
+            title?: string | null;
+            /** Tags */
+            tags?: components["schemas"]["MaterialTag"][] | null;
+            /** Body */
+            body?: string | null;
+            /** Url */
+            url?: string | null;
+            /** File Ids */
+            file_ids?: number[] | null;
+            /** Position */
+            position?: number | null;
+            /** Is Published */
+            is_published?: boolean | null;
+            /** Lesson Id */
+            lesson_id?: number | null;
         };
         /** Mentee */
         Mentee: {
@@ -2454,6 +3059,11 @@ export interface components {
              */
             release_offset_days: number;
         };
+        /** ModuleOrder */
+        ModuleOrder: {
+            /** Module Ids */
+            module_ids: number[];
+        };
         /** ModuleOutline */
         ModuleOutline: {
             /** Id */
@@ -2467,7 +3077,7 @@ export interface components {
             /** Release Offset Days */
             release_offset_days: number;
             /** Lessons */
-            lessons: components["schemas"]["LessonSummary"][];
+            lessons: components["schemas"]["LessonOutline"][];
         };
         /** ModuleRead */
         ModuleRead: {
@@ -2542,6 +3152,28 @@ export interface components {
             /** Released Lessons */
             released_lessons: number;
         };
+        /** NextDeadline */
+        NextDeadline: {
+            /** Assignment Id */
+            assignment_id: number;
+            /** Lesson Id */
+            lesson_id: number;
+            /** Title */
+            title: string;
+            /**
+             * Mode
+             * @default homework
+             * @constant
+             */
+            mode: "homework";
+            /**
+             * Due On
+             * Format: date
+             */
+            due_on: string;
+            /** Opens At */
+            opens_at?: string | null;
+        };
         /** NextLesson */
         NextLesson: {
             /** Lesson Id */
@@ -2587,6 +3219,25 @@ export interface components {
          * @enum {string}
          */
         NotificationType: "submission_created" | "review_completed" | "lesson_released" | "deadline_soon" | "enrollment_created";
+        /** OutlineCohort */
+        OutlineCohort: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Status */
+            status: string;
+            /**
+             * Starts On
+             * Format: date
+             */
+            starts_on: string;
+            /**
+             * Ends On
+             * Format: date
+             */
+            ends_on: string;
+        };
         /** PaginatedListResponse[UserRead] */
         PaginatedListResponse_UserRead_: {
             /** Data */
@@ -2826,6 +3477,11 @@ export interface components {
              */
             lead_id?: number | null;
         };
+        /**
+         * Purpose
+         * @enum {string}
+         */
+        Purpose: "cover" | "content_image" | "content" | "submission";
         /** QueueItem */
         QueueItem: {
             /** Submission Id */
@@ -2883,7 +3539,8 @@ export interface components {
             module_id: number;
             /** Title */
             title: string;
-            type: components["schemas"]["LessonType"];
+            /** Summary */
+            summary: string;
             /** Position */
             position: number;
             /** Is Published */
@@ -2895,6 +3552,15 @@ export interface components {
             released_on: string;
             /** Is Released */
             is_released: boolean;
+            /**
+             * Completed
+             * @description The caller marked it done
+             */
+            completed: boolean;
+            /** Materials */
+            materials: components["schemas"]["MaterialForCohortSummary"][];
+            /** Assignments */
+            assignments: components["schemas"]["AssignmentForCohortSummary"][];
         };
         /** ReleasedModule */
         ReleasedModule: {
@@ -3195,19 +3861,6 @@ export interface components {
          * @enum {string}
          */
         SubmissionStatus: "submitted" | "changes_requested" | "approved";
-        /** TextContent */
-        TextContent: {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "text";
-            /**
-             * Body
-             * @description Markdown
-             */
-            body: string;
-        };
         /**
          * UploadTicket
          * @description PUT the bytes to ``upload_url`` with ``headers``, then call ``POST /files/{id}/complete``.
@@ -3324,20 +3977,6 @@ export interface components {
              * @example https://www.profileimageurl.com
              */
             profile_image_url?: string | null;
-        };
-        /** VideoContent */
-        VideoContent: {
-            /**
-             * @description discriminator enum property added by openapi-typescript
-             * @enum {string}
-             */
-            type: "video";
-            /**
-             * Url
-             * Format: uri
-             * @description Embed URL from the video provider
-             */
-            url: string;
         };
         /** _ChangeIn */
         _ChangeIn: {
@@ -5531,7 +6170,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CourseRead"][];
+                    "application/json": components["schemas"]["CourseListItem"][];
                 };
             };
             /** @description Error envelope; translate `error.message_key` */
@@ -5644,6 +6283,99 @@ export interface operations {
             };
         };
     };
+    list_editors: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourseEditorRead"][];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    add_editor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: number;
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourseEditorRead"][];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    remove_editor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: number;
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     create_module: {
         parameters: {
             query?: never;
@@ -5666,6 +6398,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ModuleRead"];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    order_modules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModuleOrder"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModuleRead"][];
                 };
             };
             /** @description Error envelope; translate `error.message_key` */
@@ -5778,6 +6545,41 @@ export interface operations {
             };
         };
     };
+    order_lessons: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                module_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LessonOrder"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LessonSummary"][];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     get_lesson: {
         parameters: {
             query?: never;
@@ -5861,6 +6663,273 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["LessonRead"];
                 };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_lesson_material: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lesson_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaterialCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialRead"];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    order_lesson_materials: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lesson_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaterialOrder"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialSummary"][];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    create_page: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaterialCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialRead"];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    order_pages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaterialOrder"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialSummary"][];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    get_material: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                material_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialRead"];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    delete_material: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                material_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    update_material: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                material_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaterialUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialRead"];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    editor_material_file: {
+        parameters: {
+            query?: {
+                download?: boolean;
+            };
+            header?: never;
+            path: {
+                material_id: number;
+                file_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redirect to a freshly signed URL (inline for viewable types unless `download=1`) */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error envelope; translate `error.message_key` */
             "4XX": {
@@ -6022,6 +7091,71 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["LessonForCohort"];
                 };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    cohort_material: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cohort_id: number;
+                material_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialForCohort"];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    cohort_material_file: {
+        parameters: {
+            query?: {
+                download?: boolean;
+            };
+            header?: never;
+            path: {
+                cohort_id: number;
+                material_id: number;
+                file_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redirect to a freshly signed URL (inline for viewable types unless `download=1`) */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error envelope; translate `error.message_key` */
             "4XX": {
@@ -6301,6 +7435,38 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SubmissionDetail"];
                 };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    submission_file: {
+        parameters: {
+            query?: {
+                download?: boolean;
+            };
+            header?: never;
+            path: {
+                submission_id: number;
+                file_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redirect to a freshly signed URL (inline for viewable types unless `download=1`) */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error envelope; translate `error.message_key` */
             "4XX": {

@@ -73,23 +73,13 @@ async function decide(verdict: 'accepted' | 'changes') {
 
           <section v-if="data.submission.status === 'waiting'" aria-labelledby="work-title" class="space-y-3">
             <h2 id="work-title" class="text-sm font-semibold text-highlighted">{{ t('review.work') }}</h2>
-            <a
-              :href="data.submission.url"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="group flex items-center gap-3 rounded-lg px-4 py-3 ring-1 ring-inset ring-default transition-colors duration-150 ease-out hover:bg-elevated"
-            >
-              <UIcon name="i-simple-icons-github" class="size-4 shrink-0 text-muted" />
-              <span class="num min-w-0 flex-1 truncate text-sm text-highlighted">{{ data.submission.url.replace(/^https?:\/\//, '') }}</span>
-              <UIcon name="i-lucide-arrow-up-right" class="size-4 shrink-0 text-dimmed transition-transform duration-150 ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-            </a>
-            <p v-if="data.submission.note" class="max-w-prose whitespace-pre-line rounded-md bg-muted p-3 text-sm text-default">{{ data.submission.note }}</p>
+            <SubmissionHistory :items="[data.submission]" />
           </section>
 
           <section v-if="data.submission.status === 'waiting'" aria-labelledby="verdict-title" class="rounded-lg bg-elevated p-5 ring-1 ring-inset ring-default sm:p-6">
             <h2 id="verdict-title" class="text-sm font-semibold text-highlighted">{{ t('review.verdict') }}</h2>
             <UFormField class="mt-4" :label="t('review.feedback')" :help="t('review.feedbackHelp')" :error="feedbackError ?? undefined" name="feedback">
-              <UTextarea v-model="feedback" :rows="5" autoresize :placeholder="t('review.feedbackPlaceholder')" class="w-full" />
+              <MarkdownEditor v-model="feedback" mode="compact" :max-length="50000" :placeholder="t('review.feedbackPlaceholder')" />
             </UFormField>
             <div class="mt-5 flex flex-wrap gap-2">
               <UButton :label="t('review.accept')" icon="i-lucide-check" color="primary" size="lg" :loading="sending === 'accepted'" :disabled="!!sending" @click="decide('accepted')" />
@@ -110,7 +100,7 @@ async function decide(verdict: 'accepted' | 'changes') {
         <HomeRail>
           <section class="p-4" aria-labelledby="task-title">
             <h2 id="task-title" class="text-sm font-semibold text-highlighted">{{ t('review.task') }}</h2>
-            <p class="mt-3 whitespace-pre-line text-sm text-default">{{ data.assignment.description }}</p>
+            <MarkdownView :source="data.assignment.description" class="mt-3 text-sm" />
             <p v-if="data.assignment.dueAt" class="num mt-3 text-xs text-muted">{{ t('review.due', { date: fmt(data.assignment.dueAt) }) }}</p>
           </section>
         </HomeRail>

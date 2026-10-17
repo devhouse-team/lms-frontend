@@ -9,7 +9,6 @@ export interface Person {
 
 /* ---------- mentee ---------- */
 
-export type CourseStatus = 'todo' | 'in_progress' | 'done'
 export type QueueKind = 'session' | 'assignment' | 'quiz' | 'feedback' | 'contest'
 
 export interface Mentor extends Person {
@@ -60,14 +59,6 @@ export interface QueueItem {
   count?: number
 }
 
-export interface ExternalCourse {
-  id: string
-  title: string
-  source: string
-  url: string
-  status: CourseStatus
-}
-
 export interface Contest {
   title: string
   at: string
@@ -88,7 +79,6 @@ export interface StudentDashboard {
   pastCohorts: PastCohort[]
   nextUp: QueueItem | null
   queue: QueueItem[]
-  courses: ExternalCourse[]
   contest: Contest | null
   career: CareerStep[]
 }
@@ -175,10 +165,22 @@ export interface HeadDashboard {
 export type SubmissionStatus = 'waiting' | 'changes' | 'accepted'
 export type AssignmentStatus = 'not_submitted' | SubmissionStatus
 
+/** A file attached to a material or submission; bytes come through a Nitro redirect route, never a stored URL */
+export interface FileMeta {
+  id: string
+  filename: string
+  contentType: string
+  size: number
+  /** Opens inline (pdf, images, text); the rest always downloads */
+  viewable: boolean
+}
+
 export interface SubmissionView {
   id: string
-  url: string
-  note?: string
+  links: string[]
+  /** Markdown */
+  body?: string
+  files: FileMeta[]
   submittedAt: string
   status: SubmissionStatus
   feedback?: string
@@ -348,6 +350,121 @@ export interface PeopleResponse {
   invites: InvitePublic[]
 }
 
+/* ---------- course content (spec course-content.md) ---------- */
+
+export type MaterialKind = 'markdown' | 'pdf' | 'video' | 'file' | 'link' | 'image'
+export type MaterialTag = 'lecture_notes' | 'slides' | 'reading' | 'lecture_video' | 'recitation' | 'code' | 'practice' | 'problem_set' | 'solution' | 'exam' | 'exam_review' | 'syllabus' | 'other'
+export const MATERIAL_TAGS: MaterialTag[] = ['lecture_notes', 'slides', 'reading', 'lecture_video', 'recitation', 'code', 'practice', 'problem_set', 'solution', 'exam', 'exam_review', 'syllabus', 'other']
+
+/** A material as a reader sees it; locked ones carry no content */
+export interface MaterialView {
+  id: string
+  title: string
+  kind: MaterialKind
+  tags: MaterialTag[]
+  isReleased: boolean
+  releasesOn: string | null
+  releaseHint: string | null
+  body: string | null
+  url: string | null
+  embedUrl: string | null
+  files: FileMeta[]
+}
+
+export interface MaterialSummaryView {
+  id: string
+  title: string
+  kind: MaterialKind
+  tags: MaterialTag[]
+  isReleased: boolean
+}
+
+/** The lesson's assignment as a row (Phase 1: at most one; `id` is today's `${cohortId}-${lessonId}` key) */
+export interface LessonAssignmentView {
+  id: string
+  title: string
+  dueOn: string | null
+  status: AssignmentStatus
+}
+
+export interface OutlineLesson {
+  id: string
+  title: string
+  releasedOn: string
+  isReleased: boolean
+  completed: boolean
+  assignments: LessonAssignmentView[]
+}
+
+export interface OutlineModule {
+  id: string
+  title: string
+  releasedOn: string
+  lessons: OutlineLesson[]
+}
+
+export interface ContentCohort {
+  id: string
+  name: string
+  status: CohortStatus
+  startsOn: string
+  endsOn: string
+}
+
+/** Sidebar and header of a course in a cohort, from one outline call */
+export interface CourseOutlineView {
+  id: string
+  title: string
+  description: string
+  cohort: ContentCohort
+  pages: MaterialSummaryView[]
+  modules: OutlineModule[]
+  /** Not a student here (staff or editor): reads ahead, no mark complete */
+  staff: boolean
+}
+
+export interface LessonView {
+  id: string
+  title: string
+  summary: string
+  moduleId: string
+  releasedOn: string
+  completed: boolean
+  materials: MaterialView[]
+  assignments: LessonAssignmentView[]
+  /** Why mark complete is closed: the cohort isn't active, or the enrollment is paused */
+  completeClosed: 'finished' | 'planned' | 'paused' | null
+  staff: boolean
+}
+
+export interface CourseRowView {
+  courseId: string
+  title: string
+  releasedLessons: number
+  totalLessons: number
+  /** The student's completed lessons; null for staff */
+  doneLessons: number | null
+  nextDeadline: { title: string, dueOn: string, assignmentId: string } | null
+}
+
+export interface CourseGroup {
+  cohort: ContentCohort & { week: number, totalWeeks: number, finishedAt: string | null }
+  courses: CourseRowView[]
+}
+
+export interface EditableCourse {
+  id: string
+  title: string
+  slug: string
+  published: boolean
+}
+
+export interface CoursesResponse {
+  cohorts: CourseGroup[]
+  editing: EditableCourse[]
+  canCreate: boolean
+}
+
 /* ---------- programs ---------- */
 
 export type ProgramStatus = 'draft' | 'active' | 'archived'
@@ -503,11 +620,6 @@ export interface InviteAcceptInput {
   name: string
   username: string
   password: string
-}
-
-export interface CourseStatusUpdate {
-  id: string
-  status: CourseStatus
 }
 
 export interface ContestRegistration {

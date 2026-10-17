@@ -1,10 +1,10 @@
 /**
- * In-memory mock for features the LMS API doesn't have yet: external courses,
+ * In-memory mock for features the LMS API doesn't have yet:
  * contests, career steps and mentoring sessions (see backend spec/open-items.md).
  * Keyed by the real user id; state resets on restart and isn't shared between
  * server instances. Everything else goes through server/utils/api.ts.
  */
-import type { CourseStatus, EnrollmentStatus, ProgramSlug, Role, SubmissionStatus } from '~~/shared/types'
+import type { EnrollmentStatus, ProgramSlug, Role, SubmissionStatus } from '~~/shared/types'
 
 const HOUR = 3_600_000
 const DAY = 24 * HOUR
@@ -34,15 +34,6 @@ export interface DbCohort {
   mentorId?: string
   startAt: number
   totalWeeks: number
-}
-
-export interface DbCourse {
-  id: string
-  userId: string
-  title: string
-  source: string
-  url: string
-  status: CourseStatus
 }
 
 export interface DbSubmission {
@@ -130,44 +121,10 @@ const mentees: DbUser[] = [
   { id: 's-test', role: 'mentee', name: 'Test Student', email: 'test.mentee@devhouse.kz', password: DEMO_PASSWORD, cohortId: 'c-fe7' }
 ]
 
-const courseCatalog: Record<ProgramSlug, Omit<DbCourse, 'id' | 'userId' | 'status'>[]> = {
-  frontend: [
-    { title: 'JavaScript: полный курс', source: 'javascript.info', url: 'https://javascript.info' },
-    { title: 'Vue 3 Fundamentals', source: 'vuemastery.com', url: 'https://www.vuemastery.com' },
-    { title: 'TypeScript Handbook', source: 'typescriptlang.org', url: 'https://www.typescriptlang.org/docs/handbook/' },
-    { title: 'Learn Accessibility', source: 'web.dev', url: 'https://web.dev/learn/accessibility' }
-  ],
-  backend: [{ title: 'Python Tutorial', source: 'docs.python.org', url: 'https://docs.python.org/3/tutorial/' }],
-  mobile: [
-    { title: 'Flutter Codelabs', source: 'docs.flutter.dev', url: 'https://docs.flutter.dev/codelabs' },
-    { title: 'Dart Language Tour', source: 'dart.dev', url: 'https://dart.dev/language' },
-    { title: 'Android Basics with Compose', source: 'developer.android.com', url: 'https://developer.android.com/courses/android-basics-compose/course' }
-  ],
-  ml: [
-    { title: 'Machine Learning Specialization', source: 'coursera.org', url: 'https://www.coursera.org/specializations/machine-learning-introduction' },
-    { title: 'Practical Deep Learning', source: 'course.fast.ai', url: 'https://course.fast.ai' },
-    { title: 'Kaggle Learn: Pandas', source: 'kaggle.com', url: 'https://www.kaggle.com/learn/pandas' }
-  ],
-  algorithms: [
-    { title: 'NeetCode 150', source: 'neetcode.io', url: 'https://neetcode.io/practice' },
-    { title: 'Алгоритмы: Тренировки', source: 'yandex.ru', url: 'https://yandex.ru/yaintern/training/algorithm-training' }
-  ]
-}
-
 // Deterministic pseudo-random so the mock is stable between restarts
 let seed = 7
 const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647)
 
-const courses: DbCourse[] = mentees.flatMap((u) => {
-  const program = cohorts.find(c => c.id === u.cohortId)!.program
-  return courseCatalog[program].map((c, i) => {
-    const r = rand()
-    const status: CourseStatus = r < 0.35 ? 'done' : r < 0.75 ? 'in_progress' : 'todo'
-    return { ...c, id: `${u.id}-k${i}`, userId: u.id, status }
-  })
-})
-// Keep the demo mentee's mix readable
-courses.filter(c => c.userId === 's-c-fe7-0').forEach((c, i) => (c.status = (['done', 'in_progress', 'in_progress', 'todo'] as const)[i]!))
 
 const assignmentTitles: Record<ProgramSlug, string[]> = {
   frontend: ['Ревью кода: корзина на Vue', 'Вёрстка лендинга по макету', 'Fetch API: список репозиториев'],
@@ -290,7 +247,6 @@ export const db = {
   now,
   users: [head, ...mentors, ...mentees],
   cohorts,
-  courses,
   assignments,
   submissions,
   invites,

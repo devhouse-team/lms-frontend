@@ -158,7 +158,7 @@ A near-monochrome graphite palette with one saturated signal colour and a small 
 - **Text Dimmed**: decorative-level hints only (chevrons, empty markers, dev notes). It sits at about 4:1 on Graphite Night, so it never carries information a user must read.
 
 ### Semantic
-- **Status Done** (emerald): completed courses and career steps, as a subtle tint with a matching ring.
+- **Status Done** (emerald): completed lessons and career steps, as a subtle tint with a matching ring.
 - **Status Risk** (red): "falling behind" badges, expired invites, at-risk counts, and errors.
 - **Status Warning** (amber): structural gaps, such as a cohort with no mentor.
 

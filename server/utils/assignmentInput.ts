@@ -1,9 +1,9 @@
 import { z } from 'zod'
 
-/** Staff side: an assignment is attached to a lesson and due N days after the lesson opens */
+/** Staff side: an assignment is attached to a lesson and due N days after the lesson opens; the statement is markdown */
 export const assignmentBody = z.object({
   title: z.string().trim().min(2).max(120),
-  description: z.string().trim().min(1).max(5000),
+  description: z.string().trim().min(1).max(200_000),
   dueOffsetDays: z.number().int().min(0).max(365).nullable()
 })
 

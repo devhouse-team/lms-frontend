@@ -4,7 +4,7 @@ import type { QueueItem, StudentDashboard } from '~~/shared/types'
 type S = components['schemas']
 
 /**
- * Cohort, mentor and deadlines come from the API; external courses, contest and career stay on the mock.
+ * Cohort, mentor and deadlines come from the API; contest and career stay on the mock.
  * The current cohort is the active one, else a planned one (the API lists active enrollments in either);
  * finished cohorts the student completed are the archive.
  */
@@ -47,7 +47,6 @@ export default defineEventHandler(async (event): Promise<StudentDashboard> => {
       ...rest.slice(0, 3),
       ...(feedback ? [{ id: 'feedback', kind: 'feedback' as const, title: '', titleKey: 'queue.feedback', count: feedback, to: '/assignments' }] : [])
     ],
-    courses: db.courses.filter(k => k.userId === user.id).map(({ id, title, source, url, status }) => ({ id, title, source, url, status })),
     contest: { title: db.contest.title, at: new Date(db.contest.at).toISOString(), registered: db.contestRegistrations.has(user.id) },
     career: CAREER_STEPS.map(id => ({ id, done: db.career.get(user.id)?.has(id) ?? false }))
   }

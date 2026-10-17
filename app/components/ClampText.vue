@@ -1,22 +1,27 @@
 <script setup lang="ts">
-/** Plain text with its line breaks, clamped to `lines` with "Show more" / "Show less" when it overflows */
+/** Markdown clamped to about `lines` lines, with "Show more" / "Show less" when it overflows */
 const props = defineProps<{ text: string, lines: 3 | 6 }>()
 const { t } = useI18n()
-const CLAMP = { 3: 'line-clamp-3', 6: 'line-clamp-6' } as const
 
-const el = useTemplateRef('el')
+const box = useTemplateRef('box')
 const expanded = ref(false)
 const overflows = ref(false)
-const measure = () => nextTick(() => {
-  if (el.value && !expanded.value) overflows.value = el.value.scrollHeight > el.value.clientHeight + 1
+let observer: ResizeObserver | undefined
+onMounted(() => {
+  // The markdown renders after mount, so measure whenever the content's size changes
+  observer = new ResizeObserver(() => {
+    if (box.value && !expanded.value) overflows.value = box.value.scrollHeight > box.value.clientHeight + 1
+  })
+  if (box.value?.firstElementChild) observer.observe(box.value.firstElementChild)
 })
-onMounted(measure)
-watch(() => props.text, measure)
+onBeforeUnmount(() => observer?.disconnect())
 </script>
 
 <template>
   <div>
-    <p ref="el" class="max-w-prose whitespace-pre-line text-pretty" :class="expanded ? '' : CLAMP[lines]">{{ text }}</p>
+    <div ref="box" class="overflow-hidden" :style="expanded ? undefined : { maxHeight: `${props.lines * 1.6}em` }">
+      <MarkdownView :source="text" />
+    </div>
     <UButton
       v-if="overflows"
       :label="expanded ? t('programs.showLess') : t('programs.showMore')"

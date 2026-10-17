@@ -30,7 +30,7 @@ async function remove() {
     emit('changed')
     deleting.value = undefined
   } catch (e) {
-    const has = (e as { statusCode?: number }).statusCode === 409
+    const has = apiError(e).code === 'content_has_submissions'
     toast.add({ title: has ? t('assignments.hasSubmissions') : t('common.saveError'), color: 'error', icon: 'i-lucide-circle-alert' })
     deleting.value = undefined
   } finally {

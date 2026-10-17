@@ -45,8 +45,9 @@ export function submissionView(s: S['SubmissionRead'], staff: S['StaffRead'][] =
   const reviewer = s.review?.reviewer_id ? staff.find(x => x.user_id === s.review!.reviewer_id)?.user : undefined
   return {
     id: String(s.id),
-    url: s.links[0] ?? '',
-    note: s.body || undefined,
+    links: s.links,
+    body: s.body || undefined,
+    files: s.files.map(fileMeta),
     submittedAt: s.submitted_at,
     status: toUiStatus(s.status),
     feedback: s.review?.feedback || undefined,

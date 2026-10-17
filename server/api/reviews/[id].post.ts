@@ -2,8 +2,8 @@ import { z } from 'zod'
 import type { OkResponse } from '~~/shared/types'
 
 const body = z.discriminatedUnion('verdict', [
-  z.object({ verdict: z.literal('accepted'), feedback: z.string().trim().max(4000).optional() }),
-  z.object({ verdict: z.literal('changes'), feedback: z.string().trim().min(2).max(4000) })
+  z.object({ verdict: z.literal('accepted'), feedback: z.string().trim().max(50_000).optional() }),
+  z.object({ verdict: z.literal('changes'), feedback: z.string().trim().min(2).max(50_000) })
 ])
 
 export default defineEventHandler(async (event): Promise<OkResponse> => {
