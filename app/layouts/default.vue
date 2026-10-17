@@ -18,6 +18,7 @@ const navByRole: Record<Role, { key: string, icon: string, to: string, all?: boo
   ],
   mentor: [
     { key: 'home', icon: 'i-lucide-layout-dashboard', to: '/' },
+    { key: 'courses', icon: 'i-lucide-book-open', to: '/courses' },
     { key: 'reviews', icon: 'i-lucide-git-pull-request', to: '/reviews' },
     { key: 'cohort', icon: 'i-lucide-users', to: '/cohort' },
     { key: 'sessions', icon: 'i-lucide-calendar', to: '/sessions' },
@@ -28,6 +29,7 @@ const navByRole: Record<Role, { key: string, icon: string, to: string, all?: boo
     { key: 'cohorts', icon: 'i-lucide-users', to: '/cohorts' },
     { key: 'people', icon: 'i-lucide-contact', to: '/people', all: true },
     { key: 'programs', icon: 'i-lucide-library', to: '/programs' },
+    { key: 'courses', icon: 'i-lucide-book-open', to: '/courses' },
     { key: 'contests', icon: 'i-lucide-trophy', to: '/contests', all: true }
   ]
 }
@@ -73,7 +75,7 @@ const userMenu = computed<DropdownMenuItem[][]>(() => [
     >
       <template #header="{ collapsed }">
         <NuxtLink to="/" class="flex items-center px-1.5 py-1" :class="collapsed && 'justify-center'" aria-label="dev.house">
-          <img v-if="collapsed" src="/brand/devhouse-mark.png" alt="" class="size-6" width="24" height="24">
+          <img v-if="collapsed" src="/brand/devhouse-star.png" alt="" class="size-6" width="24" height="24">
           <img v-else src="/brand/devhouse-logo.png" alt="dev.house" class="h-6 w-auto" width="124" height="24">
         </NuxtLink>
       </template>
