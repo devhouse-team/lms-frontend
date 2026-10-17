@@ -19,7 +19,8 @@ contract is `../backend/openapi.json` (types in `shared/types/api.d.ts`).
 | [Invites](features/invites.md) | head, invitee | API |
 | [Password reset and email verification](features/account-recovery.md) | everyone | API |
 | [Cohorts](features/cohorts.md) | head, mentor, student | API |
-| [People](features/people.md) | head | API |
+| [People](features/people.md): list and per-person profile | head | API |
+| [My profile](features/profile.md): own account, name, username, password | everyone | API |
 | [Programs](features/programs.md) | head, program lead; student and mentor read-only | API |
 | [Assignments](features/assignments.md) | head, mentor, student | API |
 | [Reviews](features/reviews.md) | mentor, student | API |

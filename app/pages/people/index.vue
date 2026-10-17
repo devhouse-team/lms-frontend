@@ -54,7 +54,7 @@ const rows = computed(() => {
                     <div class="flex min-w-0 items-center gap-2.5">
                       <UAvatar :src="p.avatar" :alt="p.name" size="xs" />
                       <div class="min-w-0">
-                        <p class="truncate text-highlighted" :title="p.name">{{ p.name }}</p>
+                        <NuxtLink :to="`/people/${p.id}`" class="block truncate text-highlighted hover:underline" :title="p.name">{{ p.name }}</NuxtLink>
                         <p class="num truncate text-xs text-muted" :title="p.email">{{ p.email }}</p>
                         <!-- Phones: role and cohort under the name, the columns are hidden -->
                         <p class="truncate text-xs sm:hidden" :class="p.role ? 'text-toned' : 'text-dimmed'">

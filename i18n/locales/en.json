@@ -15,7 +15,8 @@
     "cohorts": "Cohorts",
     "people": "People",
     "programs": "Programs",
-    "contests": "Contests"
+    "contests": "Contests",
+    "me": "My profile"
   },
   "common": {
     "retry": "Retry",
@@ -1241,5 +1242,53 @@
     "releaseConfirm": "Students of {cohort} will see \"{title}\" at once.",
     "releasedToast": "Solution released",
     "hiddenToast": "Solution hidden again"
+  },
+  "person": {
+    "back": "People",
+    "notFound": "Person not found",
+    "notFoundText": "This account does not exist or was deactivated.",
+    "verified": "Email verified",
+    "unverified": "Email not verified",
+    "admin": "Administrator",
+    "asStudent": "As a student",
+    "asStaff": "As staff",
+    "noEnrollments": "Not enrolled in any cohort.",
+    "noStaff": "Not on the staff of any cohort.",
+    "cohort": "Cohort",
+    "status": "Status",
+    "since": "Since",
+    "mentor": "Mentor",
+    "noMentor": "No mentor",
+    "role": "Role",
+    "username": "Username",
+    "email": "Email"
+  },
+  "me": {
+    "title": "My profile",
+    "account": "Account",
+    "roles": "Views",
+    "cohorts": "My cohorts",
+    "noCohorts": "You are not in any cohort yet.",
+    "programsLed": "Programs you lead",
+    "relation": {
+      "student": "Student",
+      "mentor": "Mentor",
+      "reviewer": "Reviewer"
+    },
+    "profile": "Profile",
+    "profileHint": "Your name and username are visible to your cohort.",
+    "saved": "Profile saved",
+    "taken": "This username is already taken.",
+    "password": "Password",
+    "passwordHint": "You stay signed in here; other devices are signed out.",
+    "current": "Current password",
+    "new": "New password",
+    "changePassword": "Change password",
+    "passwordChanged": "Password changed",
+    "wrongPassword": "The current password is wrong.",
+    "rateLimited": "Too many attempts. Wait a minute and try again.",
+    "err": {
+      "current": "Enter your current password"
+    }
   }
 }
