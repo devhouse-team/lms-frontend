@@ -50,7 +50,7 @@ async function onFiles(e: Event) {
       continue
     }
     try {
-      const id = await upload(f, 'content')
+      const id = await upload(f, props.kind === 'image' ? 'content_image' : 'content')
       if (props.kind === 'file') {
         fileIds.value.push(Number(id))
         fileNames.value.push(f.name)
@@ -102,9 +102,7 @@ async function create() {
         <UFormField v-if="needsUrl" :label="kind === 'video' ? t('editor.videoUrl') : t('editor.url')" :error="urlError" :help="kind === 'video' && !urlError ? t('editor.videoHelp') : undefined">
           <UInput v-model="url" type="url" inputmode="url" placeholder="https://" class="w-full" />
         </UFormField>
-        <div v-if="embed" class="aspect-video overflow-hidden rounded-lg bg-black ring-1 ring-inset ring-default">
-          <iframe :src="embed.embedUrl" :title="title || t('editor.videoUrl')" class="size-full" allow="fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" />
-        </div>
+        <VideoEmbed v-if="embed" :src="embed.embedUrl" :title="title || t('editor.videoUrl')" />
         <UFormField :label="t('editor.title')">
           <UInput v-model="title" maxlength="200" autocomplete="off" class="w-full" />
         </UFormField>

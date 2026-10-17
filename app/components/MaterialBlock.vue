@@ -58,20 +58,11 @@ const host = (url: string) => {
         <iframe :src="`${base}/${file.id}`" :title="m.title" class="h-[80vh] w-full bg-white" loading="lazy" />
       </div>
       <FileCard v-else :file="file" :base="base" class="max-w-3xl" />
+      <MarkdownView v-if="m.body" :source="m.body" :files="m.files" :base="base" />
     </template>
 
     <template v-else-if="m.kind === 'video'">
-      <div v-if="m.embedUrl" class="aspect-video max-w-3xl overflow-hidden rounded-lg bg-black ring-1 ring-inset ring-default">
-        <iframe
-          :src="m.embedUrl"
-          :title="m.title"
-          class="size-full"
-          loading="lazy"
-          allow="fullscreen; picture-in-picture"
-          allowfullscreen
-          referrerpolicy="strict-origin-when-cross-origin"
-        />
-      </div>
+      <VideoEmbed v-if="m.embedUrl && isEmbedUrl(m.embedUrl)" :src="m.embedUrl" :title="m.title" />
       <UButton v-else-if="m.url" :to="m.url" target="_blank" external :label="t('material.openVideo')" icon="i-lucide-play" color="neutral" variant="outline" />
       <div v-if="m.files.length" class="max-w-3xl space-y-2">
         <FileCard v-for="f in m.files" :key="f.id" :file="f" :base="base" />
@@ -104,10 +95,10 @@ const host = (url: string) => {
     </template>
 
     <template v-else-if="m.kind === 'image' && file">
-      <a :href="`${base}/${file.id}`" target="_blank" class="block max-w-3xl">
-        <img :src="`${base}/${file.id}`" :alt="m.body || m.title" loading="lazy" class="max-w-full rounded-md">
+      <a :href="`${base}/${file.id}`" target="_blank" rel="noopener" class="block max-w-3xl">
+        <img :src="`${base}/${file.id}`" :alt="m.title" loading="lazy" class="max-w-full rounded-md">
       </a>
-      <p v-if="m.body" class="text-sm text-muted">{{ m.body }}</p>
+      <MarkdownView v-if="m.body" :source="m.body" class="text-sm text-muted" />
     </template>
   </section>
 </template>

@@ -37,6 +37,12 @@ Differences from the text below (the code follows these):
   scroll sync, remembering open modules in `sessionStorage` (Phase 3 sidebar polish), a separate assignment editor
   (the modal is reused, with a markdown statement).
 - `apiError()` is null-safe (pages pass `error.value` directly).
+- Review fixes (2026-10-17): the material editor keeps attached files in their own state, so attaching never resets
+  unsaved text, and file-list PATCHes run one at a time (several pasted images all stay attached); pasting several
+  images inserts all placeholders at once. Videos embed through `VideoEmbed` (sandboxed iframe, host allowlist
+  `isEmbedUrl`, lazy, also in previews). Markdown images accept only `https:` and our exact file routes; links accept
+  http(s), mailto, `#` and those routes. `MarkdownView` drops stale renders and falls back to plain text when a
+  renderer chunk can't load.
 
 ## Decisions this spec relies on
 
@@ -773,7 +779,7 @@ a browser check, or the named check.
 - [x] Mark complete flips at once, survives a reload, updates the sidebar check and the home figure; in a finished
   cohort it is disabled with "This cohort has finished". (e2e) ✓ e2e-smoke + browser check
 - [x] Course pages (syllabus) appear at the top of the sidebar and open. ✓ e2e-smoke + browser check
-- [ ] Program and course descriptions render as markdown (O19).
+- [x] Program and course descriptions render as markdown (O19). ✓ browser check (program page, student home, course home)
 
 ### Phase 1: homework with files
 
@@ -790,8 +796,8 @@ a browser check, or the named check.
 - [x] The head adds and removes an editor; a program lead appears as an editor "via program". (e2e) ✓ e2e-smoke
 - [x] Add module, lesson and each material kind; reorder with up / down and move a lesson to another module; the
   student view shows the new order. (e2e) ✓ e2e-smoke (order and move calls through Nitro; the up / down buttons weren't clicked in a browser)
-- [ ] The material editor previews math and code exactly as the lesson page shows them; pasting an image inserts a
-  `file:` reference that renders in the preview and for students.
+- [x] The material editor previews math and code exactly as the lesson page shows them; pasting an image inserts a
+  `file:` reference that renders in the preview and for students. ✓ browser check (preview HTML equals the lesson's; two images pasted at once)
 - [x] Uploading a `.md` replaces the body and lists unresolved relative image paths. ✓ browser check
 - [x] A non-allowlisted video URL is refused in the field; a Vimeo unlisted link previews. ✓ browser check
 - [x] Deleting a lesson with submissions is refused with "Unpublish it instead"; unpublishing hides it from students.

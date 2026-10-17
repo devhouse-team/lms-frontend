@@ -96,36 +96,35 @@ function onKeydown(e: KeyboardEvent) {
 // ---- images: paste, drop, pick -----------------------------------------------------------
 const imageInput = useTemplateRef('imageInput')
 const uploading = ref(0)
-async function insertImage(file: File) {
-  if (!props.upload) return
-  const placeholder = `![${t('editor.md.uploading', { name: file.name })}]()`
-  replace(placeholder)
-  uploading.value++
-  try {
-    const meta = await props.upload(file)
-    const alt = file.name.replace(/\.[^.]+$/, '')
-    model.value = model.value.replace(placeholder, meta ? `![${alt}](file:${meta.id})` : '')
-  } catch {
-    model.value = model.value.replace(placeholder, '')
-  } finally {
-    uploading.value--
+let placeholders = 0
+/** All placeholders go in with one edit at the caret, then each upload swaps its own (numbered) placeholder */
+function insertImages(files: File[]) {
+  if (!props.upload || !files.length) return
+  const items = files.map(file => ({ file, placeholder: `![${t('editor.md.uploading', { name: file.name })} #${++placeholders}]()` }))
+  replace(items.map(x => x.placeholder).join('\n'))
+  for (const { file, placeholder } of items) {
+    uploading.value++
+    props.upload(file)
+      .then(meta => (model.value = model.value.replace(placeholder, meta ? `![${file.name.replace(/\.[^.]+$/, '')}](file:${meta.id})` : '')))
+      .catch(() => (model.value = model.value.replace(placeholder, '')))
+      .finally(() => uploading.value--)
   }
 }
 function onPaste(e: ClipboardEvent) {
   const images = [...(e.clipboardData?.files ?? [])].filter(f => f.type.startsWith('image/'))
   if (!images.length || !props.upload) return
   e.preventDefault()
-  images.forEach(insertImage)
+  insertImages(images)
 }
 function onDrop(e: DragEvent) {
   const images = [...(e.dataTransfer?.files ?? [])].filter(f => f.type.startsWith('image/'))
   if (!images.length || !props.upload) return
   e.preventDefault()
-  images.forEach(insertImage)
+  insertImages(images)
 }
 function onImagePick(e: Event) {
   const input = e.target as HTMLInputElement
-  ;[...(input.files ?? [])].forEach(insertImage)
+  insertImages([...(input.files ?? [])])
   input.value = ''
 }
 

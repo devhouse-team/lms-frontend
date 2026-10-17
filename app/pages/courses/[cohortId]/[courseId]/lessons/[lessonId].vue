@@ -24,14 +24,14 @@ async function toggleDone() {
   const l = lesson.value
   if (!l || saving.value) return
   const next = !l.completed
-  l.completed = next // optimistic
+  lesson.value = { ...l, completed: next } // optimistic
   saving.value = true
   try {
     await $fetch(`/api/courses/${cohortId.value}/lessons/${l.id}/complete`, { method: next ? 'PUT' : 'DELETE' })
     clearNuxtData(['my-courses', 'dashboard-mentee'])
     refreshNuxtData(`course-outline:${cohortId.value}:${courseId.value}`)
   } catch (e) {
-    l.completed = !next
+    lesson.value = { ...lesson.value!, completed: !next }
     toast.add({ title: apiError(e).code === 'cohort_not_active' ? t('lesson.err.notActive') : t('common.saveError'), color: 'error', icon: 'i-lucide-circle-alert' })
     if (apiError(e).code === 'cohort_not_active') refresh()
   } finally {

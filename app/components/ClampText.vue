@@ -4,6 +4,7 @@ const props = defineProps<{ text: string, lines: 3 | 6 }>()
 const { t } = useI18n()
 
 const box = useTemplateRef('box')
+const inner = useTemplateRef('inner')
 const expanded = ref(false)
 const overflows = ref(false)
 let observer: ResizeObserver | undefined
@@ -12,7 +13,8 @@ onMounted(() => {
   observer = new ResizeObserver(() => {
     if (box.value && !expanded.value) overflows.value = box.value.scrollHeight > box.value.clientHeight + 1
   })
-  if (box.value?.firstElementChild) observer.observe(box.value.firstElementChild)
+  if (box.value) observer.observe(box.value)
+  if (inner.value) observer.observe(inner.value)
 })
 onBeforeUnmount(() => observer?.disconnect())
 </script>
@@ -20,7 +22,9 @@ onBeforeUnmount(() => observer?.disconnect())
 <template>
   <div>
     <div ref="box" class="overflow-hidden" :style="expanded ? undefined : { maxHeight: `${props.lines * 1.6}em` }">
-      <MarkdownView :source="text" />
+      <div ref="inner">
+        <MarkdownView :source="text" />
+      </div>
     </div>
     <UButton
       v-if="overflows"
