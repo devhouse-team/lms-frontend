@@ -14,6 +14,15 @@ Newest first. One entry per merged change: what changed, for whom, and anything 
   text are in [course-content.md, Phase 3 as built](features/course-content.md#phase-3-as-built).
 - e2e smoke checks the by-type list, calendar rows, search and prev / next.
 
+## 2026-10-17: person profile and my profile
+
+- New `/people/{id}` (head): a person's cohorts as student (status, mentor) and as staff. Names in `/people` link to it.
+  See [features/people.md](features/people.md).
+- New `/me` (everyone): own account, cohorts, edit name and username, change password; linked from the account menu.
+  See [features/profile.md](features/profile.md). Changing the password signs the user in again, because the API evicts
+  the old tokens.
+- Not run against a backend yet: check both pages and the password change on a local backend before release.
+
 ## 2026-10-16: course content v2 spec (not built)
 
 - New [features/course-content.md](features/course-content.md): the LMS hosts courses, OCW-style. Student course page

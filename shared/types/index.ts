@@ -395,6 +395,51 @@ export interface PeopleResponse {
   invites: InvitePublic[]
 }
 
+/** One cohort a person is (or was) a student in; `mentor` only while the enrollment is current */
+export interface PersonEnrollment {
+  cohortId: string
+  cohortName: string
+  programTitle?: string
+  status: EnrollmentStatus
+  /** When the status last changed (ISO) */
+  since: string
+  mentor?: Person
+}
+
+export interface PersonStaffing {
+  cohortId: string
+  cohortName: string
+  programTitle?: string
+  role: StaffRole
+}
+
+/** `/people/{id}`: the list row plus the person's full cohort history */
+export interface PersonDetail extends PersonRow {
+  emailVerified: boolean
+  isSuperuser: boolean
+  enrollments: PersonEnrollment[]
+  staffIn: PersonStaffing[]
+}
+
+export interface MeCohort {
+  cohortId: string
+  cohortName: string
+  relation: 'student' | 'mentor' | 'reviewer'
+  /** Set for students */
+  enrollment?: EnrollmentStatus
+}
+
+/** `/me`: the signed-in user's own account */
+export interface MeProfile extends Person {
+  email: string
+  username: string
+  emailVerified: boolean
+  roles: Role[]
+  cohorts: MeCohort[]
+  /** Programs this user leads */
+  ledPrograms: { id: string, title: string }[]
+}
+
 /* ---------- course content (spec course-content.md) ---------- */
 
 export type MaterialKind = 'markdown' | 'pdf' | 'video' | 'file' | 'link' | 'image'

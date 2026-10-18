@@ -98,6 +98,7 @@ const userMenu = computed<DropdownMenuItem[][]>(() => [
         ...user.value!.roles.map(r => ({ label: t(`roles.${r}`), type: 'checkbox' as const, checked: r === role.value, onSelect: () => r !== role.value && switchRole(r) }))
       ]]
     : []),
+  [{ label: t('nav.me'), icon: 'i-lucide-user', to: '/me', onSelect: () => (open.value = false) }],
   [
     { label: 'Русский', type: 'checkbox', checked: locale.value === 'ru', onSelect: () => setLocale('ru') },
     { label: 'English', type: 'checkbox', checked: locale.value === 'en', onSelect: () => setLocale('en') }
