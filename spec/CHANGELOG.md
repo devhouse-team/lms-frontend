@@ -2,6 +2,18 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-10-18: student (cohort) invites spec (not built)
+
+- [features/invites.md](features/invites.md): students join through a cohort invite. Add students gains an "Invite by
+  email" tab (paste up to 200 emails, count, per-outcome report: invited, re-sent, added, re-added, already in, staff,
+  invalid); the CSV report gains invited and re-sent; the cohort page gets an "Invited" section (pending / expired,
+  resend, revoke); the People rail shows cohort invites with resend / revoke; `/accept-invite` shows the public preview
+  ("You're joining {cohort} · {program}, starts {date}" or the role) and lands a new student on `/courses`.
+- `/people/invite` drops the student role option. Edits in [cohorts.md](features/cohorts.md) and
+  [people.md](features/people.md). O2 and O5 specified (close when built).
+- Needs the backend's cohort invites (`POST/GET /cohorts/{c}/invites`, `GET /invites/preview`, `DELETE /invites/{id}`,
+  `POST /invites/{id}/resend`, import `invited` / `resent`, accept `cohort_id`); regenerate types before building.
+
 ## 2026-10-18: course content v2, phase 3 (navigation)
 
 - Students and staff: "Materials by type" (`/courses/[c]/[course]/materials`, one tag at a time in `?tag=`, grouped
