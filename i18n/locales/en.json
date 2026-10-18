@@ -135,17 +135,37 @@
       "name": "Use 2 to 80 characters",
       "confirm": "Passwords don't match",
       "username": "2 to 32 characters: lowercase Latin letters, digits or underscore",
-      "email": "That address looks mistyped"
+      "email": "That address looks mistyped",
+      "userExists": "This username is taken, or {email} already has an account. Try another username; if you already have an account, sign in."
     },
     "problem": {
       "invalid": {
         "title": "This link no longer works",
-        "text": "The invitation was already used or has expired. If your account exists, just sign in."
+        "text": "The invite was already used, has expired or was withdrawn. If you already have an account, sign in. Otherwise ask the person who invited you for a new link."
+      },
+      "finished": {
+        "title": "{cohort} has ended",
+        "text": "This cohort finished before you joined, so the invite can't be used. Contact the academy to join another cohort."
+      },
+      "rate": {
+        "title": "Too many attempts",
+        "text": "Too many attempts. Try again in a minute."
+      },
+      "load": {
+        "title": "Couldn't open the invite",
+        "text": "Check your connection and try again."
       }
     },
     "username": "Username",
     "usernameHint": "You can sign in with it instead of email",
-    "taken": "This username or email is already taken."
+    "joining": "You're joining {cohort}",
+    "startsOn": "{program} · starts {date}",
+    "startedOn": "{program} · started {date}",
+    "asRole": "You're invited as {role}",
+    "forEmail": "Invitation for {email}",
+    "validUntil": "The link works until {date}",
+    "submitCohort": "Join the cohort",
+    "welcomeCohort": "Welcome to {cohort}"
   },
   "mentor": {
     "summary": "{n} submissions waiting for review",
@@ -320,7 +340,6 @@
   "inviteForm": {
     "title": "Invite to the academy",
     "subtitle": "They get an email with a link and set a name, username and password.",
-    "menteeHint": "Studies in a cohort with a mentor",
     "mentorHint": "Leads a cohort, reviews work",
     "submit": "Create invitation",
     "createdTitle": "Invitation created",
@@ -334,8 +353,9 @@
       "roleUnavailable": "This role cannot be granted by invitation yet"
     },
     "headHint": "Manages cohorts, people and programs",
-    "unavailable": "Not available yet: the API has no role for inviting students",
-    "role": "Role"
+    "role": "Role",
+    "studentsMoved": "Students are invited into a cohort: open the cohort → Add students → Invite by email.",
+    "toCohorts": "Open cohorts"
   },
   "careerHints": {
     "cv": "One page, program projects, GitHub links",
@@ -836,7 +856,7 @@
     "readded": "{name} re-added",
     "file": "File",
     "fileDrop": "Drop a CSV here or choose a file",
-    "fileHelp": "UTF-8. One email per line, or a column named \"email\". Up to 2000 rows. Only people who already have an account are added.",
+    "fileHelp": "UTF-8. One email per line, or a column named \"email\". Up to 2000 rows. People with an account are added; the others get an invite by email.",
     "import": "Import",
     "another": "Import another file",
     "done": "Done",
@@ -850,11 +870,16 @@
       "enrolled": "Added: {n}",
       "reactivated": "Re-added (were dropped): {n}",
       "alreadyEnrolled": "Already in this cohort: {n}",
-      "unknown": "No account with this email: {n}",
+      "unknown": "Not a valid email or account deactivated: {n}",
       "skippedStaff": "Skipped, on this cohort's staff: {n}",
-      "unknownHint": "These people need an account first.",
-      "empty": "The file had no emails."
-    }
+      "empty": "The file had no emails.",
+      "invited": "Invited: {n}",
+      "resent": "Invite re-sent: {n}",
+      "enrolledExisting": "Added (already had an account): {n}",
+      "invalid": "Not a valid email or account deactivated: {n}",
+      "fixHint": "Fix these addresses and send them again."
+    },
+    "invite": "Invite by email"
   },
   "cohort": {
     "mine": "My students",
@@ -1330,6 +1355,47 @@
     "rateLimited": "Too many attempts. Wait a minute and try again.",
     "err": {
       "current": "Enter your current password"
+    }
+  },
+  "invites": {
+    "emails": "Emails",
+    "emailsHelp": "Separate with commas, spaces or new lines. Up to 200 at a time; for more, use a CSV file. People who already have an account are added straight away; the others get an email with a link valid for 7 days.",
+    "placeholder": "ana{'@'}example.com, timur{'@'}example.com",
+    "count": "{n} address | {n} addresses",
+    "dupes": ", {d} duplicates removed",
+    "tooMany": "{n} addresses: up to 200 at a time. Split the list or use a CSV file.",
+    "send": "Send invites ({n})",
+    "more": "Invite more",
+    "section": "Invited",
+    "sectionHint": "People who haven't accepted yet. Accepted invites join the roster.",
+    "loadError": "Couldn't load invites.",
+    "status": {
+      "pending": "Pending",
+      "expired": "Expired"
+    },
+    "col": {
+      "status": "Status",
+      "expiry": "Expiry",
+      "invited": "Invited",
+      "actions": "Actions"
+    },
+    "expiredOn": "expired {date}",
+    "resend": "Resend",
+    "revoke": "Revoke",
+    "revokeTitle": "Revoke the invite?",
+    "keep": "Keep",
+    "resent": "Invite re-sent to {email}. The old link no longer works.",
+    "revokeConfirm": "Revoke the invite for {email}? The link stops working. You can invite them again later.",
+    "revoked": "Invite revoked",
+    "studentIn": "Student · {cohort}",
+    "actionsFor": "Actions for {email}",
+    "all": "All invites",
+    "err": {
+      "invite_not_found": "This invite no longer exists; the list was refreshed.",
+      "invite_not_pending": "This invite was already accepted or revoked; the list was refreshed.",
+      "user_exists": "{email} has an account now. Add them from \"One person\".",
+      "permission_denied": "You can't manage invites for this cohort.",
+      "validation_error": "Enter between 1 and 200 emails."
     }
   }
 }

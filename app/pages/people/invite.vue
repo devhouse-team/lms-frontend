@@ -1,26 +1,22 @@
 <script setup lang="ts">
 import { z } from 'zod'
-import type { InvitePublic, Role } from '~~/shared/types'
+import type { InvitePublic } from '~~/shared/types'
 
+/** Role invite (mentor, head). Students are invited into a cohort from its Add students (spec invites.md) */
 definePageMeta({ roles: ['head'], headScope: 'all' })
 
 const { t, locale } = useI18n()
 const toast = useToast()
-const roleIds = useRuntimeConfig().public.roleIds as Record<Role, number | string>
 useHead({ title: () => `${t('inviteForm.title')} · dev.house` })
 
-const roleItems = computed(() => (['mentee', 'mentor', 'head'] as const).map((value) => {
-  const disabled = !Number(roleIds[value])
-  return { value, label: t(`roles.${value}`), description: disabled ? t('inviteForm.unavailable') : t(`inviteForm.${value}Hint`), disabled }
-}))
-const firstAvailable = roleItems.value.find(r => !r.disabled)?.value ?? 'mentor'
+const roleItems = computed(() => (['mentor', 'head'] as const).map(value => ({ value, label: t(`roles.${value}`), description: t(`inviteForm.${value}Hint`) })))
 
 const schema = computed(() => z.object({
   email: z.string().trim().min(1, t('auth.err.loginRequired')).email(t('invite.err.email')),
-  role: z.enum(['mentee', 'mentor', 'head'])
+  role: z.enum(['mentor', 'head'])
 }))
 
-const state = reactive<{ email: string, role: Role }>({ email: '', role: firstAvailable })
+const state = reactive<{ email: string, role: 'mentor' | 'head' }>({ email: '', role: 'mentor' })
 const sending = ref(false)
 const created = ref<InvitePublic | null>(null)
 
@@ -79,6 +75,11 @@ const expiry = computed(() => created.value
           <UFormField :label="t('inviteForm.role')" name="role">
             <URadioGroup v-model="state.role" :items="roleItems" variant="table" />
           </UFormField>
+
+          <p class="text-sm text-muted">
+            {{ t('inviteForm.studentsMoved') }}
+            <NuxtLink to="/cohorts" class="text-default underline underline-offset-4 hover:text-highlighted">{{ t('inviteForm.toCohorts') }}</NuxtLink>
+          </p>
 
           <UButton type="submit" :label="t('inviteForm.submit')" icon="i-lucide-send" color="primary" size="lg" :loading="sending" />
         </UForm>

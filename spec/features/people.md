@@ -8,7 +8,7 @@ Everyone with an account, their role and where they are, plus pending invites.
 
 | Route | Who | What it shows / does |
 |---|---|---|
-| `/people` | head | Tabs all / students / mentors / leadership with counts, search by name, email, username or cohort. Table: name + email, role ("not in a cohort" when none), cohort / program. Rail: pending and expired [invites](invites.md) of both kinds (role, or "Student · {cohort}"), with Resend / Revoke (spec, not built). "Invite" button (role invites; students are invited from the cohort). Names link to the profile. |
+| `/people` | head | Tabs all / students / mentors / leadership with counts, search by name, email, username or cohort. Table: name + email, role ("not in a cohort" when none), cohort / program. Rail: pending and expired [invites](invites.md) of both kinds (role, or "Student · {cohort}"), with Resend / Revoke. "Invite" button (role invites; students are invited from the cohort). Names link to the profile. |
 | `/people/{id}` | head | One person: avatar, name, email, username, derived role, admin and email-verified badges. "As a student": every cohort they were enrolled in (current first) with status, date of the last status change and, for current enrollments, their mentor. "As staff": cohorts where they are mentor or reviewer. Unknown, deactivated or non-numeric ids show "Person not found". |
 
 ## Behavior

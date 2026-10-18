@@ -1,17 +1,24 @@
 <script setup lang="ts">
-import type { CohortRosterRow, ImportReport, PersonOption, StaffMember } from '~~/shared/types'
+import type { CohortRosterRow, ImportReport, InviteReport, PersonOption, StaffMember } from '~~/shared/types'
 
-/** Enroll one person, or import a CSV of emails. Head only, cohort not finished. Spec: cohorts.md, Add students. */
+/**
+ * Enroll one person, invite a pasted list of emails, or import a CSV. Head only, cohort not finished. Specs: cohorts.md,
+ * Add students; invites.md, Invite by email. Accounts are enrolled at once; other addresses get an emailed invite.
+ */
 const props = defineProps<{ cohortId: string, roster: CohortRosterRow[], staff: StaffMember[] }>()
 const open = defineModel<boolean>('open', { default: false })
 const emit = defineEmits<{ added: [], stale: [] }>()
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const toast = useToast()
 const { message, toastError, leaveIfGone, code } = useCohortErrors()
 
-const tab = ref<'one' | 'csv'>('one')
-const tabs = computed(() => [{ value: 'one', label: t('addStudents.one') }, { value: 'csv', label: t('addStudents.csv') }])
+const tab = ref<'one' | 'invite' | 'csv'>('one')
+const tabs = computed(() => [
+  { value: 'one', label: t('addStudents.one') },
+  { value: 'invite', label: t('addStudents.invite') },
+  { value: 'csv', label: t('addStudents.csv') }
+])
 
 // ---- one person (people list loads when the modal first opens) ----------------
 const { data: people, status: peopleStatus, execute: loadPeople } = useLazyFetch<PersonOption[]>('/api/people/options', {
@@ -25,6 +32,9 @@ watch(open, (o) => {
   report.value = null
   file.value = null
   fileError.value = undefined
+  emailsText.value = ''
+  inviteError.value = undefined
+  inviteReport.value = null
   if (!people.value.length) loadPeople()
 })
 
@@ -61,6 +71,33 @@ async function addOne() {
   }
 }
 
+// ---- invite by email --------------------------------------------------------------
+const MAX_EMAILS = 200
+const emailsText = ref('')
+const parsed = computed(() => parseEmails(emailsText.value))
+const tooMany = computed(() => parsed.value.emails.length > MAX_EMAILS)
+const inviteError = ref<string>()
+const inviteReport = ref<InviteReport | null>(null)
+
+async function sendInvites() {
+  inviteError.value = undefined
+  if (!parsed.value.emails.length || tooMany.value) return
+  saving.value = true
+  try {
+    inviteReport.value = await $fetch(`/api/cohorts/${props.cohortId}/invites`, { method: 'POST', body: { emails: parsed.value.emails } })
+    invalidateCohorts()
+    emit('added') // roster and Invited list refresh as soon as the report arrives
+  } catch (e) {
+    const c = code(e) ?? ''
+    if (c === 'validation_error') inviteError.value = t('invites.err.validation_error')
+    else if (te(`invites.err.${c}`)) toast.add({ title: t(`invites.err.${c}`), color: 'error', icon: 'i-lucide-circle-alert' })
+    else toastError(e)
+    if (c === 'cohort_finished') emit('stale')
+  } finally {
+    saving.value = false
+  }
+}
+
 // ---- CSV -----------------------------------------------------------------------
 const MAX_BYTES = 1024 * 1024
 const file = ref<File | null>(null)
@@ -88,21 +125,19 @@ async function importFile() {
   }
 }
 
+/** The open tab's report as non-empty groups (`key` names the text under addStudents.report); `fix`: copyable to fix and resend */
 const groups = computed(() => {
-  const r = report.value
-  if (!r) return []
-  return ([
-    ['enrolled', r.enrolled],
-    ['reactivated', r.reactivated],
-    ['alreadyEnrolled', r.alreadyEnrolled],
-    ['unknown', r.unknown],
-    ['skippedStaff', r.skippedStaff]
-  ] as const).filter(([, list]) => list.length).map(([key, list]) => ({ key, list }))
+  const r = tab.value === 'csv' ? report.value : tab.value === 'invite' ? inviteReport.value : null
+  if (!r) return null
+  const rows: [string, string[]][] = 'invalid' in r
+    ? [['invited', r.invited], ['resent', r.resent], ['enrolledExisting', r.enrolled], ['reactivated', r.reactivated], ['alreadyEnrolled', r.alreadyEnrolled], ['skippedStaff', r.skippedStaff], ['invalid', r.invalid]]
+    : [['enrolled', r.enrolled], ['reactivated', r.reactivated], ['alreadyEnrolled', r.alreadyEnrolled], ['invited', r.invited], ['resent', r.resent], ['unknown', r.unknown], ['skippedStaff', r.skippedStaff]]
+  return rows.filter(([, list]) => list.length).map(([key, list]) => ({ key, list, fix: key === 'invalid' || key === 'unknown' }))
 })
 
-async function copyUnknown() {
+async function copyEmails(list: string[]) {
   try {
-    await navigator.clipboard.writeText(report.value?.unknown.join('\n') ?? '')
+    await navigator.clipboard.writeText(list.join('\n'))
     toast.add({ title: t('addStudents.copied'), icon: 'i-lucide-clipboard-check', color: 'neutral' })
   } catch {
     toast.add({ title: t('common.saveError'), color: 'error' })
@@ -113,7 +148,7 @@ async function copyUnknown() {
 <template>
   <UModal v-model:open="open" :title="t('addStudents.title')">
     <template #body>
-      <UTabs v-model="tab" :items="tabs" :content="false" variant="link" color="primary" class="mb-4" />
+      <UTabs v-model="tab" :items="tabs" :content="false" variant="link" color="primary" class="mb-4" :ui="{ label: 'whitespace-normal text-center' }" />
 
       <div v-if="tab === 'one'" class="space-y-3">
         <UFormField :label="t('addStudents.person')">
@@ -130,15 +165,34 @@ async function copyUnknown() {
         <p class="text-xs text-muted">{{ t('addStudents.oneHint') }}</p>
       </div>
 
-      <div v-else-if="!report" class="space-y-3">
+      <div v-else-if="tab === 'invite' && !inviteReport" class="space-y-2">
+        <UFormField :label="t('invites.emails')" :help="t('invites.emailsHelp')" :error="inviteError">
+          <UTextarea
+            v-model="emailsText"
+            :rows="6"
+            autoresize
+            :maxrows="14"
+            :readonly="saving"
+            :placeholder="t('invites.placeholder')"
+            autocapitalize="none"
+            spellcheck="false"
+            class="w-full"
+          />
+        </UFormField>
+        <p v-if="parsed.emails.length" class="num text-xs" :class="tooMany ? 'text-error' : 'text-muted'" aria-live="polite">
+          {{ tooMany ? t('invites.tooMany', { n: parsed.emails.length }) : t('invites.count', parsed.emails.length) + (parsed.dupes ? t('invites.dupes', { d: parsed.dupes }) : '') }}
+        </p>
+      </div>
+
+      <div v-else-if="tab === 'csv' && !report" class="space-y-3">
         <UFormField :label="t('addStudents.file')" :help="fileError ? undefined : t('addStudents.fileHelp')" :error="fileError">
           <UFileUpload v-model="file" accept=".csv,text/csv" :label="t('addStudents.fileDrop')" icon="i-lucide-file-spreadsheet" layout="list" class="w-full" />
         </UFormField>
       </div>
 
-      <div v-else class="space-y-3" aria-live="polite">
+      <div v-else-if="groups" class="space-y-3" aria-live="polite">
         <p v-if="!groups.length" class="text-sm text-muted">{{ t('addStudents.report.empty') }}</p>
-        <UCollapsible v-for="g in groups" :key="g.key" class="rounded-lg ring-1 ring-inset ring-default">
+        <UCollapsible v-for="(g, i) in groups" :key="g.key" :default-open="i < 2" class="rounded-lg ring-1 ring-inset ring-default">
           <UButton
             :label="t(`addStudents.report.${g.key}`, { n: g.list.length })"
             color="neutral"
@@ -152,9 +206,9 @@ async function copyUnknown() {
             <ul class="num max-h-48 space-y-0.5 overflow-auto px-3 pb-3 text-xs text-muted">
               <li v-for="email in g.list" :key="email" class="truncate">{{ email }}</li>
             </ul>
-            <div v-if="g.key === 'unknown'" class="px-3 pb-3">
-              <p class="mb-2 text-xs text-muted">{{ t('addStudents.report.unknownHint') }}</p>
-              <UButton :label="t('addStudents.copyEmails')" icon="i-lucide-copy" color="neutral" variant="outline" size="xs" @click="copyUnknown" />
+            <div v-if="g.fix" class="px-3 pb-3">
+              <p class="mb-2 text-xs text-muted">{{ t('addStudents.report.fixHint') }}</p>
+              <UButton :label="t('addStudents.copyEmails')" icon="i-lucide-copy" color="neutral" variant="outline" size="xs" @click="copyEmails(g.list)" />
             </div>
           </template>
         </UCollapsible>
@@ -165,9 +219,24 @@ async function copyUnknown() {
         <UButton :label="t('common.cancel')" color="neutral" variant="ghost" @click="open = false" />
         <UButton :label="t('cohorts.add')" color="primary" :disabled="!userId" :loading="saving" @click="addOne" />
       </template>
-      <template v-else-if="!report">
+      <template v-else-if="tab === 'invite' && !inviteReport">
+        <UButton :label="t('common.cancel')" color="neutral" variant="ghost" @click="open = false" />
+        <UButton
+          :label="t('invites.send', { n: parsed.emails.length })"
+          icon="i-lucide-send"
+          color="primary"
+          :disabled="!parsed.emails.length || tooMany"
+          :loading="saving"
+          @click="sendInvites"
+        />
+      </template>
+      <template v-else-if="tab === 'csv' && !report">
         <UButton :label="t('common.cancel')" color="neutral" variant="ghost" @click="open = false" />
         <UButton :label="t('addStudents.import')" icon="i-lucide-upload" color="primary" :disabled="!file" :loading="saving" @click="importFile" />
+      </template>
+      <template v-else-if="tab === 'invite'">
+        <UButton :label="t('invites.more')" color="neutral" variant="ghost" @click="inviteReport = null; emailsText = ''" />
+        <UButton :label="t('addStudents.done')" color="primary" @click="open = false" />
       </template>
       <template v-else>
         <UButton :label="t('addStudents.another')" color="neutral" variant="ghost" @click="report = null; file = null" />

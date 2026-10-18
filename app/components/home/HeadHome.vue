@@ -45,16 +45,8 @@ const totals = computed(() => {
             <h2 id="invites-title" class="text-sm font-semibold text-highlighted">{{ t('head.invites') }}</h2>
             <span class="num text-xs text-muted">{{ data.invites.length }}</span>
           </div>
-          <ul v-if="data.invites.length" class="mt-3 space-y-3">
-            <li v-for="inv in data.invites" :key="inv.id" class="min-w-0">
-              <p class="truncate text-sm text-highlighted">{{ inv.email }}</p>
-              <p v-if="inv.role" class="truncate text-xs text-muted">{{ t(`roles.${inv.role}`) }}</p>
-              <p class="num mt-0.5 text-xs" :class="inv.expired ? 'text-error' : 'text-dimmed'">
-                {{ inv.expired ? t('head.expired') : t('head.expiresIn', { value: left(inv.expiresAt) }) }}
-              </p>
-            </li>
-          </ul>
-          <p v-else class="mt-3 text-sm text-muted">{{ t('head.noInvites') }}</p>
+          <InviteList :invites="data.invites" />
+          <NuxtLink v-if="data.invites.length" to="/people" class="mt-3 inline-block text-xs text-muted underline-offset-4 hover:text-highlighted hover:underline">{{ t('invites.all') }}</NuxtLink>
         </section>
 
         <section class="p-4" aria-labelledby="load-title">

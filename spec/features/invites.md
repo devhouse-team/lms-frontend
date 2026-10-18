@@ -6,7 +6,7 @@ Registration is invite-only: an invite is the only way in for someone without an
 
 - **Role invite** (as today): the head enters an email and a role (mentor, head); the API emails a one-time link valid
   for 7 days; accepting creates the account with that role.
-- **Cohort invite** (new, spec, not built): whoever manages a cohort's enrollments (head, the program's lead) invites
+- **Cohort invite** (built 2026-10-18): whoever manages a cohort's enrollments (head, the program's lead) invites
   one or many emails straight into a cohort, from the [Add students modal](cohorts.md#add-students-modal) or a CSV.
   Accepting creates the account **and** an active enrollment; the student lands on their courses. People who already
   have an account are enrolled at once, without an email.
@@ -14,9 +14,30 @@ Registration is invite-only: an invite is the only way in for someone without an
 Success: a head pastes 30 emails into a cohort and, a week later, sees who joined, who didn't, and can resend or
 withdraw the rest; an invitee knows what they are joining before they type a password.
 
-Status: role invites built; everything marked (new) is **specified, not built**. Contract: `../backend/spec/domain.md`,
+Status: **built** (role invites; cohort invites 2026-10-18, items marked (new)). Contract: `../backend/spec/domain.md`,
 section "Invites", and `../backend/openapi.json` (`npm run api:types`). Endpoint, field and error names below are per
 backend spec/domain.md; where they differ from the generated types, the types win and this spec gets corrected.
+
+### As built
+
+Differences from the text below (the code follows these):
+
+- **Resend / Revoke** live in one component, `InviteActions` (cohort page: Resend as a button, Revoke in the row menu;
+  People rail: both in the row menu), with the revoke confirm. After any attempt, success or error, the page refetches
+  its list (the server's state wins) and clears the other views holding invites (`people`, `dashboard-head`,
+  `cohort-invites:<c>`). An error toast reads `invites.err.<code>`, then `cohorts.err.<code>`, then `common.saveError`.
+- **Rails**: People and head home share `InviteList` (head home without actions, plus "All invites" → `/people`).
+- **Invited section** columns: Email, Status, Expiry (from `sm`), Invited (relative, from `md`), actions; the full date
+  is in each `title`. "Relative time" moved into `useCountdown().relative` (the roster uses the same).
+- **Accept page**: the preview's `cohort.status = finished` shows the "has ended" state before the form. A load error
+  and the rate limit each get a titled state with Retry. Field errors from the API's `validation_error` land on
+  name, username or password.
+- **`/accept-invite` renders client-only** (`routeRules: { ssr: false }`): rendered on the server, Nuxt copies the
+  page URL, token included, into the HTML payload.
+- **After accept** the page lands through `useAuth().afterLogin('/courses')` (it refreshes the session first; a plain
+  navigation landed on `/login`).
+- **Preview** responses carry `Cache-Control: no-store`; the cohort carries its `status` (`InvitePreview.cohort.status`).
+- `parseEmails` has a self-check: `node --experimental-strip-types scripts/emails.check.ts`.
 
 ## Screens
 
@@ -123,7 +144,8 @@ without a request).
 confirm). The invited email is shown read-only above the fields (from the preview), so the invitee knows which address
 signs in. Submit label: "Join the cohort" for cohort invites, "Create account" for role invites.
 
-**After accept**: Nitro signs the new account in (as today). Then:
+**After accept**: Nitro signs the new account in (as today); the page refreshes the session (`useAuth().afterLogin(to)`)
+before navigating, or the auth middleware still sees a guest and sends it to `/login`. Then:
 
 - cohort invite → `/courses` (their cohort's courses; a planned cohort shows "starts {date}" there), toast
   "Welcome to {cohort}";
@@ -155,8 +177,9 @@ signs in. Submit label: "Join the cohort" for cohort invites, "Create account" f
 - **Accept → views.** Views are read at sign-in (`/me/access`); the new enrollment exists before Nitro signs in, so the
   new student lands in the student view without another sign-in.
 - **The token** stays in the emailed link only. The preview call sends it to Nitro, which passes it to the API; it is
-  never logged, cached in payload state (`server: false` fetch, not in the SSR payload) or put in another URL. There is
-  still no copy-link (not wanted: the address is the identity).
+  never logged, cached in payload state or put in another URL. `/accept-invite` renders client-only (`routeRules:
+  { ssr: false }`): a `server: false` fetch is not enough, because a server-rendered page still copies its own URL,
+  token included, into the HTML payload. There is still no copy-link (not wanted: the address is the identity).
 - **Rate limit.** Preview is limited per IP (30/min). Nitro forwards `X-Forwarded-For` (`apiPublic`), so the limit is
   per invitee, not per Vercel (needs backend `TRUSTED_PROXY_HOPS`, O3).
 
@@ -177,11 +200,11 @@ Read with `apiError(e).code` (never the HTTP status: Nitro's `toH3Error` turns s
 | `user_exists` | 422 | resend | "{email} has an account now. Add them from \"One person\"." | Toast; refetch the list |
 | `user_exists` | 422 | role invite create | "A user with this email already exists" (unchanged) | Toast |
 | `validation_error` | 422 | accept | The API's field message (`password`, `username`, `name` → that input); otherwise the API's message | Field error / alert |
-| `validation_error` | 422 | bulk invite (empty or > 200; the client prevents both) | "Enter between 1 and 200 emails." | Under the textarea |
+| `validation_error` | 422 | bulk invite (empty or > 200; the client prevents both, and Nitro's zod answers `400` before the API) | "Enter between 1 and 200 emails." | Under the textarea |
 | `cohort_finished` | 422 | bulk invite, CSV, resend | "This cohort has finished and is read-only." (cohorts) | Toast; refetch header, roster and invites (page turns read-only) |
 | `cohort_not_found` | 404 | bulk invite, cohort invite list | As [cohorts](cohorts.md#errors): toast "This cohort no longer exists", go to `/cohorts` | |
 | `permission_denied` | 403 | bulk invite, resend, revoke | "You can't manage invites for this cohort." | Toast |
-| `rate_limited` | 429 | preview, accept | "Too many attempts. Try again in a minute." | Too-many state (preview) / alert (accept) |
+| `rate_limited` | 429 | preview (accept is not rate-limited) | "Too many attempts. Try again in a minute." | Too-many state with Retry |
 | `role_unavailable` | 422 (Nitro) | role invite create | "This role can't be given by invite yet" (unchanged) | Toast |
 
 ### Cache keys
@@ -191,7 +214,7 @@ Read with `apiError(e).code` (never the HTTP status: Nitro's `toH3Error` turns s
 | `cohort-invites:<id>` (new) | `/cohorts/[id]` | Pending + expired invites of the cohort |
 | `people` | `/people` | People + invites rail (both kinds) |
 | `dashboard-head` | head home | Includes the invites rail |
-| `invite-preview` (new) | `/accept-invite`, `server: false` | The preview; cleared on leaving the page |
+| `invite-preview` (new) | `/accept-invite` (client-only page) | The preview; cleared on leaving the page |
 
 | Mutation | Refresh on the page | Also clear |
 |---|---|---|
@@ -247,6 +270,14 @@ vue-i18n pipe forms with the Russian three forms (`адрес | адреса | �
 Remove `inviteForm.menteeHint` and `inviteForm.unavailable` (student option gone). The full list of keys is checked
 by the existing key check script (both locales, no missing keys).
 
+- **`@` in a message must be written `{'@'}`**: vue-i18n reads `@` as a linked key, and one bad message stops the whole
+  locale from compiling (every text on every page shows its raw key). The placeholder is
+  `ana{'@'}example.com, timur{'@'}example.com`.
+- Keys the table above leaves out, added in the build: `invites.placeholder`, `.loadError`, `.expiredOn`,
+  `.revokeTitle`, `.keep`, `.actionsFor`, `.all`, `.col.{status,expiry,invited,actions}`, `.err.<code>`;
+  `inviteForm.toCohorts`; `addStudents.report.fixHint` (replaces `unknownHint`); `invite.problem.rate.title`,
+  `invite.problem.load.{title,text}`, `invite.err.userExists`.
+
 ## API
 
 Pages call only these routes. Cohort-scoped routes use `requireRole(event, 'head')` (leads included); `/api/people`,
@@ -261,7 +292,7 @@ Pages call only these routes. Cohort-scoped routes use `requireRole(event, 'head
 | `POST /api/cohorts/[id]/enrollments/import` (changed) | `POST /cohorts/{c}/enrollments/import` | `ImportReport` gains `invited`, `resent` (from the API fields of the same name); `unknown` now means invalid email or deactivated account |
 | `POST /api/invites/[id]/resend` (new) | `POST /invites/{id}/resend` | → `InvitePublic` (new expiry) |
 | `DELETE /api/invites/[id]` (new) | `DELETE /invites/{id}` | API 204 → `{ok}` |
-| `GET /api/invites/preview?token=` (new, public) | `GET /invites/preview?token=` via `apiPublic` (forwards `X-Forwarded-For`) | zod: `token` 1–200 chars. → `InvitePreview {email, kind, role?: Role, roleName: string \| null, cohort: {id, name, programTitle, startsOn} \| null, expiresAt}`; `role` maps the API's role name (`admin` → `head`, `mentor` → `mentor`), absent otherwise. Errors passed through (`invite_not_found`, `rate_limited`) |
+| `GET /api/invites/preview?token=` (new, public) | `GET /invites/preview?token=` via `apiPublic` (forwards `X-Forwarded-For`) | zod: `token` 1–200 chars. → `InvitePreview {email, kind, role?: Role, roleName: string \| null, cohort: {id, name, programTitle, startsOn, status} \| null, expiresAt}`; `role` maps the API's role name (`admin` → `head`, `mentor` → `mentor`), absent otherwise. Errors passed through (`invite_not_found`, `rate_limited`) |
 | `POST /api/invites/accept {token, name, username, password}` (changed) | `POST /invites/accept`, then sign-in | → `AuthResponse & {cohortId: string \| null}` from the API's `cohort_id`; the page picks the landing route from it |
 
 Type changes in `shared/types/index.ts`: `InvitePublic` gains `kind: 'role' | 'cohort'`, `status: 'pending' |
@@ -282,54 +313,54 @@ the items marked (e2e); the rest by the manual check the item describes.
 - [x] A username with uppercase letters, dots or dashes is refused in the form, before calling the API.
 - [x] ~~A student invite is refused while no student role id is configured, and the option is disabled.~~ Replaced:
   see the next item.
-- [ ] `/people/invite` offers only Mentor and Head and points students to the cohort's Add students.
+- [x] `/people/invite` offers only Mentor and Head and points students to the cohort's Add students. ✓ browser + e2e (`mentee` → 400)
 
 ### Invite by email
 
-- [ ] Pasting "a@x.kz, B@x.kz\nb@x.kz;  c@x.kz" shows "3 addresses, 1 duplicate removed" and sends 3 lowercased emails.
-- [ ] 201 addresses disable Send with the 200-limit message; no request is made.
-- [ ] A list with one new email, one existing account, one dropped student, one active student, one staff member, one
+- [x] Pasting "a@x.kz, B@x.kz\nb@x.kz;  c@x.kz" shows "3 addresses, 1 duplicate removed" and sends 3 lowercased emails. ✓ browser + `scripts/emails.check.ts`
+- [x] 201 addresses disable Send with the 200-limit message; no request is made. ✓ browser (Nitro also refuses > 200: e2e)
+- [x] A list with one new email, one existing account, one dropped student, one active student, one staff member, one
   open invite and "not-an-email" shows Invited 1, Added 1, Re-added 1, Already 1, Skipped staff 1, Re-sent 1,
-  Invalid 1 (e2e).
-- [ ] After the report, the roster shows the added and re-added students and the Invited section shows the invited and
-  re-sent emails, without a reload.
-- [ ] "Copy emails" in the Invalid group copies the invalid entries one per line.
+  Invalid 1 (e2e). ✓ e2e
+- [x] After the report, the roster shows the added and re-added students and the Invited section shows the invited and
+  re-sent emails, without a reload. ✓ browser (Invited list; the roster refreshes in the same call)
+- [x] "Copy emails" in the Invalid group copies the invalid entries one per line. ✓ browser
 - [ ] On a cohort that finished meanwhile, Send shows the `cohort_finished` message and the page turns read-only.
 
 ### CSV import
 
-- [ ] A CSV with one unknown address shows it under "Invited" (not "No account"), and it appears in the Invited section (e2e).
-- [ ] Re-importing the same CSV shows that address under "Invite re-sent".
+- [x] A CSV with one unknown address shows it under "Invited" (not "No account"), and it appears in the Invited section (e2e). ✓ e2e
+- [x] Re-importing the same CSV shows that address under "Invite re-sent". ✓ e2e
 
 ### Invited section
 
-- [ ] Lists pending and expired cohort invites with status badge and expiry; accepted and revoked ones are absent (e2e).
-- [ ] Resend on an expired invite makes it pending with a new expiry and the toast says the old link no longer works (e2e).
-- [ ] Revoke asks first, removes the row, and the revoked link then shows the invalid state on `/accept-invite` (e2e).
-- [ ] On a finished cohort only Revoke is offered.
+- [x] Lists pending and expired cohort invites with status badge and expiry; accepted and revoked ones are absent (e2e). ✓ e2e + browser
+- [x] Resend on an expired invite makes it pending with a new expiry and the toast says the old link no longer works (e2e). ✓ browser (expired → pending) + e2e (old link 404)
+- [x] Revoke asks first, removes the row, and the revoked link then shows the invalid state on `/accept-invite` (e2e). ✓ e2e + browser
+- [x] On a finished cohort only Revoke is offered. ✓ browser
 - [ ] A program lead (no admin rights) sees and uses the section on their program's cohort.
 
 ### People rail
 
-- [ ] Shows role and cohort invites; a cohort invite reads "Student · {cohort}" and links to the cohort (e2e).
+- [x] Shows role and cohort invites; a cohort invite reads "Student · {cohort}" and links to the cohort (e2e). ✓ e2e + browser
 - [ ] Resend and Revoke from the rail work and refresh the cohort's Invited section on the next visit.
-- [ ] Head home shows the same items without actions.
+- [x] Head home shows the same items without actions. ✓ browser
 
 ### Accept page
 
-- [ ] A cohort invite link shows "You're joining {cohort}", "{program} · starts {date}", the invited email and the expiry before the form; the submit reads "Join the cohort" (e2e: preview fields).
-- [ ] A role invite link shows the role line and "Create account".
-- [ ] No flash of the invalid state while the preview loads; a network error shows Retry, not the invalid state.
-- [ ] Unknown, used, expired and revoked tokens all show the same invalid state (e2e: preview 404).
-- [ ] Accepting a cohort invite signs the student in, in the student view, and lands on `/courses` showing that cohort with the welcome toast (e2e).
-- [ ] Accepting after the cohort finished shows the "has ended" state; nothing is created (e2e).
-- [ ] Accepting when the email got an account meanwhile shows the `user_exists` alert with a Sign in link.
-- [ ] The token does not appear in the SSR payload or any other URL.
+- [x] A cohort invite link shows "You're joining {cohort}", "{program} · starts {date}", the invited email and the expiry before the form; the submit reads "Join the cohort" (e2e: preview fields). ✓ e2e + browser
+- [x] A role invite link shows the role line and "Create account". ✓ browser
+- [x] No flash of the invalid state while the preview loads; a network error shows Retry, not the invalid state. ✓ browser
+- [x] Unknown, used, expired and revoked tokens all show the same invalid state (e2e: preview 404). ✓ e2e + browser
+- [x] Accepting a cohort invite signs the student in, in the student view, and lands on `/courses` showing that cohort with the welcome toast (e2e). ✓ e2e + browser
+- [x] Accepting after the cohort finished shows the "has ended" state; nothing is created (e2e). ✓ e2e + browser
+- [x] Accepting when the email got an account meanwhile shows the `user_exists` alert with a Sign in link. ✓ browser
+- [x] The token does not appear in the SSR payload or any other URL. ✓ browser (`/accept-invite` renders client-only: `routeRules`)
 
 ### Errors, i18n and cache
 
-- [ ] Every code in the error table has `en` and `ru` messages and is shown as the table says; no listed code shows `common.saveError` (key check script).
-- [ ] Russian plurals for the address count read correctly for 1, 2, 5 and 21.
+- [x] Every code in the error table has `en` and `ru` messages and is shown as the table says; no listed code shows `common.saveError` (key check script). ✓ key check (static keys in both locales)
+- [x] Russian plurals for the address count read correctly for 1, 2, 5 and 21. ✓ browser
 
 ## Known gaps
 

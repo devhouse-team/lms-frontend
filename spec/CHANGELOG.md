@@ -2,6 +2,17 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-10-18: student (cohort) invites built
+
+- Built per [features/invites.md](features/invites.md) on backend `d69f872` (migration `a7d1be8a51ca`; types
+  regenerated): Add students → "Invite by email" (paste up to 200, count, per-outcome report), CSV `invited` / `resent`,
+  the cohort's "Invited" section with Resend / Revoke, cohort invites in the People rail (with actions) and on head
+  home, `/people/invite` for mentor and head only, and `/accept-invite` with the preview, the finished / rate-limit /
+  load-error states and landing on `/courses`. O2 and O5 closed. Differences: [As built](features/invites.md#as-built).
+- To do before release: run the backend migration. Locally: `docker compose build migrate && docker compose run --rm
+  migrate` in `../backend` (a stale `migrate` image skips it).
+- e2e smoke covers outcomes, CSV invites, the Invited list, resend, revoke, preview, accept and a finished cohort.
+
 ## 2026-10-18: student (cohort) invites spec (not built)
 
 - [features/invites.md](features/invites.md): students join through a cohort invite. Add students gains an "Invite by

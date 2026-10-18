@@ -3,11 +3,12 @@ import type { Role } from '~~/shared/types'
 export function useAuth() {
   const { user, loggedIn, fetch: refreshSession, clear } = useUserSession()
 
-  async function afterLogin() {
+  /** `to`: where the page wants to land (an accepted cohort invite → its courses); else a safe `?next=`, else home */
+  async function afterLogin(to?: string) {
     await refreshSession()
     clearNuxtData()
     const next = useRoute().query.next
-    await navigateTo(typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') ? next : '/')
+    await navigateTo(to ?? (typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') ? next : '/'))
   }
 
   /** `login` is an email or a username */

@@ -4,7 +4,6 @@ import type { Role } from '~~/shared/types'
 definePageMeta({ roles: ['head'], headScope: 'all' })
 
 const { t } = useI18n()
-const { left } = useCountdown()
 useHead({ title: () => `${t('nav.people')} · dev.house` })
 
 const { data, status, refresh } = await useFetch('/api/people', { key: 'people' })
@@ -84,14 +83,7 @@ const rows = computed(() => {
               <h2 id="inv-title" class="text-sm font-semibold text-highlighted">{{ t('head.invites') }}</h2>
               <span class="num text-xs text-muted">{{ data.invites.length }}</span>
             </div>
-            <ul v-if="data.invites.length" class="mt-3 space-y-3">
-              <li v-for="inv in data.invites" :key="inv.id" class="min-w-0">
-                <p class="truncate text-sm text-highlighted">{{ inv.email }}</p>
-                <p v-if="inv.role" class="truncate text-xs text-muted">{{ t(`roles.${inv.role}`) }}</p>
-                <p class="num mt-0.5 text-xs" :class="inv.expired ? 'text-error' : 'text-dimmed'">{{ inv.expired ? t('head.expired') : t('head.expiresIn', { value: left(inv.expiresAt) }) }}</p>
-              </li>
-            </ul>
-            <p v-else class="mt-3 text-sm text-muted">{{ t('head.noInvites') }}</p>
+            <InviteList :invites="data.invites" actions @changed="refresh()" />
           </section>
         </HomeRail>
       </div>

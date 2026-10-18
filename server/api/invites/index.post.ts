@@ -4,10 +4,10 @@ import type { InvitePublic } from '~~/shared/types'
 
 const body = z.object({
   email: z.string().trim().toLowerCase().email().max(200),
-  role: z.enum(['mentee', 'mentor', 'head'])
+  role: z.enum(['mentor', 'head'])
 })
 
-/** The API emails the link; it never returns the token */
+/** Role invite (students are invited into a cohort). The API emails the link; it never returns the token */
 export default defineEventHandler(async (event): Promise<InvitePublic> => {
   await requireRole(event, 'head', 'all')
   const { email, role } = await readValidatedBody(event, body.parse)

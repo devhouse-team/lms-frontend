@@ -16,7 +16,7 @@ contract is `../backend/openapi.json` (types in `shared/types/api.d.ts`).
 | Feature | Roles | Data |
 |---|---|---|
 | [Auth and roles](features/auth.md) | everyone | API |
-| [Invites](features/invites.md): role invites; cohort (student) invites, preview, resend, revoke (spec, not built) | head, program lead, invitee | API |
+| [Invites](features/invites.md): role invites; cohort (student) invites, preview, resend, revoke | head, program lead, invitee | API |
 | [Password reset and email verification](features/account-recovery.md) | everyone | API |
 | [Cohorts](features/cohorts.md) | head, mentor, student | API |
 | [People](features/people.md): list and per-person profile | head | API |

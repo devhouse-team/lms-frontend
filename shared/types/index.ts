@@ -139,13 +139,50 @@ export interface CohortRow extends CohortTiming {
 }
 
 /** A pending invite. The link itself is only in the invitee's email. */
+export type InviteStatus = 'pending' | 'expired'
+
+/** A pending or expired invite, as staff see it (never its token) */
 export interface InvitePublic {
   id: string
   email: string
-  /** Absent when the backend role has no UI equivalent */
+  kind: 'role' | 'cohort'
+  /** Role invites; absent when the backend role has no UI equivalent */
   role?: Role
+  /** Cohort invites */
+  cohort?: { id: string, name: string }
+  status: InviteStatus
   expiresAt: string
-  expired: boolean
+}
+
+/** A cohort's open invite, for its Invited section */
+export interface CohortInvite {
+  id: string
+  email: string
+  status: InviteStatus
+  expiresAt: string
+  createdAt: string
+}
+
+/** Per-address outcome of inviting a list of emails into a cohort (each address lands in exactly one list) */
+export interface InviteReport {
+  invited: string[]
+  resent: string[]
+  enrolled: string[]
+  reactivated: string[]
+  alreadyEnrolled: string[]
+  skippedStaff: string[]
+  invalid: string[]
+}
+
+/** What the invitee sees before the form (public, by token) */
+export interface InvitePreview {
+  email: string
+  kind: 'role' | 'cohort'
+  role?: Role
+  /** The API's role name, for an unknown role */
+  roleName: string | null
+  cohort: { id: string, name: string, programTitle: string, startsOn: string, status: CohortStatus } | null
+  expiresAt: string
 }
 
 /** Waiting work of the students assigned to one mentor; `id` 'none' collects students without a mentor */
@@ -376,6 +413,11 @@ export interface ImportReport {
   enrolled: string[]
   reactivated: string[]
   alreadyEnrolled: string[]
+  /** No account: a cohort invite was emailed */
+  invited: string[]
+  /** Had an open invite to this cohort: new link and expiry */
+  resent: string[]
+  /** Not a valid email, or a deactivated account */
   unknown: string[]
   skippedStaff: string[]
 }
