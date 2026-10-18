@@ -7,12 +7,14 @@ const { t } = useI18n()
 const cohortId = computed(() => String(route.params.cohortId))
 const courseId = computed(() => String(route.params.courseId))
 const materialId = computed(() => String(route.params.materialId))
-const { data: page, status, error, refresh } = await useFetch<MaterialView>(() => `/api/courses/${cohortId.value}/pages/${materialId.value}`, {
-  key: `course-page:${cohortId.value}:${materialId.value}`
-})
+const [{ data: page, status, error, refresh }, { data: outline }] = await Promise.all([
+  useFetch<MaterialView>(() => `/api/courses/${cohortId.value}/pages/${materialId.value}`, {
+    key: `course-page:${cohortId.value}:${materialId.value}`
+  }),
+  useCourseOutline(cohortId, courseId)
+])
 useHead({ title: () => `${page.value?.title ?? t('nav.courses')} · dev.house` })
 
-const { data: outline } = await useCourseOutline(cohortId, courseId)
 const pager = computed(() => {
   const o = outline.value
   const pages = o?.pages.filter(p => p.isReleased || o.staff) ?? []

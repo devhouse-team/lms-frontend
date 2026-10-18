@@ -18,7 +18,13 @@ const { data, status, error, refresh } = await useFetch<CalendarView>('/api/cale
 useHead({ title: () => `${t('calendar.title')} · dev.house` })
 const notFound = computed(() => error.value?.statusCode === 404 || error.value?.statusCode === 403)
 
-const switcher = computed(() => data.value?.cohorts.map(c => ({ label: c.name, value: c.id })) ?? [])
+/** My current cohorts, plus the one shown when it isn't among them (staff via `?cohort=`) */
+const switcher = computed(() => {
+  const d = data.value
+  if (!d) return []
+  const list = d.cohort && !d.cohorts.some(c => c.id === d.cohort!.id) ? [{ id: d.cohort.id, name: d.cohort.name }, ...d.cohorts] : d.cohorts
+  return list.map(c => ({ label: c.name, value: c.id }))
+})
 const selected = computed({
   get: () => data.value?.cohort?.id,
   set: (id?: string) => navigateTo({ query: { cohort: id } })
@@ -29,6 +35,12 @@ const examWindow = (e: CalendarEntry, tz: string) => {
   const end = e.endsAt ? new Intl.DateTimeFormat(locale.value, { timeZone: tz, hour: '2-digit', minute: '2-digit' }).format(new Date(e.endsAt)) : ''
   return end ? `${day}–${end}` : day
 }
+/** The viewer's time when their zone differs (after mount, so SSR and hydration agree), as on the assignment page */
+const mounted = ref(false)
+onMounted(() => (mounted.value = true))
+const yourTime = (e: CalendarEntry, tz: string) => (mounted.value && e.at && browserZone() !== tz
+  ? t('exam.yourTime', { time: new Intl.DateTimeFormat(locale.value, { weekday: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(e.at)) })
+  : '')
 const columns = ['opens', 'due', 'exams'] as const
 const past = (n: number) => data.value?.cohort?.status === 'finished' || (!!data.value?.cohort?.week && n < data.value.cohort.week)
 </script>
@@ -72,7 +84,7 @@ const past = (n: number) => data.value?.cohort?.status === 'finished' || (!!data
                 </div>
                 <div v-for="col in columns" :key="col" class="min-w-0 space-y-1.5">
                   <p class="text-xs font-medium text-muted md:sr-only">{{ t(`calendar.col.${col}`) }}</p>
-                  <p v-if="!w[col].length" class="text-sm text-dimmed" :aria-label="t('calendar.nothing')">—</p>
+                  <p v-if="!w[col].length" class="text-sm text-dimmed"><span aria-hidden="true">—</span><span class="sr-only">{{ t('calendar.nothing') }}</span></p>
                   <ul v-else class="space-y-1.5">
                     <li v-for="(e, i) in w[col]" :key="i" class="text-sm">
                       <component :is="e.to ? NuxtLink : 'span'" :to="e.to ?? undefined" class="block min-w-0" :class="e.to && 'group'">
@@ -85,6 +97,7 @@ const past = (n: number) => data.value?.cohort?.status === 'finished' || (!!data
                           <template v-else><span class="num">{{ short(e.date) }}</span> · </template>
                           {{ e.courseTitle }}
                         </span>
+                        <span v-if="e.type === 'exam_window' && yourTime(e, data.cohort.timezone)" class="num block text-xs text-muted">{{ yourTime(e, data.cohort.timezone) }}</span>
                       </component>
                     </li>
                   </ul>

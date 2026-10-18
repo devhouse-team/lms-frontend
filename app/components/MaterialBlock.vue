@@ -49,7 +49,7 @@ const host = (url: string) => {
           <UButton :to="`${base}/${file.id}`" target="_blank" external :label="t('content.openTab')" color="neutral" variant="ghost" size="xs" />
           <UButton :to="`${base}/${file.id}?download=1`" external :label="t('content.download')" icon="i-lucide-download" color="neutral" variant="ghost" size="xs" />
         </div>
-        <iframe :src="`${base}/${file.id}`" :title="m.title" class="h-[80vh] w-full bg-white" loading="lazy" />
+        <iframe :src="`${base}/${file.id}`" :title="m.title" class="h-[80vh] w-full bg-white focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary" loading="lazy" />
       </div>
       <FileCard v-else :file="file" :base="base" class="max-w-3xl" />
       <MarkdownView v-if="m.body" :source="m.body" :files="m.files" :base="base" />

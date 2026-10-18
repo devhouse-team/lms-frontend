@@ -14,11 +14,13 @@ const cohortId = computed(() => String(route.params.cohortId))
 const courseId = computed(() => String(route.params.courseId))
 const base = computed(() => `/courses/${cohortId.value}/${courseId.value}`)
 
-const { data: rows, status, refresh } = await useFetch<MaterialIndexRow[]>(() => `/api/courses/${cohortId.value}/${courseId.value}/materials`, {
-  key: `course-materials:${cohortId.value}:${courseId.value}:all`,
-  default: () => []
-})
-const { data: outline } = await useCourseOutline(cohortId, courseId)
+const [{ data: rows, status, refresh }, { data: outline }] = await Promise.all([
+  useFetch<MaterialIndexRow[]>(() => `/api/courses/${cohortId.value}/${courseId.value}/materials`, {
+    key: computed(() => `course-materials:${cohortId.value}:${courseId.value}:all`),
+    default: () => []
+  }),
+  useCourseOutline(cohortId, courseId)
+])
 useHead({ title: () => `${t('byType.title')} · ${outline.value?.title ?? t('nav.courses')} · dev.house` })
 
 /** Tags with at least one released material, in the fixed order */
@@ -88,6 +90,7 @@ const href = (r: MaterialIndexRow) => r.lesson ? `${base.value}/lessons/${r.less
                     <UIcon
                       :name="r.isReleased ? KIND_ICON[r.kind] : 'i-lucide-lock'"
                       class="mt-0.5 size-4 shrink-0 text-dimmed"
+                      :role="r.isReleased ? 'img' : undefined"
                       :aria-label="r.isReleased ? t(`material.kind.${r.kind}`) : undefined"
                       :aria-hidden="r.isReleased ? undefined : 'true'"
                     />

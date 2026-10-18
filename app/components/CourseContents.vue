@@ -23,6 +23,8 @@ const footer = computed(() => [
  * closed is kept per course for the tab's session, and the current lesson's module always opens.
  */
 const open = ref(new Set<string>())
+/** sessionStorage only after mount: the server and the hydrating client render the defaults alike */
+const mounted = ref(false)
 const storeKey = computed(() => `course-open:${props.outline.id}`)
 function stored(): string[] | null {
   try {
@@ -35,11 +37,14 @@ function restore() {
   const mods = props.outline.modules
   const current = mods.findIndex(m => m.lessons.some(l => l.id === props.lessonId))
   const i = current >= 0 ? current : Math.max(0, mods.findLastIndex(m => m.lessons.some(l => l.isReleased)))
-  const kept = import.meta.client ? stored() : null
+  const kept = mounted.value ? stored() : null
   open.value = new Set([...(kept ?? [mods[i]?.id, mods[i + 1]?.id]), current >= 0 ? mods[current]!.id : undefined].filter((x): x is string => !!x))
 }
 watch(() => [props.outline, props.lessonId], restore, { immediate: true })
-onMounted(restore)
+onMounted(() => {
+  mounted.value = true
+  restore()
+})
 function toggle(id: string) {
   if (open.value.has(id)) open.value.delete(id)
   else open.value.add(id)

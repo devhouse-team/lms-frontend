@@ -35,7 +35,7 @@ async function call(s: CohortSolution, method: 'PUT' | 'DELETE') {
   try {
     await $fetch(`/api/cohorts/${props.cohortId}/solutions/${s.materialId}`, { method })
     toast.add({ title: method === 'PUT' ? t('solution.releasedToast') : t('solution.hiddenToast'), icon: 'i-lucide-check', color: 'success' })
-    clearNuxtData(k => k.startsWith(`assignment:${props.cohortId}:`) || k.startsWith(`lesson:${props.cohortId}:`))
+    clearNuxtData(k => k.startsWith(`assignment:${props.cohortId}:`) || k.startsWith(`lesson:${props.cohortId}:`) || k.startsWith(`course-materials:${props.cohortId}:`))
   } catch (e) {
     toastError(e)
   } finally {

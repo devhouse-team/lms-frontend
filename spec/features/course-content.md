@@ -87,16 +87,20 @@ Differences from the text below (the code follows these):
   The API's calendar is cohort-wide (backend decision 30), so Due shows no status badge. Due and exam items link to
   the assignment page for students and to the lesson for staff; module openings link to the course. Items of a
   course that isn't published are left out (as on `/courses`). The current week is a raised row with a "This week"
-  chip, not a yellow left rule (DESIGN bans side stripes); "Jump to this week" is the Today link. Without
+  chip, not a yellow left rule (DESIGN bans side stripes); "Jump to this week" is the Today link. The current week
+  comes from today's date in the cohort's timezone. Week 1 starts on the cohort's first day; the API's default range
+  is the cohort's dates, so nothing falls before it, and an item after the last day adds weeks instead of being
+  pushed into the last one. Exam windows also show the viewer's time when their zone differs (after mount). Without
   `?cohort=` the calendar opens my first current cohort (active, then planned); the switcher lists my current cohorts.
 - **Prev / next** come from the lesson view's `prev` / `next` (no extra call). A locked neighbour shows its title and
   "Opens {date}" without a link for students. Course pages walk among the pages the reader can open (from the shared
   outline). `CoursePager` renders the pair at the end of the column from `md`, and below `md` a sticky bottom bar
   (previous, "Contents", next) in the panel footer, which replaces the header's Contents button there.
-- **Search**: inside `/courses/[c]/[course]/…` the ⌘K palette adds an "In this course" group from
-  `GET /api/courses/[c]/[course]/search?q=` (250 ms debounce, 2+ characters, stale answers dropped, not run through
-  the palette's local filter). Material hits open the lesson at the material's anchor; assignment hits open the
-  assignment page for students and the lesson for staff. Snippets are the API's raw text.
+- **Search**: inside `/courses/[c]/[course]/…` the ⌘K palette adds an "In this course" group from `GET
+  /api/courses/[c]/[course]/search?q=` (250 ms debounce, 2+ characters, stale answers dropped, not run through the
+  palette's local filter; a failed request shows "Search isn't available right now" instead of nothing). Material hits
+  open the lesson at the material's anchor; assignment hits open the assignment page for students and the lesson for
+  staff. Snippets are the API's raw text.
 - **Sidebar**: footer links "Materials by type" and "Calendar" (`/calendar?cohort=<c>`); opened / closed modules are
   kept in `sessionStorage` per course (`course-open:<course>`), and the current lesson's module always opens.
 - Nav item "Calendar" (`/calendar`) for students and mentors; heads open a cohort's calendar from its course sidebar.
@@ -645,8 +649,8 @@ Retry (never "not found" for a 500).
 | `course-outline:<cohortId>:<courseId>` | course home, lesson, course page, by-type | Sidebar + header (one API call); shared, so moving between lessons doesn't refetch it |
 | `lesson:<cohortId>:<lessonId>` | lesson page | Materials, assignments, completion |
 | `course-page:<cohortId>:<materialId>` | course-level page | One material |
-| `course-materials:<cohortId>:<courseId>:<tag>` | by-type (Phase 3) | Rows |
-| `calendar:<cohortId>` | `/calendar` (Phase 3) | Week rows |
+| `course-materials:<cohortId>:<courseId>:all` | by-type (Phase 3) | Rows (one list per course; the tag filters on the page) |
+| `calendar:<cohortId>`, `calendar:mine` | `/calendar` (Phase 3; `mine` without `?cohort=`) | Week rows |
 | `assignment:<cohortId>:<assignmentId>` | assignment page (Phase 2) | Assignment, attempts, trial, solutions |
 | `editor-outline:<courseId>` | course editor | Full outline incl. drafts |
 | `editor-material:<materialId>`, `editor-assignment:<assignmentId>` | editors | Raw body, files |
@@ -660,7 +664,7 @@ Invalidation (one helper `invalidateContent(courseId?)` in `app/utils/`, `clearN
 | Mark complete / undo | `lesson:…` (optimistic) | `course-outline:<c>:<course>`, `my-courses`, `dashboard-mentee` |
 | Submit / trial | `assignment:…` or today's key | `course-outline:<c>:*`, `assignments`, `dashboard-mentee` |
 | Any editor mutation | `editor-outline:<course>` | every `course-outline:*:<course>`, `lesson:*`, `course-page:*`, `course-materials:*`, `calendar:*`, `my-courses`, `editor-courses` |
-| Release / hide solution | `cohort-solutions:<c>` | `assignment:<c>:*`, `lesson:<c>:*` |
+| Release / hide solution | `cohort-solutions:<c>` | `assignment:<c>:*`, `lesson:<c>:*`, `course-materials:<c>:*` |
 | Editors add / remove | `course-editors:<course>` | `editor-courses` |
 
 On a mutation error, refetch the affected keys so the UI resets to the server value.
@@ -887,7 +891,7 @@ a browser check, or the named check.
 
 - [x] Materials by type lists, e.g., all lecture notes of released lessons, grouped by module, with locked ones
   muted. (e2e) ✓ e2e-smoke + browser check
-- [x] The calendar shows each week's lessons, due dates and exam windows, current week marked. (e2e) ✓ e2e-smoke + browser check
+- [x] The calendar shows each week's module openings, due dates and exam windows, current week marked. (e2e) ✓ e2e-smoke + browser check
 - [x] Prev / next walk across module boundaries and skip locked lessons for students. ✓ e2e-smoke + browser check
 - [x] ⌘K in a course finds lessons and materials by title and text, never an unreleased one. ✓ e2e-smoke (draft, locked solution) + browser check
 
@@ -896,7 +900,8 @@ a browser check, or the named check.
 - [x] Every code in the error table has `en` and `ru` messages and shows as the table says (key check script). ✓ key check (`validation_error` shows the API's field message, as the table says)
 - [ ] Keyboard only: contents sidebar, reorder buttons, editor toolbar, submit form and exam confirm are usable;
   focus is visible.
-- [ ] Phone viewport (390 px): no sideways page scroll on course, lesson, assignment and editor pages.
+- [x] Phone viewport (390 px): no sideways page scroll on course, lesson, assignment and editor pages. ✓ browser check
+  (2026-10-18: course home, lesson, by type, calendar, three assignment pages, course / material / assignment editor)
 
 ## Known gaps
 

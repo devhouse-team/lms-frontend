@@ -53,6 +53,7 @@ const course = computed(() => (route.path.startsWith('/courses/') && route.param
 const searchTerm = ref('')
 const hits = ref<CourseSearchHit[]>([])
 const searching = ref(false)
+const searchFailed = ref(false)
 const HIT_ICON = { lesson: 'i-lucide-book-open', material: 'i-lucide-file-text', assignment: 'i-lucide-git-pull-request' } as const
 let timer: ReturnType<typeof setTimeout> | undefined
 let seq = 0
@@ -62,24 +63,28 @@ watch([searchTerm, course], ([q, url]) => {
   if (!url || q.trim().length < 2) {
     hits.value = []
     searching.value = false
+    searchFailed.value = false
     return
   }
   searching.value = true
   timer = setTimeout(async () => {
-    const found = await $fetch<CourseSearchHit[]>(url, { query: { q: q.trim() } }).catch(() => [])
+    const found = await $fetch<CourseSearchHit[]>(url, { query: { q: q.trim() } }).catch(() => null)
     if (run !== seq) return // a newer term or another course
-    hits.value = found
+    hits.value = found ?? []
+    searchFailed.value = !found
     searching.value = false
   }, 250)
 })
 
 const groups = computed<CommandPaletteGroup[]>(() => [
-  ...(course.value && hits.value.length
+  ...(course.value && (hits.value.length || searchFailed.value)
     ? [{
         id: 'course',
         label: t('search.inCourse'),
         ignoreFilter: true,
-        items: hits.value.map(h => ({ label: h.title, suffix: h.lessonTitle ?? undefined, description: h.snippet ?? undefined, icon: HIT_ICON[h.type], to: h.to }))
+        items: searchFailed.value
+          ? [{ label: t('search.failed'), icon: 'i-lucide-circle-alert', disabled: true }]
+          : hits.value.map(h => ({ label: h.title, suffix: h.lessonTitle ?? undefined, description: h.snippet ?? undefined, icon: HIT_ICON[h.type], to: h.to }))
       }]
     : []),
   {

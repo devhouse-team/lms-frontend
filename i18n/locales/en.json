@@ -1281,7 +1281,8 @@
   },
   "search": {
     "inCourse": "In this course",
-    "course": "Search this course or jump to…"
+    "course": "Search this course or jump to…",
+    "failed": "Search isn't available right now"
   },
   "person": {
     "back": "People",

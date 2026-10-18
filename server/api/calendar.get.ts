@@ -35,13 +35,16 @@ export default defineEventHandler(async (event): Promise<CalendarView> => {
   const staff = !access.cohorts.some(x => x.cohort_id === cohortId && x.relation === 'student')
   const titles = new Map(courses.filter(r => r.course.is_published).map(r => [r.course_id, r.course.title]))
 
+  // Week 1 starts on the cohort's first day. The API's default range is the cohort's dates, so nothing comes before
+  // it; an item after the last day (a date local to the cohort's zone) adds weeks rather than landing in the last one.
   const start = dayNo(c.starts_on)
-  const total = Math.max(1, Math.ceil((dayNo(c.ends_on) - start + 1) / 7))
-  const weekOf = (d: string) => Math.min(total, Math.max(1, Math.floor((dayNo(d) - start) / 7) + 1))
+  const weekOf = (d: string) => Math.floor((dayNo(d) - start) / 7) + 1
+  const total = Math.max(1, Math.ceil((dayNo(c.ends_on) - start + 1) / 7), ...items.map(it => weekOf(it.date)))
+  const lastDay = Math.max(dayNo(c.ends_on), start + total * 7 - 1)
   const weeks: CalendarWeek[] = Array.from({ length: total }, (_, i) => ({
     n: i + 1,
     from: isoDay(start + i * 7),
-    to: isoDay(Math.min(start + i * 7 + 6, dayNo(c.ends_on))),
+    to: isoDay(Math.min(start + i * 7 + 6, lastDay)),
     opens: [],
     due: [],
     exams: []
@@ -57,7 +60,7 @@ export default defineEventHandler(async (event): Promise<CalendarView> => {
     const courseTitle = titles.get(it.course_id)
     if (!courseTitle) continue // an unpublished course of the cohort
     const entry: CalendarEntry = { type: it.type, title: it.title, courseTitle, date: it.date, at: it.at ?? null, endsAt: it.ends_at ?? null, to: to(it) }
-    const w = weeks[weekOf(it.date) - 1]!
+    const w = weeks[Math.max(1, weekOf(it.date)) - 1]!
     ;(it.type === 'due' ? w.due : it.type === 'exam_window' ? w.exams : w.opens).push(entry)
   }
 
@@ -67,7 +70,8 @@ export default defineEventHandler(async (event): Promise<CalendarView> => {
       name: c.name,
       status: c.status,
       timezone: c.timezone,
-      week: c.status === 'active' ? weekOf(new Date().toISOString()) : null
+      // Today as a day in the cohort's zone (en-CA formats as YYYY-MM-DD)
+      week: c.status === 'active' ? Math.min(total, Math.max(1, weekOf(new Intl.DateTimeFormat('en-CA', { timeZone: c.timezone }).format(new Date())))) : null
     },
     cohorts,
     weeks
