@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import type { components } from '~~/shared/types/api'
-import type { ContentCohort, CourseOutlineView, FileMeta, LessonAssignmentView, MaterialSummaryView, MaterialView } from '~~/shared/types'
+import type { ContentCohort, CourseOutlineView, FileMeta, LessonAssignmentView, LessonNavView, MaterialSummaryView, MaterialView } from '~~/shared/types'
 
 /** Course content mapping (spec course-content.md). Bodies stay raw; files carry metadata only. */
 
@@ -36,6 +36,18 @@ export const lessonAssignment = (cohortId: number) => (a: S['AssignmentForCohort
   closesAt: a.closes_at,
   status: a.my_status ? toUiStatus(a.my_status) : 'not_submitted'
 })
+
+export const lessonNav = (l: S['LessonNav']): LessonNavView =>
+  ({ id: String(l.id), title: l.title, releasedOn: l.released_on, isReleased: l.is_released })
+
+/** Course page paths; a material on a lesson is an anchor on the lesson page */
+export const coursePath = (cohortId: number, courseId: number) => `/courses/${cohortId}/${courseId}`
+export const materialPath = (cohortId: number, courseId: number, materialId: number, lessonId?: number | null) =>
+  lessonId ? `${coursePath(cohortId, courseId)}/lessons/${lessonId}#m-${materialId}` : `${coursePath(cohortId, courseId)}/pages/${materialId}`
+
+/** An assignment for this viewer: students open its page; staff have none, so its lesson */
+export const workPath = (cohortId: number, courseId: number, staff: boolean, assignmentId: number, lessonId?: number | null) =>
+  staff ? (lessonId ? `${coursePath(cohortId, courseId)}/lessons/${lessonId}` : coursePath(cohortId, courseId)) : assignmentPath(cohortId, assignmentId)
 
 export const contentCohort = (c: S['OutlineCohort']): ContentCohort =>
   ({ id: String(c.id), name: c.name, status: c.status as ContentCohort['status'], startsOn: c.starts_on, endsOn: c.ends_on, timezone: c.timezone })

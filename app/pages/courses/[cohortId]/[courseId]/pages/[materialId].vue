@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { MaterialView } from '~~/shared/types'
 
-/** A course-level page (syllabus, about, grading…): one material, same viewer as on lessons */
+/** A course-level page (syllabus, about, grading…): one material, same viewer as on lessons, prev / next among the pages */
 const route = useRoute()
 const { t } = useI18n()
 const cohortId = computed(() => String(route.params.cohortId))
@@ -11,10 +11,20 @@ const { data: page, status, error, refresh } = await useFetch<MaterialView>(() =
   key: `course-page:${cohortId.value}:${materialId.value}`
 })
 useHead({ title: () => `${page.value?.title ?? t('nav.courses')} · dev.house` })
+
+const { data: outline } = await useCourseOutline(cohortId, courseId)
+const pager = computed(() => {
+  const o = outline.value
+  const pages = o?.pages.filter(p => p.isReleased || o.staff) ?? []
+  const i = pages.findIndex(p => p.id === materialId.value)
+  if (i < 0 || pages.length < 2) return null
+  const link = (p?: { id: string, title: string }) => p ? { title: p.title, to: `/courses/${cohortId.value}/${courseId.value}/pages/${p.id}` } : null
+  return { prev: link(pages[i - 1]), next: link(pages[i + 1]) }
+})
 </script>
 
 <template>
-  <CourseShell :cohort-id="cohortId" :course-id="courseId" :page-id="materialId">
+  <CourseShell :cohort-id="cohortId" :course-id="courseId" :page-id="materialId" :pager="pager">
     <UEmpty
       v-if="error?.statusCode === 404"
       icon="i-lucide-file-question"

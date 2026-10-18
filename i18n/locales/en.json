@@ -15,7 +15,8 @@
     "cohorts": "Cohorts",
     "people": "People",
     "programs": "Programs",
-    "contests": "Contests"
+    "contests": "Contests",
+    "calendar": "Calendar"
   },
   "common": {
     "retry": "Retry",
@@ -1241,5 +1242,44 @@
     "releaseConfirm": "Students of {cohort} will see \"{title}\" at once.",
     "releasedToast": "Solution released",
     "hiddenToast": "Solution hidden again"
+  },
+  "byType": {
+    "title": "Materials by type",
+    "pages": "Course pages",
+    "all": "All",
+    "filter": "Filter by type",
+    "empty": "No materials in this course yet.",
+    "emptyTag": "Nothing tagged “{type}” in this course yet.",
+    "material": "Material",
+    "lesson": "Lesson"
+  },
+  "calendar": {
+    "title": "Calendar",
+    "cohort": "Cohort",
+    "notFound": "Calendar not found",
+    "empty": "No cohort to show. Your calendar appears here once you are in a cohort.",
+    "zone": "Exam times in {zone}",
+    "today": "Jump to this week",
+    "week": "Week",
+    "weekN": "Week {n}",
+    "thisWeek": "This week",
+    "nothing": "Nothing",
+    "solution": "Solution: {title}",
+    "col": {
+      "opens": "Opens",
+      "due": "Due",
+      "exams": "Exams"
+    }
+  },
+  "pager": {
+    "label": "Previous and next",
+    "prev": "Previous",
+    "next": "Next",
+    "prevTitle": "Previous: {title}",
+    "nextTitle": "Next: {title}"
+  },
+  "search": {
+    "inCourse": "In this course",
+    "course": "Search this course or jump to…"
   }
 }

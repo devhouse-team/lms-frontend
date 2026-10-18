@@ -10,7 +10,7 @@ submissions with files, exams in a time window, solutions that open at the right
 a student reads, watches and submits everything for a week without leaving the LMS; an editor builds a lesson with
 math, code, a PDF and a video in one sitting; nothing on these pages contradicts what the API will accept.
 
-Status: **Phases 1 and 2 built** (2026-10-17); Phase 3 not built (course content v2, 2026-10-16). Decisions: product owner 2026-10-16 (PO1–PO6 below) and
+Status: **Phases 1, 2 and 3 built** (Phases 1–2 2026-10-17, Phase 3 2026-10-18; course content v2, 2026-10-16). Decisions: product owner 2026-10-16 (PO1–PO6 below) and
 the defaults in the decisions doc (D-…). Contract: `../backend/spec/content.md` and `../backend/openapi.json`
 (`npm run api:types`). Endpoint, field and error-code names below are **exactly those of backend spec/content.md**
 (reconciled 2026-10-16); the generated types win and this file gets corrected where they differ.
@@ -72,6 +72,34 @@ Differences from the text below (the code follows these):
 - Scores are whole numbers (max score from 1, a review score from 0 to the max).
 - `scripts/zoned-time.check.ts` checks the zone conversions (Almaty, Berlin spring gap and autumn overlap):
   `node --experimental-strip-types scripts/zoned-time.check.ts`.
+
+### Phase 3 as built
+
+Differences from the text below (the code follows these):
+
+- **Materials by type** loads the course's list once (`GET /api/courses/[c]/[course]/materials`, key
+  `course-materials:<c>:<course>:all`) and filters by `?tag=` on the page; the API's `tag` filter isn't used. Rows
+  carry no file metadata (`MaterialByType` has none), so there is no size or Download column: the material title
+  links to its anchor on the lesson (`#m-<id>`) or to the course page, and the lesson title to the lesson. Staff see
+  locked rows as links (they read ahead); students see them muted with the lock text (`useLockText`, shared with
+  `MaterialBlock`).
+- **Calendar** columns are **Opens** (module openings and after-due solution releases), **Due** and **Exams**.
+  The API's calendar is cohort-wide (backend decision 30), so Due shows no status badge. Due and exam items link to
+  the assignment page for students and to the lesson for staff; module openings link to the course. Items of a
+  course that isn't published are left out (as on `/courses`). The current week is a raised row with a "This week"
+  chip, not a yellow left rule (DESIGN bans side stripes); "Jump to this week" is the Today link. Without
+  `?cohort=` the calendar opens my first current cohort (active, then planned); the switcher lists my current cohorts.
+- **Prev / next** come from the lesson view's `prev` / `next` (no extra call). A locked neighbour shows its title and
+  "Opens {date}" without a link for students. Course pages walk among the pages the reader can open (from the shared
+  outline). `CoursePager` renders the pair at the end of the column from `md`, and below `md` a sticky bottom bar
+  (previous, "Contents", next) in the panel footer, which replaces the header's Contents button there.
+- **Search**: inside `/courses/[c]/[course]/…` the ⌘K palette adds an "In this course" group from
+  `GET /api/courses/[c]/[course]/search?q=` (250 ms debounce, 2+ characters, stale answers dropped, not run through
+  the palette's local filter). Material hits open the lesson at the material's anchor; assignment hits open the
+  assignment page for students and the lesson for staff. Snippets are the API's raw text.
+- **Sidebar**: footer links "Materials by type" and "Calendar" (`/calendar?cohort=<c>`); opened / closed modules are
+  kept in `sessionStorage` per course (`course-open:<course>`), and the current lesson's module always opens.
+- Nav item "Calendar" (`/calendar`) for students and mentors; heads open a cohort's calendar from its course sidebar.
 
 ## Decisions this spec relies on
 
@@ -857,11 +885,11 @@ a browser check, or the named check.
 
 ### Phase 3: navigation and polish
 
-- [ ] Materials by type lists, e.g., all lecture notes of released lessons, grouped by module, with locked ones
-  muted. (e2e)
-- [ ] The calendar shows each week's lessons, due dates and exam windows, current week marked. (e2e)
-- [ ] Prev / next walk across module boundaries and skip locked lessons for students.
-- [ ] ⌘K in a course finds lessons and materials by title and text, never an unreleased one.
+- [x] Materials by type lists, e.g., all lecture notes of released lessons, grouped by module, with locked ones
+  muted. (e2e) ✓ e2e-smoke + browser check
+- [x] The calendar shows each week's lessons, due dates and exam windows, current week marked. (e2e) ✓ e2e-smoke + browser check
+- [x] Prev / next walk across module boundaries and skip locked lessons for students. ✓ e2e-smoke + browser check
+- [x] ⌘K in a course finds lessons and materials by title and text, never an unreleased one. ✓ e2e-smoke (draft, locked solution) + browser check
 
 ### All phases
 

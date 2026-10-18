@@ -8,7 +8,6 @@ import type { MaterialView } from '~~/shared/types'
 /** `bare`: no title row (a course page shows its title as the page heading) */
 const props = defineProps<{ material: MaterialView, base: string, bare?: boolean }>()
 const { t } = useI18n()
-const { long } = useCohortFormat()
 const m = computed(() => props.material)
 const file = computed(() => m.value.files[0])
 
@@ -18,13 +17,8 @@ onMounted(() => {
   inlinePdf.value = matchMedia('(pointer: fine) and (min-width: 768px)').matches && !/iPad|iPhone|iPod|Android/.test(navigator.userAgent)
 })
 
-const lockText = computed(() => {
-  const hint = m.value.releaseHint
-  if (hint === 'after_due' && m.value.releasesOn) return t('material.lock.afterDue', { date: long(m.value.releasesOn) })
-  if (hint === 'after_submit') return t('material.lock.afterSubmit')
-  if (hint === 'manual') return t('material.lock.manual')
-  return m.value.releasesOn ? t('material.lock.on', { date: long(m.value.releasesOn) }) : t('material.lock.later')
-})
+const lock = useLockText()
+const lockText = computed(() => lock(m.value))
 const host = (url: string) => {
   try {
     return new URL(url).host.replace(/^www\./, '')

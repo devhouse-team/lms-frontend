@@ -7,9 +7,6 @@ const props = defineProps<{ materials: components['schemas']['MaterialSummary'][
 const { t } = useI18n()
 const { courseId, call } = useCourseEditor()
 
-const KIND_ICON: Record<MaterialKind, string> = {
-  markdown: 'i-lucide-file-text', pdf: 'i-lucide-file-type', video: 'i-lucide-play', file: 'i-lucide-paperclip', link: 'i-lucide-link', image: 'i-lucide-image'
-}
 const sorted = computed(() => [...props.materials].sort((a, b) => a.position - b.position))
 const orderPath = computed(() => (props.lessonId ? `lessons/${props.lessonId}/materials/order` : `courses/${courseId}/pages/order`))
 

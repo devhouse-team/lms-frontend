@@ -2,6 +2,18 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-10-18: course content v2, phase 3 (navigation)
+
+- Students and staff: "Materials by type" (`/courses/[c]/[course]/materials`, one tag at a time in `?tag=`, grouped
+  by module, locked ones muted), the cohort calendar (`/calendar`, week rows: Opens, Due, Exams in the cohort's
+  timezone, current week marked), previous / next on lesson and course pages (a sticky bar with "Contents" on
+  phones), and course search in ⌘K. The course sidebar gains "Materials by type" and "Calendar" links and remembers
+  opened modules for the session. Nav "Calendar" for students and mentors.
+- Needs backend P3 (`GET /cohorts/{c}/courses/{course}/materials`, `GET /cohorts/{c}/calendar`,
+  `GET /cohorts/{c}/courses/{course}/search`, lesson `prev` / `next`); types regenerated. Differences from the spec
+  text are in [course-content.md, Phase 3 as built](features/course-content.md#phase-3-as-built).
+- e2e smoke checks the by-type list, calendar rows, search and prev / next.
+
 ## 2026-10-16: course content v2 spec (not built)
 
 - New [features/course-content.md](features/course-content.md): the LMS hosts courses, OCW-style. Student course page

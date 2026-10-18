@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import type { LessonView } from '~~/shared/types'
+import type { LessonNavView, LessonView } from '~~/shared/types'
+import type { CoursePagerLink } from '~/components/CoursePager.vue'
 
-/** Lesson (session) page: materials in order, its assignment, mark complete. Spec: course-content.md, Lesson page. */
+/** Lesson (session) page: materials in order, assignments, mark complete, prev / next. Spec: course-content.md, Lesson page. */
 const route = useRoute()
 const { t, locale } = useI18n()
 const toast = useToast()
@@ -17,6 +18,14 @@ const { data: lesson, status, error, refresh } = await useFetch<LessonView>(() =
 })
 useHead({ title: () => `${lesson.value?.title ?? t('nav.courses')} · dev.house` })
 const code = computed(() => apiError(error.value).code)
+
+/** Students don't get a link to a lesson that hasn't opened; staff read ahead */
+const navLink = (l: LessonNavView | null): CoursePagerLink | null => l && {
+  title: l.title,
+  to: l.isReleased || lesson.value?.staff ? `/courses/${cohortId.value}/${courseId.value}/lessons/${l.id}` : null,
+  note: t('course.opensOn', { date: short(l.releasedOn) })
+}
+const pager = computed(() => lesson.value ? { prev: navLink(lesson.value.prev), next: navLink(lesson.value.next) } : null)
 
 const base = (materialId: string) => `/api/files/cohorts/${cohortId.value}/materials/${materialId}`
 
@@ -42,7 +51,7 @@ async function toggleDone() {
 </script>
 
 <template>
-  <CourseShell :cohort-id="cohortId" :course-id="courseId" :lesson-id="lessonId">
+  <CourseShell :cohort-id="cohortId" :course-id="courseId" :lesson-id="lessonId" :pager="pager">
     <template #default="{ outline: o }">
       <UEmpty
         v-if="code === 'lesson_locked'"

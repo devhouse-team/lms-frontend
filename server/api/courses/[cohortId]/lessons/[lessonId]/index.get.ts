@@ -3,7 +3,7 @@ import type { LessonView } from '~~/shared/types'
 
 type S = components['schemas']
 
-/** One lesson with its materials (raw bodies, file metadata) and assignment; 403 lesson_locked before its day */
+/** One lesson with its materials (raw bodies, file metadata), assignments and neighbours; 403 lesson_locked before its day */
 export default defineEventHandler(async (event): Promise<LessonView> => {
   await requireUserSession(event)
   const cohortId = apiId(getRouterParam(event, 'cohortId'))
@@ -23,6 +23,8 @@ export default defineEventHandler(async (event): Promise<LessonView> => {
     materials: [...l.materials].sort((a, b) => a.position - b.position).map(materialView),
     assignments: l.assignments.map(lessonAssignment(cohortId)),
     completeClosed: cohort.status !== 'active' ? (cohort.status === 'finished' ? 'finished' : 'planned') : rel.enrollment === 'paused' ? 'paused' : null,
-    staff: rel.staff
+    staff: rel.staff,
+    prev: l.prev && lessonNav(l.prev),
+    next: l.next && lessonNav(l.next)
   }
 })

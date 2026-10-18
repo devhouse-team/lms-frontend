@@ -21,5 +21,8 @@ const { t } = useI18n()
     <template #body>
       <slot />
     </template>
+    <template v-if="$slots.footer" #footer>
+      <slot name="footer" />
+    </template>
   </UDashboardPanel>
 </template>
