@@ -544,6 +544,34 @@ time.sleep(max(0, (closes - dt.datetime.now(dt.timezone.utc)).total_seconds() + 
 s, m4 = S4c(EX)
 ok(s == 200 and m4['phase'] == 'closed' and not m4['canSubmit'] and m4['statement'] and not m4['submissions'], 'after the window: closed, statement stays, nothing to send (missed)', (s, m4))
 
+# --- navigation (spec course-content.md Phase 3): by type, calendar, search, prev / next ----------------------------
+s, bt = stud(f'/api/courses/{cid}/{CID}/materials')
+ids = [r_['id'] for r_ in bt] if isinstance(bt, list) else []
+notes = next((r_ for r_ in bt if r_['id'] == str(md['id'])), None) if isinstance(bt, list) else None
+ok(s == 200 and bt[0]['lesson'] is None and 'syllabus' in bt[0]['tags'] and notes and notes['module']['title'] == 'Week 1' and notes['lesson']['id'] == str(L1)
+   and str(hidden['id']) not in ids and str(af['id']) not in ids, 'by type: course pages first, lecture notes under their module, no drafts or locked solutions for a student', ids)
+s, bth = head(f'/api/courses/{cid}/{CID}/materials')
+ok(s == 200 and any(r_['id'] == str(af['id']) and not r_['isReleased'] for r_ in bth), 'by type: staff also see a locked solution, marked locked', [(r_['title'], r_['isReleased']) for r_ in bth] if isinstance(bth, list) else bth)
+s, cal = stud('/api/calendar')
+cw = cal['cohort']['week'] if s == 200 and cal.get('cohort') else None
+allw = lambda col: [e for w in cal.get('weeks', []) for e in w[col]]
+ok(s == 200 and cal['cohort']['id'] == str(cid) and cw and cal['weeks'][cw - 1]['n'] == cw
+   and any(e['title'] == 'Todo app' and e['to'] == f'/assignments/{aid}' for e in allw('due'))
+   and any(e['title'] == 'Midterm' and e['at'] and e['endsAt'] for e in cal['weeks'][cw - 1]['exams'])
+   and any(e['type'] == 'module_opens' and e['title'] == 'Week 1' for e in allw('opens')), 'calendar: weeks with the current one, due homework, this week\'s exam window, module openings', cal)
+s, calh = head(f'/api/calendar?cohort={cid}')
+ok(s == 200 and calh['cohort']['id'] == str(cid) and any(e['title'] == 'Todo app' and '/lessons/' in e['to'] for e in [e for w in calh['weeks'] for e in w['due']]), 'calendar: staff open it by ?cohort= and land on the lesson', calh.get('cohort'))
+s, h1 = stud(f'/api/courses/{cid}/{CID}/search?q=limits')
+s2, h2 = stud(f'/api/courses/{cid}/{CID}/search?q=draft')
+s3, h3 = stud(f'/api/courses/{cid}/{CID}/search?q=future%20answer')
+s4, h4 = stud(f'/api/courses/{cid}/{CID}/search?q=x')
+ok(s == 200 and any(h['type'] == 'material' and h['to'].endswith(f'/lessons/{L1}#m-{md["id"]}') for h in h1) and h2 == [] and h3 == [] and h4 == [],
+   'search: finds a material by its text, never a draft or a locked solution; one letter finds nothing', (h1, h2, h3))
+s, n1 = stud(f'/api/courses/{cid}/lessons/{L1}')
+s2, n2 = stud(f'/api/courses/{cid}/lessons/{L2}')
+ok(n1['prev'] is None and n1['next']['id'] == str(L2) and n2['prev']['id'] == str(L1) and n2['next'] and not n2['next']['isReleased'],
+   'prev / next: across modules, the next locked lesson comes back unreleased', (n1.get('next'), n2.get('next')))
+
 # --- finish --------------------------------------------------------------------------------
 s, r = head(f'/api/cohorts/{cid}/finish', 'POST')
 s2, det = head(f'/api/cohorts/{cid}')

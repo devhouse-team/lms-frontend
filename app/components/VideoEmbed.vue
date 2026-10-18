@@ -12,7 +12,7 @@ const allowed = computed(() => isEmbedUrl(props.src))
     <iframe
       :src="src"
       :title="title"
-      class="size-full"
+      class="size-full focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
       loading="lazy"
       sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
       allow="fullscreen; picture-in-picture"

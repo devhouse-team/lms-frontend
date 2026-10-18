@@ -1,9 +1,13 @@
-import type { CourseOutlineView, OutlineLesson } from '~~/shared/types'
+import type { CourseOutlineView, MaterialKind, OutlineLesson } from '~~/shared/types'
 
 /** After a content mutation: drop the keys derived from course content (spec course-content.md, Cache keys) */
 export function invalidateContent(keep?: string) {
-  clearNuxtData(key => key !== keep && (/^(course-outline|lesson|course-page|editor-outline|editor-material):/.test(key)
+  clearNuxtData(key => key !== keep && (/^(course-outline|lesson|course-page|course-materials|calendar|editor-outline|editor-material):/.test(key)
     || ['my-courses', 'editor-courses', 'dashboard-mentee', 'assignments'].includes(key)))
+}
+
+export const KIND_ICON: Record<MaterialKind, string> = {
+  markdown: 'i-lucide-file-text', pdf: 'i-lucide-file-type', video: 'i-lucide-play', file: 'i-lucide-paperclip', link: 'i-lucide-link', image: 'i-lucide-image'
 }
 
 /** UTC calendar day, as the API's dates are (D5) */

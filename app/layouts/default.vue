@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { CommandPaletteGroup, DropdownMenuItem, NavigationMenuItem } from '@nuxt/ui'
-import type { Role } from '~~/shared/types'
+import type { CourseSearchHit, Role } from '~~/shared/types'
 
 const { t, locale, setLocale } = useI18n()
 const { user, role, logout, switchRole } = useAuth()
@@ -12,6 +12,7 @@ const navByRole: Record<Role, { key: string, icon: string, to: string, all?: boo
     { key: 'home', icon: 'i-lucide-layout-dashboard', to: '/' },
     { key: 'courses', icon: 'i-lucide-book-open', to: '/courses' },
     { key: 'assignments', icon: 'i-lucide-git-pull-request', to: '/assignments' },
+    { key: 'calendar', icon: 'i-lucide-calendar-days', to: '/calendar' },
     { key: 'contest', icon: 'i-lucide-trophy', to: '/contest' },
     { key: 'career', icon: 'i-lucide-briefcase', to: '/career' },
     { key: 'mentor', icon: 'i-lucide-messages-square', to: '/mentor' }
@@ -22,6 +23,7 @@ const navByRole: Record<Role, { key: string, icon: string, to: string, all?: boo
     { key: 'reviews', icon: 'i-lucide-git-pull-request', to: '/reviews' },
     { key: 'cohort', icon: 'i-lucide-users', to: '/cohort' },
     { key: 'sessions', icon: 'i-lucide-calendar', to: '/sessions' },
+    { key: 'calendar', icon: 'i-lucide-calendar-days', to: '/calendar' },
     { key: 'contest', icon: 'i-lucide-trophy', to: '/contest' }
   ],
   head: [
@@ -43,11 +45,54 @@ const items = computed<NavigationMenuItem[]>(() =>
   }))
 )
 
-const groups = computed<CommandPaletteGroup[]>(() => [{
-  id: 'nav',
-  label: t('nav.jumpTo'),
-  items: items.value.map(i => ({ label: i.label as string, icon: i.icon, to: i.to }))
-}])
+/** ⌘K inside a course also searches it (titles and text the reader can open), through the API, not the local filter */
+const route = useRoute()
+const course = computed(() => (route.path.startsWith('/courses/') && route.params.cohortId && route.params.courseId
+  ? `/api/courses/${route.params.cohortId}/${route.params.courseId}/search`
+  : null))
+const searchTerm = ref('')
+const hits = ref<CourseSearchHit[]>([])
+const searching = ref(false)
+const searchFailed = ref(false)
+const HIT_ICON = { lesson: 'i-lucide-book-open', material: 'i-lucide-file-text', assignment: 'i-lucide-git-pull-request' } as const
+let timer: ReturnType<typeof setTimeout> | undefined
+let seq = 0
+watch([searchTerm, course], ([q, url]) => {
+  clearTimeout(timer)
+  const run = ++seq
+  if (!url || q.trim().length < 2) {
+    hits.value = []
+    searching.value = false
+    searchFailed.value = false
+    return
+  }
+  searching.value = true
+  timer = setTimeout(async () => {
+    const found = await $fetch<CourseSearchHit[]>(url, { query: { q: q.trim() } }).catch(() => null)
+    if (run !== seq) return // a newer term or another course
+    hits.value = found ?? []
+    searchFailed.value = !found
+    searching.value = false
+  }, 250)
+})
+
+const groups = computed<CommandPaletteGroup[]>(() => [
+  ...(course.value && (hits.value.length || searchFailed.value)
+    ? [{
+        id: 'course',
+        label: t('search.inCourse'),
+        ignoreFilter: true,
+        items: searchFailed.value
+          ? [{ label: t('search.failed'), icon: 'i-lucide-circle-alert', disabled: true }]
+          : hits.value.map(h => ({ label: h.title, suffix: h.lessonTitle ?? undefined, description: h.snippet ?? undefined, icon: HIT_ICON[h.type], to: h.to }))
+      }]
+    : []),
+  {
+    id: 'nav',
+    label: t('nav.jumpTo'),
+    items: items.value.map(i => ({ label: i.label as string, icon: i.icon, to: i.to }))
+  }
+])
 
 const userMenu = computed<DropdownMenuItem[][]>(() => [
   [{ type: 'label', label: user.value?.email }],
@@ -100,7 +145,7 @@ const userMenu = computed<DropdownMenuItem[][]>(() => [
       </template>
     </UDashboardSidebar>
 
-    <UDashboardSearch :groups="groups" :placeholder="t('nav.search')" />
+    <UDashboardSearch v-model:search-term="searchTerm" :groups="groups" :loading="searching" :placeholder="course ? t('search.course') : t('nav.search')" />
 
     <slot />
   </UDashboardGroup>

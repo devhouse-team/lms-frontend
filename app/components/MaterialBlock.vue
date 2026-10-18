@@ -8,7 +8,6 @@ import type { MaterialView } from '~~/shared/types'
 /** `bare`: no title row (a course page shows its title as the page heading) */
 const props = defineProps<{ material: MaterialView, base: string, bare?: boolean }>()
 const { t } = useI18n()
-const { long } = useCohortFormat()
 const m = computed(() => props.material)
 const file = computed(() => m.value.files[0])
 
@@ -18,13 +17,8 @@ onMounted(() => {
   inlinePdf.value = matchMedia('(pointer: fine) and (min-width: 768px)').matches && !/iPad|iPhone|iPod|Android/.test(navigator.userAgent)
 })
 
-const lockText = computed(() => {
-  const hint = m.value.releaseHint
-  if (hint === 'after_due' && m.value.releasesOn) return t('material.lock.afterDue', { date: long(m.value.releasesOn) })
-  if (hint === 'after_submit') return t('material.lock.afterSubmit')
-  if (hint === 'manual') return t('material.lock.manual')
-  return m.value.releasesOn ? t('material.lock.on', { date: long(m.value.releasesOn) }) : t('material.lock.later')
-})
+const lock = useLockText()
+const lockText = computed(() => lock(m.value))
 const host = (url: string) => {
   try {
     return new URL(url).host.replace(/^www\./, '')
@@ -55,7 +49,7 @@ const host = (url: string) => {
           <UButton :to="`${base}/${file.id}`" target="_blank" external :label="t('content.openTab')" color="neutral" variant="ghost" size="xs" />
           <UButton :to="`${base}/${file.id}?download=1`" external :label="t('content.download')" icon="i-lucide-download" color="neutral" variant="ghost" size="xs" />
         </div>
-        <iframe :src="`${base}/${file.id}`" :title="m.title" class="h-[80vh] w-full bg-white" loading="lazy" />
+        <iframe :src="`${base}/${file.id}`" :title="m.title" class="h-[80vh] w-full bg-white focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary" loading="lazy" />
       </div>
       <FileCard v-else :file="file" :base="base" class="max-w-3xl" />
       <MarkdownView v-if="m.body" :source="m.body" :files="m.files" :base="base" />

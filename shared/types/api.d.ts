@@ -1633,6 +1633,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cohorts/{cohort_id}/courses/{course_id}/materials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Materials By Type
+         * @description Released, published materials and course pages the caller may open, in outline order (pages first).
+         *
+         *     `tag` and `kind` repeat; a material matches any given tag and any given kind.
+         */
+        get: operations["materials_by_type"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cohorts/{cohort_id}/calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cohort Calendar
+         * @description Module openings, homework due days, exam windows (`at` in UTC) and after-due solution releases.
+         *
+         *     Default range: the cohort's dates. At most 400 days (`422 validation_error`).
+         */
+        get: operations["cohort_calendar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cohorts/{cohort_id}/courses/{course_id}/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search Course
+         * @description Case-insensitive substring over what the caller could open: lesson and material titles, markdown bodies,
+         *     assignment titles and visible statements. At most 50 hits.
+         */
+        get: operations["search_course"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/cohorts/{cohort_id}/lessons/{lesson_id}/complete": {
         parameters: {
             query?: never;
@@ -1795,34 +1860,6 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/lessons/{lesson_id}/assignment": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Assignment
-         * @description Deprecated: the lesson's first homework by position. Use `GET /lessons/{lesson_id}` and `/assignments/{id}`.
-         */
-        get: operations["get_assignment"];
-        /**
-         * Set Assignment
-         * @description Deprecated: edits the lesson's first homework, or creates a published one. Use `/lessons/{id}/assignments`.
-         */
-        put: operations["set_assignment"];
-        post?: never;
-        /**
-         * Delete Assignment
-         * @description Deprecated: deletes the lesson's first homework. Refused (`content_has_submissions`) once anyone has submitted.
-         */
-        delete: operations["delete_assignment"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2006,46 +2043,6 @@ export interface paths {
         get: operations["review_queue"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/cohorts/{cohort_id}/lessons/{lesson_id}/assignment": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Assignment For Student
-         * @description Deprecated: the lesson's first published homework. Use `GET /cohorts/{cohort_id}/assignments/{id}`.
-         */
-        get: operations["assignment_for_student"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/cohorts/{cohort_id}/lessons/{lesson_id}/submissions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Submit
-         * @description Deprecated: submits to the lesson's first published homework. Use `POST /cohorts/{id}/assignments/{id}/submissions`.
-         */
-        post: operations["submit"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2485,20 +2482,6 @@ export interface components {
             /** Position */
             position?: number | null;
         };
-        /** AssignmentWrite */
-        AssignmentWrite: {
-            /** Title */
-            title: string;
-            /**
-             * Instructions
-             * @default
-             */
-            instructions: string;
-            /** Due Offset Days */
-            due_offset_days?: number | null;
-            /** Max Score */
-            max_score?: number | null;
-        };
         /** Body_import_enrollments */
         Body_import_enrollments: {
             /** File */
@@ -2527,6 +2510,44 @@ export interface components {
              * Format: password
              */
             client_secret?: string | null;
+        };
+        /** CalendarItem */
+        CalendarItem: {
+            /**
+             * Date
+             * Format: date
+             */
+            date: string;
+            /**
+             * At
+             * @description UTC instant (exam windows: `opens_at`)
+             */
+            at?: string | null;
+            /**
+             * Ends At
+             * @description UTC instant, exam windows only: `closes_at`
+             */
+            ends_at?: string | null;
+            /**
+             * Timezone
+             * @description The cohort's IANA timezone; `date` of an exam is local to it
+             */
+            timezone?: string | null;
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "module_opens" | "due" | "exam_window" | "solution_release";
+            /** Course Id */
+            course_id: number;
+            /** Lesson Id */
+            lesson_id?: number | null;
+            /** Assignment Id */
+            assignment_id?: number | null;
+            /** Material Id */
+            material_id?: number | null;
+            /** Title */
+            title: string;
         };
         /** CohortAccess */
         CohortAccess: {
@@ -3209,43 +3230,6 @@ export interface components {
              */
             created_at: string;
         };
-        /** LegacyAssignmentRead */
-        LegacyAssignmentRead: {
-            /** Id */
-            id: number;
-            /** Lesson Id */
-            lesson_id: number;
-            /** Title */
-            title: string;
-            /** Instructions */
-            instructions: string;
-            /** Due Offset Days */
-            due_offset_days: number | null;
-            /** Max Score */
-            max_score: number | null;
-        };
-        /** LegacyStudentAssignment */
-        LegacyStudentAssignment: {
-            /** Id */
-            id: number;
-            /** Lesson Id */
-            lesson_id: number;
-            /** Title */
-            title: string;
-            /** Instructions */
-            instructions: string;
-            /** Due Offset Days */
-            due_offset_days: number | null;
-            /** Max Score */
-            max_score: number | null;
-            /** Due On */
-            due_on: string | null;
-            /**
-             * Submissions
-             * @description Newest first
-             */
-            submissions: components["schemas"]["SubmissionRead"][];
-        };
         /** LessonCreate */
         LessonCreate: {
             /** Title */
@@ -3294,6 +3278,26 @@ export interface components {
             materials: components["schemas"]["MaterialForCohort"][];
             /** Assignments */
             assignments: components["schemas"]["AssignmentForCohortSummary"][];
+            /** @description Previous published lesson in outline order (crosses modules) */
+            prev: components["schemas"]["LessonNav"] | null;
+            /** @description Next published lesson in outline order (crosses modules) */
+            next: components["schemas"]["LessonNav"] | null;
+        };
+        /** LessonNav */
+        LessonNav: {
+            /** Id */
+            id: number;
+            /** Title */
+            title: string;
+            /** Module Id */
+            module_id: number;
+            /**
+             * Released On
+             * Format: date
+             */
+            released_on: string;
+            /** Is Released */
+            is_released: boolean;
         };
         /** LessonOrder */
         LessonOrder: {
@@ -3378,6 +3382,37 @@ export interface components {
             position?: number | null;
             /** Is Published */
             is_published?: boolean | null;
+        };
+        /** MaterialByType */
+        MaterialByType: {
+            /** Id */
+            id: number;
+            /** Lesson Id */
+            lesson_id: number | null;
+            /** Title */
+            title: string;
+            kind: components["schemas"]["MaterialKind"];
+            /** Tags */
+            tags: components["schemas"]["MaterialTag"][];
+            /** Position */
+            position: number;
+            /**
+             * Is Released
+             * @default true
+             */
+            is_released: boolean;
+            /** Releases On */
+            releases_on?: string | null;
+            /** @description Why a locked material is locked */
+            release_hint?: components["schemas"]["MaterialRelease"] | null;
+            /** Solution Of Id */
+            solution_of_id?: number | null;
+            /** Updated At */
+            updated_at?: string | null;
+            /** @description `null` for a course page */
+            lesson: components["schemas"]["LessonRef"] | null;
+            /** @description `null` for a course page */
+            module: components["schemas"]["ModuleRef"] | null;
         };
         /** MaterialCreate */
         MaterialCreate: {
@@ -3713,6 +3748,13 @@ export interface components {
             position: number;
             /** Release Offset Days */
             release_offset_days: number;
+        };
+        /** ModuleRef */
+        ModuleRef: {
+            /** Id */
+            id: number;
+            /** Title */
+            title: string;
         };
         /** ModuleUpdate */
         ModuleUpdate: {
@@ -4314,6 +4356,32 @@ export interface components {
             username: string;
             /** Email */
             email: string;
+        };
+        /** SearchHit */
+        SearchHit: {
+            /**
+             * Type
+             * @enum {string}
+             */
+            type: "lesson" | "material" | "assignment";
+            /**
+             * Matched
+             * @enum {string}
+             */
+            matched: "title" | "body" | "statement";
+            /** Title */
+            title: string;
+            /**
+             * Snippet
+             * @description Text around the match for `body` and `statement`
+             */
+            snippet: string | null;
+            /** @description `null` for a course page */
+            lesson: components["schemas"]["LessonRef"] | null;
+            /** Material Id */
+            material_id?: number | null;
+            /** Assignment Id */
+            assignment_id?: number | null;
         };
         /** SolutionAssignment */
         SolutionAssignment: {
@@ -7967,6 +8035,109 @@ export interface operations {
             };
         };
     };
+    materials_by_type: {
+        parameters: {
+            query?: {
+                tag?: components["schemas"]["MaterialTag"][] | null;
+                kind?: components["schemas"]["MaterialKind"][] | null;
+            };
+            header?: never;
+            path: {
+                cohort_id: number;
+                course_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MaterialByType"][];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    cohort_calendar: {
+        parameters: {
+            query?: {
+                from?: string | null;
+                to?: string | null;
+            };
+            header?: never;
+            path: {
+                cohort_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarItem"][];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    search_course: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path: {
+                cohort_id: number;
+                course_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchHit"][];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     complete: {
         parameters: {
             query?: never;
@@ -8317,101 +8488,6 @@ export interface operations {
             };
         };
     };
-    get_assignment: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                lesson_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LegacyAssignmentRead"];
-                };
-            };
-            /** @description Error envelope; translate `error.message_key` */
-            "4XX": {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    set_assignment: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                lesson_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AssignmentWrite"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LegacyAssignmentRead"];
-                };
-            };
-            /** @description Error envelope; translate `error.message_key` */
-            "4XX": {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    delete_assignment: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                lesson_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Error envelope; translate `error.message_key` */
-            "4XX": {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
     get_submission: {
         parameters: {
             query?: never;
@@ -8734,74 +8810,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QueueItem"][];
-                };
-            };
-            /** @description Error envelope; translate `error.message_key` */
-            "4XX": {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    assignment_for_student: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cohort_id: number;
-                lesson_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LegacyStudentAssignment"];
-                };
-            };
-            /** @description Error envelope; translate `error.message_key` */
-            "4XX": {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    submit: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cohort_id: number;
-                lesson_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SubmissionCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SubmissionRead"];
                 };
             };
             /** @description Error envelope; translate `error.message_key` */

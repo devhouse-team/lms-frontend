@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"sed -i 's|<UAvatar :src=\\\"m.avatar\\\" :alt=\\\"m.name\\\" size=\\\"xs\\\" />|<UAvatar :src=\\\"m.avatar\\\" :alt=\\\"m.name\\\" size=\\\"xs\\\" class=\\\"hidden sm:inline-flex\\\" />|; s|<div class=\\\"min-w-0\\\">|<d...",
-  "error": "Exit code 1\nsed: 1: \"app/components/RosterTa ...\": command a expects \\ followed by text",
-  "timestamp": "2026-10-13T11:44:11.230Z",
-  "retry_count": 1
-}

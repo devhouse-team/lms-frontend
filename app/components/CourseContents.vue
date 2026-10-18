@@ -3,9 +3,10 @@ import type { CourseOutlineView } from '~~/shared/types'
 
 /**
  * The course's contents rail (DESIGN.md, Course Contents Rail): course pages, then modules as disclosures with their
- * lessons. Locked lessons aren't links for students; staff read ahead. State comes from the outline only.
+ * lessons, then "Materials by type" and "Calendar". Locked lessons aren't links for students; staff read ahead.
+ * State comes from the outline only.
  */
-const props = defineProps<{ outline: CourseOutlineView, lessonId?: string, pageId?: string }>()
+const props = defineProps<{ outline: CourseOutlineView, lessonId?: string, pageId?: string, byType?: boolean }>()
 const emit = defineEmits<{ navigate: [] }>()
 const { t, locale } = useI18n()
 const NuxtLink = resolveComponent('NuxtLink')
@@ -13,15 +14,44 @@ const examTime = (iso: string) => new Intl.DateTimeFormat(locale.value, { timeZo
 const { short } = useCohortFormat()
 
 const base = computed(() => `/courses/${props.outline.cohort.id}/${props.outline.id}`)
-/** Expanded: the current module and the next one (else the first open module and the next) */
+const footer = computed(() => [
+  { to: `${base.value}/materials`, icon: 'i-lucide-layers', label: t('byType.title'), current: props.byType },
+  { to: `/calendar?cohort=${props.outline.cohort.id}`, icon: 'i-lucide-calendar-days', label: t('calendar.title'), current: false }
+])
+/**
+ * Expanded: the current module and the next one (else the last open module and the next); what the reader opened or
+ * closed is kept per course for the tab's session, and the current lesson's module always opens.
+ */
 const open = ref(new Set<string>())
-watch(() => [props.outline, props.lessonId], () => {
+/** sessionStorage only after mount: the server and the hydrating client render the defaults alike */
+const mounted = ref(false)
+const storeKey = computed(() => `course-open:${props.outline.id}`)
+function stored(): string[] | null {
+  try {
+    return JSON.parse(sessionStorage.getItem(storeKey.value) ?? 'null')
+  } catch {
+    return null
+  }
+}
+function restore() {
   const mods = props.outline.modules
-  let i = mods.findIndex(m => m.lessons.some(l => l.id === props.lessonId))
-  if (i < 0) i = Math.max(0, mods.findLastIndex(m => m.lessons.some(l => l.isReleased)))
-  open.value = new Set([mods[i]?.id, mods[i + 1]?.id].filter((x): x is string => !!x))
-}, { immediate: true })
-const toggle = (id: string) => (open.value.has(id) ? open.value.delete(id) : open.value.add(id))
+  const current = mods.findIndex(m => m.lessons.some(l => l.id === props.lessonId))
+  const i = current >= 0 ? current : Math.max(0, mods.findLastIndex(m => m.lessons.some(l => l.isReleased)))
+  const kept = mounted.value ? stored() : null
+  open.value = new Set([...(kept ?? [mods[i]?.id, mods[i + 1]?.id]), current >= 0 ? mods[current]!.id : undefined].filter((x): x is string => !!x))
+}
+watch(() => [props.outline, props.lessonId], restore, { immediate: true })
+onMounted(() => {
+  mounted.value = true
+  restore()
+})
+function toggle(id: string) {
+  if (open.value.has(id)) open.value.delete(id)
+  else open.value.add(id)
+  try {
+    sessionStorage.setItem(storeKey.value, JSON.stringify([...open.value]))
+  } catch { /* private mode: not remembered */ }
+}
 </script>
 
 <template>
@@ -87,5 +117,20 @@ const toggle = (id: string) => (open.value.has(id) ? open.value.delete(id) : ope
         </li>
       </ul>
     </div>
+
+    <ul class="space-y-0.5 border-t border-default pt-3">
+      <li v-for="l in footer" :key="l.to">
+        <NuxtLink
+          :to="l.to"
+          class="flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors duration-150 ease-out hover:bg-elevated"
+          :class="l.current ? 'bg-elevated text-highlighted' : 'text-default'"
+          :aria-current="l.current ? 'page' : undefined"
+          @click="emit('navigate')"
+        >
+          <UIcon :name="l.icon" class="size-4 shrink-0" :class="l.current ? 'text-primary' : 'text-dimmed'" aria-hidden="true" />
+          <span class="min-w-0 truncate">{{ l.label }}</span>
+        </NuxtLink>
+      </li>
+    </ul>
   </nav>
 </template>

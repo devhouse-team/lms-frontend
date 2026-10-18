@@ -550,6 +550,66 @@ export interface LessonView {
   /** Why mark complete is closed: the cohort isn't active, or the enrollment is paused */
   completeClosed: 'finished' | 'planned' | 'paused' | null
   staff: boolean
+  /** Neighbours in outline order across modules (published only; may be locked) */
+  prev: LessonNavView | null
+  next: LessonNavView | null
+}
+
+export interface LessonNavView {
+  id: string
+  title: string
+  releasedOn: string
+  isReleased: boolean
+}
+
+/** A row of "materials by type": a released material (staff also see locked ones) with where it lives */
+export interface MaterialIndexRow {
+  id: string
+  title: string
+  kind: MaterialKind
+  tags: MaterialTag[]
+  isReleased: boolean
+  releasesOn: string | null
+  releaseHint: string | null
+  /** null for a course page */
+  lesson: { id: string, title: string } | null
+  module: { id: string, title: string } | null
+}
+
+export interface CalendarEntry {
+  type: 'module_opens' | 'due' | 'exam_window' | 'solution_release'
+  title: string
+  courseTitle: string
+  date: string
+  /** Exam window, UTC */
+  at: string | null
+  endsAt: string | null
+  to: string | null
+}
+
+export interface CalendarWeek {
+  n: number
+  from: string
+  to: string
+  opens: CalendarEntry[]
+  due: CalendarEntry[]
+  exams: CalendarEntry[]
+}
+
+/** One cohort's dates by week (GET /cohorts/{c}/calendar, grouped in Nitro) */
+export interface CalendarView {
+  cohort: { id: string, name: string, status: CohortStatus, timezone: string, week: number | null } | null
+  /** My current cohorts, for the switcher */
+  cohorts: { id: string, name: string }[]
+  weeks: CalendarWeek[]
+}
+
+export interface CourseSearchHit {
+  type: 'lesson' | 'material' | 'assignment'
+  title: string
+  snippet: string | null
+  lessonTitle: string | null
+  to: string
 }
 
 export interface CourseRowView {
