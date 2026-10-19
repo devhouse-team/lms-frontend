@@ -3,7 +3,7 @@ import { z } from 'zod'
 
 const { t } = useI18n()
 const toast = useToast()
-const { fetch: refreshSession } = useUserSession()
+const { fetch: refreshSession, clear: clearSession } = useUserSession()
 useHead({ title: () => `${t('me.title')} · dev.house` })
 
 const { data, status, refresh } = await useFetch('/api/me', { key: 'me' })
@@ -68,6 +68,96 @@ async function changePassword() {
     pwSaving.value = false
   }
 }
+
+/* ---------- email: resend verification ---------- */
+const resending = ref(false)
+const resent = ref(false)
+const resendError = ref<string>()
+const cooldown = ref(0)
+let cooldownTimer: ReturnType<typeof setInterval> | undefined
+onBeforeUnmount(() => clearInterval(cooldownTimer))
+async function resend() {
+  resendError.value = undefined
+  resending.value = true
+  try {
+    await $fetch('/api/me/verify-email', { method: 'POST' })
+    resent.value = true
+    cooldown.value = 60
+    clearInterval(cooldownTimer)
+    cooldownTimer = setInterval(() => {
+      if (--cooldown.value <= 0) clearInterval(cooldownTimer)
+    }, 1000)
+  } catch (e) {
+    const err = apiError(e)
+    resendError.value = err.status === 429 ? t('me.rateLimited') : err.status === 502 ? t('auth.err.network') : t('common.saveError')
+  } finally {
+    resending.value = false
+  }
+}
+
+/* ---------- email: change ---------- */
+const changing = ref(false)
+const changeSentTo = ref<string>()
+const emailSchema = computed(() => z.object({
+  newEmail: z.string().trim().email(t('invite.err.email')).max(254, t('invite.err.email'))
+    .refine(v => v.toLowerCase() !== data.value?.email.toLowerCase(), t('me.sameEmail')),
+  password: z.string().min(1, t('me.err.current'))
+}))
+const emailForm = reactive({ newEmail: '', password: '' })
+const emailSaving = ref(false)
+const emailError = ref<{ newEmail?: string, password?: string, general?: string }>({})
+const sentNote = useTemplateRef<HTMLElement>('sentNote')
+async function toggleChange() {
+  changing.value = !changing.value
+  if (changing.value) {
+    await nextTick()
+    document.getElementById('new-email')?.focus()
+  }
+}
+async function changeEmail() {
+  emailError.value = {}
+  emailSaving.value = true
+  try {
+    await $fetch('/api/me/email', { method: 'POST', body: { newEmail: emailForm.newEmail.trim(), password: emailForm.password } })
+    changeSentTo.value = emailForm.newEmail.trim()
+    Object.assign(emailForm, { newEmail: '', password: '' })
+    await nextTick()
+    sentNote.value?.focus()
+  } catch (e) {
+    const err = apiError(e)
+    // The API's 400 (bad_request) is a wrong password; Nitro's own 400 is a malformed body the form already prevents
+    if (err.code === 'bad_request') emailError.value = { password: t('me.wrongPassword') }
+    else if (err.status === 422) emailError.value = { newEmail: err.field('new_email') ?? err.message ?? t('common.saveError') }
+    else if (err.status === 429) emailError.value = { general: t('me.rateLimited') }
+    else emailError.value = { general: err.status === 502 ? t('auth.err.network') : t('common.saveError') }
+  } finally {
+    emailSaving.value = false
+  }
+}
+function otherAddress() {
+  changeSentTo.value = undefined
+  nextTick(() => document.getElementById('new-email')?.focus())
+}
+
+/* ---------- sessions ---------- */
+const logoutAllOpen = ref(false)
+const loggingOut = ref(false)
+async function logoutAll() {
+  loggingOut.value = true
+  try {
+    await $fetch('/api/auth/logout-all', { method: 'POST' })
+  } catch (e) {
+    if (apiError(e).status !== 401) {
+      loggingOut.value = false
+      toast.add({ title: apiError(e).status === 502 ? t('auth.err.network') : t('common.saveError'), color: 'error', icon: 'i-lucide-circle-alert' })
+      return
+    }
+  }
+  await clearSession()
+  clearNuxtData()
+  toast.add({ title: t('me.loggedOutAll'), color: 'success', icon: 'i-lucide-check' })
+  await navigateTo('/login')
+}
 </script>
 
 <template>
@@ -89,6 +179,64 @@ async function changePassword() {
             </UForm>
           </section>
 
+          <section aria-labelledby="email-title">
+            <h2 id="email-title" class="text-sm font-semibold text-highlighted">{{ t('me.email') }}</h2>
+            <p class="num mt-1 flex flex-wrap items-center gap-2 text-sm text-default">
+              {{ data.email }}
+              <UBadge
+                :label="data.emailVerified ? t('person.verified') : t('person.unverified')"
+                :icon="data.emailVerified ? 'i-lucide-check' : 'i-lucide-mail-warning'"
+                :color="data.emailVerified ? 'success' : 'neutral'"
+                variant="subtle"
+                size="sm"
+              />
+            </p>
+            <div v-if="!data.emailVerified" class="mt-4 max-w-md space-y-2 rounded-lg bg-elevated p-4 ring-1 ring-inset ring-default">
+              <p class="text-sm text-default">{{ t('me.unverified') }}</p>
+              <UButton
+                :label="cooldown > 0 ? t('me.resendWait', { n: cooldown }) : t('me.resend')"
+                icon="i-lucide-mail"
+                color="neutral"
+                variant="outline"
+                size="sm"
+                :loading="resending"
+                :disabled="cooldown > 0"
+                aria-live="off"
+                @click="resend"
+              />
+              <p v-if="resent" class="text-xs text-muted" role="status">{{ t('me.resent', { email: data.email }) }}</p>
+              <p v-if="resendError" class="text-xs text-error" role="alert">{{ resendError }}</p>
+            </div>
+
+            <UButton
+              class="mt-4"
+              :label="t('me.changeEmail')"
+              :trailing-icon="changing ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              :aria-expanded="changing"
+              aria-controls="change-email"
+              @click="toggleChange"
+            />
+            <div v-show="changing" id="change-email" class="mt-3 max-w-md">
+              <div v-if="changeSentTo" ref="sentNote" tabindex="-1" role="status" class="space-y-3 focus:outline-none">
+                <p class="text-sm text-default">{{ t('me.changeSent', { email: changeSentTo, current: data.email }) }}</p>
+                <UButton :label="t('me.otherAddress')" color="neutral" variant="outline" size="sm" @click="otherAddress" />
+              </div>
+              <UForm v-else :schema="emailSchema" :state="emailForm" class="space-y-4" @submit="changeEmail">
+                <UFormField :label="t('me.newEmail')" name="newEmail" :error="emailError.newEmail">
+                  <UInput id="new-email" v-model="emailForm.newEmail" type="email" autocomplete="email" inputmode="email" class="w-full" />
+                </UFormField>
+                <UFormField :label="t('me.current')" name="password" :error="emailError.password">
+                  <UInput v-model="emailForm.password" type="password" autocomplete="current-password" class="w-full" />
+                </UFormField>
+                <UAlert v-if="emailError.general" :description="emailError.general" color="error" variant="subtle" icon="i-lucide-circle-alert" role="alert" />
+                <UButton type="submit" color="primary" :label="t('me.sendLink')" :loading="emailSaving" />
+              </UForm>
+            </div>
+          </section>
+
           <section aria-labelledby="pw-title">
             <h2 id="pw-title" class="text-sm font-semibold text-highlighted">{{ t('me.password') }}</h2>
             <p class="mt-1 text-sm text-muted">{{ t('me.passwordHint') }}</p>
@@ -105,6 +253,19 @@ async function changePassword() {
               <UAlert v-if="pwError.general" :description="pwError.general" color="error" variant="subtle" icon="i-lucide-circle-alert" role="alert" />
               <UButton type="submit" color="primary" :label="t('me.changePassword')" :loading="pwSaving" />
             </UForm>
+          </section>
+
+          <section aria-labelledby="ntf-title">
+            <h2 id="ntf-title" class="text-sm font-semibold text-highlighted">{{ t('me.notifications') }}</h2>
+            <p class="mt-1 text-sm text-muted">
+              <NuxtLink to="/notifications#email" class="text-default underline underline-offset-4 hover:text-highlighted">{{ t('me.notificationsLink') }}</NuxtLink>
+            </p>
+          </section>
+
+          <section aria-labelledby="ses-title">
+            <h2 id="ses-title" class="text-sm font-semibold text-highlighted">{{ t('me.sessions') }}</h2>
+            <p class="mt-1 text-sm text-muted">{{ t('me.logoutAllHint') }}</p>
+            <UButton class="mt-4" :label="t('me.logoutAll')" icon="i-lucide-log-out" color="error" variant="outline" @click="logoutAllOpen = true" />
           </section>
         </div>
 
@@ -150,5 +311,12 @@ async function changePassword() {
         </HomeRail>
       </div>
     </HomeState>
+
+    <UModal v-model:open="logoutAllOpen" :title="t('me.logoutAllTitle')" :description="t('me.logoutAllText')">
+      <template #footer>
+        <UButton :label="t('common.cancel')" color="neutral" variant="ghost" autofocus @click="logoutAllOpen = false" />
+        <UButton :label="t('me.logoutAllConfirm')" color="error" :loading="loggingOut" @click="logoutAll" />
+      </template>
+    </UModal>
   </AppPage>
 </template>

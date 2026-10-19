@@ -17,7 +17,9 @@
     "programs": "Programs",
     "contests": "Contests",
     "calendar": "Calendar",
-    "me": "My profile"
+    "me": "My profile",
+    "notifications": "Notifications",
+    "grades": "Grades"
   },
   "common": {
     "retry": "Retry",
@@ -791,7 +793,16 @@
     "rateLimited": "Too many requests. Try again later.",
     "err": {
       "email": "That address looks mistyped"
-    }
+    },
+    "emailChange": {
+      "title": "Email change",
+      "pending": "Confirming your address…",
+      "done": "Email changed",
+      "doneTo": "Your address is now {email}.",
+      "invalid": "The link is invalid or has expired. Request the email change again from your profile.",
+      "taken": "That address now belongs to another account. Your email hasn't changed."
+    },
+    "toProfile": "To my profile"
   },
   "password": {
     "rules": "8–128 characters with an uppercase and a lowercase letter, a digit and a special character",
@@ -1355,7 +1366,27 @@
     "rateLimited": "Too many attempts. Wait a minute and try again.",
     "err": {
       "current": "Enter your current password"
-    }
+    },
+    "email": "Email",
+    "unverified": "Your address isn't confirmed. Confirm it so you can recover access if you forget your password.",
+    "resend": "Send the email again",
+    "resendWait": "Send again in {n} s",
+    "resent": "Email sent to {email}. The link works for 24 hours.",
+    "changeEmail": "Change email",
+    "newEmail": "New email",
+    "sameEmail": "That's your current address",
+    "sendLink": "Send the link",
+    "changeSent": "If the address is free, we've sent a confirmation link to {email}. It works for 24 hours. Until then, sign-in and emails stay on {current}.",
+    "otherAddress": "Use another address",
+    "notifications": "Notifications",
+    "notificationsLink": "Choose which emails you get in notification settings",
+    "sessions": "Sessions",
+    "logoutAll": "Log out on all devices",
+    "logoutAllHint": "You'll be signed out everywhere, this device included.",
+    "logoutAllTitle": "Log out on all devices?",
+    "logoutAllText": "Every session ends, this one too. You can sign in again with your password.",
+    "logoutAllConfirm": "Log out everywhere",
+    "loggedOutAll": "You've been logged out on all devices"
   },
   "invites": {
     "emails": "Emails",
@@ -1397,5 +1428,69 @@
       "permission_denied": "You can't manage invites for this cohort.",
       "validation_error": "Enter between 1 and 200 emails."
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "open": "Notifications, {n} unread",
+    "openNone": "Notifications",
+    "new": "New notifications: {n}",
+    "unreadCount": "{n} unread",
+    "readAll": "Mark all as read",
+    "all": "All",
+    "unread": "Unread",
+    "seeAll": "All notifications",
+    "emailSettings": "Email settings",
+    "unreadMark": "unread",
+    "empty": {
+      "title": "No notifications yet",
+      "text": "Reviews, new lessons and deadlines will show up here."
+    },
+    "emptyUnread": "You're all caught up",
+    "loadError": "Couldn't load notifications",
+    "limitNote": "Showing the latest 100.",
+    "type": {
+      "submission_created": "New submission to review",
+      "review_completed": "Your work was reviewed",
+      "lesson_released": "New lessons are open",
+      "deadline_soon": "Due tomorrow",
+      "enrollment_created": "You were added to a cohort",
+      "exam_opens_soon": "An exam opens soon",
+      "solution_released": "A solution was published",
+      "unknown": "Notification"
+    },
+    "email": {
+      "title": "Emails",
+      "hint": "In-app notifications are always on; these switches only control emails.",
+      "none": "There are no emails for your role."
+    },
+    "err": {
+      "rate": "Too many requests, try again in a minute."
+    }
+  },
+  "grades": {
+    "title": "Grades",
+    "cohort": "Cohort",
+    "finished": "{cohort} · finished",
+    "col": {
+      "assignment": "Assignment",
+      "lesson": "Lesson",
+      "mode": "Mode",
+      "status": "Status",
+      "submitted": "Submitted",
+      "score": "Score",
+      "feedback": "Feedback"
+    },
+    "attempt": "attempt {n}",
+    "late": "Late",
+    "total": "Points: {sum} of {max}",
+    "graded": "{n} of {m} graded",
+    "submitted": "{k} of {all} submitted",
+    "lateCount": "late: {n}",
+    "noScores": "No grades yet",
+    "emptyCohort": "No assignments yet. They appear as lessons open.",
+    "noCohort": "You're not in a cohort yet",
+    "toCourses": "Go to courses",
+    "scoreOf": "{score} of {max} points",
+    "assignmentsCount": "{n} assignment | {n} assignments"
   }
 }

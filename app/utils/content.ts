@@ -3,7 +3,7 @@ import type { CourseOutlineView, MaterialKind, OutlineLesson } from '~~/shared/t
 /** After a content mutation: drop the keys derived from course content (spec course-content.md, Cache keys) */
 export function invalidateContent(keep?: string) {
   clearNuxtData(key => key !== keep && (/^(course-outline|lesson|course-page|course-materials|calendar|editor-outline|editor-material):/.test(key)
-    || ['my-courses', 'editor-courses', 'dashboard-mentee', 'assignments'].includes(key)))
+    || ['my-courses', 'editor-courses', 'dashboard-mentee', 'assignments', 'grades'].includes(key)))
 }
 
 export const KIND_ICON: Record<MaterialKind, string> = {
