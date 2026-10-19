@@ -19,12 +19,20 @@ const tab = computed({
 })
 const tabs = computed(() => [{ value: 'all', label: t('notifications.all') }, { value: 'unread', label: t('notifications.unread') }])
 
-const { data, status, error, refresh } = useFetch<NotificationsResponse>('/api/notifications', {
+const { data: fetched, status, error, refresh } = useFetch<NotificationsResponse>('/api/notifications', {
   key: 'notifications-page',
   query: computed(() => ({ limit: 100, ...(unreadOnly.value ? { unread: '1' } : {}) })),
   server: false,
   lazy: true
 })
+
+/** The last good list: a failed refresh (Nuxt resets data then) keeps it on screen */
+const last = shallowRef<NotificationsResponse>()
+watch(fetched, (d) => {
+  if (d) last.value = d
+}, { immediate: true })
+watch(unreadOnly, () => (last.value = undefined))
+const data = computed(() => last.value)
 
 // ---- email switches ---------------------------------------------------------------
 const STUDENT: NotificationType[] = ['review_completed', 'lesson_released', 'deadline_soon', 'enrollment_created', 'exam_opens_soon', 'solution_released']
@@ -32,7 +40,7 @@ const mine = computed<NotificationType[]>(() => [
   ...(user.value?.roles.includes('mentor') ? ['submission_created' as const] : []),
   ...(user.value?.roles.includes('mentee') ? STUDENT : [])
 ])
-const { data: prefs, status: prefsStatus, refresh: refreshPrefs } = useFetch<NotificationPreference[]>('/api/notifications/preferences', {
+const { data: prefs, status: prefsStatus, error: prefsError, refresh: refreshPrefs } = useFetch<NotificationPreference[]>('/api/notifications/preferences', {
   key: 'notification-prefs', server: false, lazy: true, default: () => []
 })
 const shown = computed(() => mine.value.map(type => ({ type, email: prefs.value.find(p => p.type === type)?.email ?? true })))
@@ -40,12 +48,12 @@ const saving = ref(new Set<NotificationType>())
 
 async function setEmail(type: NotificationType, email: boolean) {
   saving.value = new Set(saving.value).add(type)
-  const before = prefs.value
-  prefs.value = [...prefs.value.filter(p => p.type !== type), { type, email }]
+  const set = (on: boolean) => (prefs.value = [...prefs.value.filter(p => p.type !== type), { type, email: on }])
+  set(email)
   try {
     prefs.value = await $fetch('/api/notifications/preferences', { method: 'PUT', body: [{ type, email }] })
   } catch (e) {
-    prefs.value = before
+    set(!email) // only this switch flips back; another one may be saving meanwhile
     toast.add({ title: apiError(e).code === 'rate_limited' ? t('notifications.err.rate') : t('common.saveError'), color: 'error', icon: 'i-lucide-circle-alert' })
     refreshPrefs()
   } finally {
@@ -61,10 +69,10 @@ async function setEmail(type: NotificationType, email: boolean) {
     <div class="mx-auto w-full max-w-3xl space-y-10">
       <section aria-labelledby="ntf-title" class="space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <h1 id="ntf-title" class="text-[1.75rem] font-semibold leading-tight tracking-tight text-highlighted">
+          <h2 id="ntf-title" class="text-[1.75rem] font-semibold leading-tight tracking-tight text-highlighted">
             {{ t('notifications.title') }}
             <span v-if="data?.unread" class="num ms-1 text-base font-normal text-muted">{{ t('notifications.unreadCount', { n: data.unread }, data.unread) }}</span>
-          </h1>
+          </h2>
           <UButton v-if="data?.unread" :label="t('notifications.readAll')" icon="i-lucide-check-check" color="neutral" variant="outline" size="sm" @click="readAll()" />
         </div>
         <UTabs v-model="tab" :items="tabs" :content="false" variant="link" color="primary" />
@@ -90,6 +98,10 @@ async function setEmail(type: NotificationType, email: boolean) {
         <h2 id="email-title" class="text-sm font-semibold text-highlighted">{{ t('notifications.email.title') }}</h2>
         <p id="email-hint" class="text-sm text-muted">{{ t('notifications.email.hint') }}</p>
         <p v-if="!mine.length" class="text-sm text-muted">{{ t('notifications.email.none') }}</p>
+        <div v-else-if="prefsError && !prefs.length" class="flex items-center gap-3 rounded-lg px-4 py-6 text-sm text-muted ring-1 ring-inset ring-default">
+          {{ t('notifications.loadError') }}
+          <UButton :label="t('common.retry')" color="neutral" variant="outline" size="xs" @click="refreshPrefs()" />
+        </div>
         <div v-else-if="prefsStatus === 'pending' && !prefs.length" class="space-y-2" aria-busy="true"><USkeleton v-for="i in 3" :key="i" class="h-10 w-full" /></div>
         <ul v-else class="divide-y divide-default rounded-lg ring-1 ring-inset ring-default">
           <li v-for="p in shown" :key="p.type" class="px-4 py-3">

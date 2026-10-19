@@ -10,7 +10,8 @@ const LEGACY: [RegExp, (m: RegExpMatchArray) => string][] = [
 ]
 
 export function fixLink(path: string | null | undefined): string | null {
-  if (!path || !path.startsWith('/') || path.startsWith('//')) return null
+  // `//x` and `/\x` leave the site in browsers; control characters have no place in a path
+  if (!path || !path.startsWith('/') || /^\/[/\\]/.test(path) || /[\u0000-\u001f\u007f]/.test(path)) return null
   for (const [re, to] of LEGACY) {
     const m = path.match(re)
     if (m) return to(m)

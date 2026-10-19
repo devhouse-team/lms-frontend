@@ -10,9 +10,14 @@ const body = z.object({ token: z.string().min(1).max(2000) })
 export default defineEventHandler(async (event): Promise<{ ok: true, email?: string }> => {
   const { token } = await readValidatedBody(event, body.parse)
   await apiPublic(event, '/auth/email/change-confirm', { method: 'POST', body: { token } })
-  const session = await getUserSession(event)
-  if (!session.user) return { ok: true }
-  const me = await apiFetch<components['schemas']['UserRead']>(event, '/users/me')
-  await setUserSession(event, { user: { ...session.user, email: me.email } })
-  return { ok: true, email: me.email }
+  // The change is done; refreshing the session copy is a nicety that must not turn it into an error
+  try {
+    const session = await getUserSession(event)
+    if (!session.user) return { ok: true }
+    const me = await apiFetch<components['schemas']['UserRead']>(event, '/users/me')
+    await setUserSession(event, { user: { ...session.user, email: me.email } })
+    return { ok: true, email: me.email }
+  } catch {
+    return { ok: true }
+  }
 })

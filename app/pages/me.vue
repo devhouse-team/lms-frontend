@@ -125,7 +125,8 @@ async function changeEmail() {
     sentNote.value?.focus()
   } catch (e) {
     const err = apiError(e)
-    if (err.status === 400) emailError.value = { password: t('me.wrongPassword') }
+    // The API's 400 (bad_request) is a wrong password; Nitro's own 400 is a malformed body the form already prevents
+    if (err.code === 'bad_request') emailError.value = { password: t('me.wrongPassword') }
     else if (err.status === 422) emailError.value = { newEmail: err.field('new_email') ?? err.message ?? t('common.saveError') }
     else if (err.status === 429) emailError.value = { general: t('me.rateLimited') }
     else emailError.value = { general: err.status === 502 ? t('auth.err.network') : t('common.saveError') }

@@ -14,9 +14,10 @@ watch(open, (o) => {
 const unread = computed(() => data.value?.unread ?? 0)
 const badge = computed(() => (unread.value > 99 ? '99+' : String(unread.value)))
 
+/** Only a rise between two known counts is announced (not the first load, not a failed refresh) */
 const announce = ref('')
-watch(unread, (n, before) => {
-  if (before !== undefined && n > before) announce.value = t('notifications.new', { n: n - before }, n - before)
+watch(() => data.value?.unread, (n, before) => {
+  if (n != null && before != null && n > before) announce.value = t('notifications.new', { n: n - before }, n - before)
 })
 
 function go(item: Parameters<typeof openItem>[0]) {
@@ -27,7 +28,9 @@ function go(item: Parameters<typeof openItem>[0]) {
 
 <template>
   <USlideover v-model:open="open" side="right" :title="t('notifications.title')" :ui="{ content: 'max-sm:max-w-none' }">
-    <UChip :text="badge" :show="unread > 0" size="2xl" color="primary" inset :ui="{ base: 'num' }">
+    <UChip :show="unread > 0" size="2xl" color="primary" inset :ui="{ base: 'num' }">
+      <!-- The button's label carries the number -->
+      <template #content><span aria-hidden="true">{{ badge }}</span></template>
       <UButton
         icon="i-lucide-bell"
         color="neutral"

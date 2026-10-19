@@ -16,6 +16,10 @@ review, one click lands on the assignment, and the badge goes down. Closes [O14]
   then the `short` date; no `notifications.time.*` keys.
 - The bell is a `UChip` over a ghost button inside the `USlideover` trigger; polling lives in `useNotifications().poll()`,
   called by the bell. `PUT /api/notifications/preferences` needed `ApiOptions.body` to accept arrays.
+- The bell and the page show the **last good answer** (`useState('notifications-last')`, the page a local
+  `shallowRef`): in Nuxt 4 a failed refresh resets `data`, which would hide the badge and later announce the whole count
+  as new. Read marks replace the cached objects (never mutate). A 401 stops polling and goes to `/login`; a `focus`
+  right after `visibilitychange` doesn't fetch twice (2 s guard). `fixLink` also drops `/\…` and control characters.
 
 ## Screens
 

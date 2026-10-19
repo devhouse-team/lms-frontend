@@ -102,9 +102,10 @@ const hasScore = (r: GradeRow) => r.mode !== 'practice' && r.result?.score != nu
                     </td>
                     <td class="num px-3 py-2.5 text-right align-top tabular-nums">
                       <template v-if="r.mode !== 'practice'">
-                        <span v-if="hasScore(r)" :aria-label="r.maxScore !== null ? t('grades.scoreOf', { score: r.result!.score!, max: r.maxScore }, r.maxScore) : undefined" class="text-highlighted">
-                          {{ r.result!.score }}<template v-if="r.maxScore !== null"> / {{ r.maxScore }}</template>
-                        </span>
+                        <template v-if="hasScore(r)">
+                          <span aria-hidden="true" class="text-highlighted">{{ r.result!.score }}<template v-if="r.maxScore !== null"> / {{ r.maxScore }}</template></span>
+                          <span class="sr-only">{{ r.maxScore !== null ? t('grades.scoreOf', { score: r.result!.score!, max: r.maxScore }, r.maxScore) : r.result!.score }}</span>
+                        </template>
                         <span v-else class="text-dimmed">—</span>
                       </template>
                     </td>
@@ -125,8 +126,9 @@ const hasScore = (r: GradeRow) => r.mode !== 'practice' && r.result?.score != nu
                     <NuxtLink :to="r.to" class="block text-sm underline-offset-4 hover:underline" :class="r.mode === 'practice' ? 'text-default' : 'text-highlighted'">{{ r.title }}</NuxtLink>
                     <p class="truncate text-xs text-muted">{{ r.lessonTitle }}</p>
                   </div>
-                  <span v-if="hasScore(r)" class="num shrink-0 text-sm text-highlighted tabular-nums" :aria-label="r.maxScore !== null ? t('grades.scoreOf', { score: r.result!.score!, max: r.maxScore }, r.maxScore) : undefined">
-                    {{ r.result!.score }}<template v-if="r.maxScore !== null"> / {{ r.maxScore }}</template>
+                  <span v-if="hasScore(r)" class="num shrink-0 text-sm text-highlighted tabular-nums">
+                    <span aria-hidden="true">{{ r.result!.score }}<template v-if="r.maxScore !== null"> / {{ r.maxScore }}</template></span>
+                    <span class="sr-only">{{ r.maxScore !== null ? t('grades.scoreOf', { score: r.result!.score!, max: r.maxScore }, r.maxScore) : r.result!.score }}</span>
                   </span>
                 </div>
                 <div class="flex flex-wrap items-center gap-1.5">
