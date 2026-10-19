@@ -1,4 +1,5 @@
 import type { FileGroup } from '../utils/fileTypes'
+import type { components } from './api'
 
 export type Role = 'mentee' | 'mentor' | 'head'
 export type ProgramSlug = 'frontend' | 'backend' | 'mobile' | 'ml' | 'algorithms'
@@ -843,3 +844,69 @@ export interface InviteAcceptInput {
 export interface ContestRegistration {
   registered: boolean
 }
+
+/* ---------- notifications (spec notifications.md) ---------- */
+
+export type NotificationType = components['schemas']['NotificationType']
+
+export interface NotificationItem {
+  id: string
+  /** A newer API may send a type this app doesn't know yet */
+  type: NotificationType | string
+  title: string
+  read: boolean
+  createdAt: string
+  /** An app path (old API paths rewritten); null when there is nowhere to go */
+  to: string | null
+  /** The view `to` needs: reviews are the mentor's, assignment pages the student's */
+  view?: Role
+}
+
+export interface NotificationsResponse {
+  unread: number
+  items: NotificationItem[]
+}
+
+export interface NotificationPreference {
+  type: NotificationType
+  email: boolean
+}
+
+/* ---------- grades (spec grades.md) ---------- */
+
+export interface GradeRow {
+  id: string
+  /** `/assignments/{c}/{a}` */
+  to: string
+  title: string
+  lessonTitle: string
+  mode: AssignmentMode
+  status: AssignmentStatus
+  maxScore: number | null
+  /** The latest counted submission (trials never count); null when nothing was sent */
+  result: { version: number, submittedAt: string, late: boolean, score: number | null, feedback: string | null, reviewedAt: string | null } | null
+}
+
+export interface GradeTotals {
+  /** Σ score and Σ max of the graded rows (homework and exams with a max and a score) */
+  score: number
+  max: number
+  graded: number
+  /** Homework and exams with a max score */
+  gradable: number
+  /** Homework and exams handed in, of all of them; late among those */
+  submitted: number
+  all: number
+  late: number
+}
+
+export interface GradesResponse {
+  cohorts: {
+    id: string
+    name: string
+    status: CohortStatus
+    timezone: string
+    courses: { courseId: string, title: string, totals: GradeTotals, rows: GradeRow[] }[]
+  }[]
+}
+

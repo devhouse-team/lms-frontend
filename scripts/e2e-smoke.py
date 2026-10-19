@@ -698,6 +698,60 @@ ok(s == 200 and any(c_['id'] == str(CID) for c_ in lc['editing']), 'the lead (no
 s, dash = lead('/api/dashboard/head')
 ok(s == 200 and dash['invites'] == [] and all(x['programId'] == pid for x in dash['cohorts']), 'lead dashboard: own cohorts, no invites', [x['programId'] for x in dash.get('cohorts', [])])
 
+# --- student area (specs notifications.md, grades.md, profile.md) -------------------------------------------------
+s, nt = stud('/api/notifications')
+rc = next((n for n in nt.get('items', []) if n['type'] == 'review_completed' and n['to'] == f"/assignments/{cid}/{ex['id']}"), None)
+ok(s == 200 and nt['unread'] >= 1 and rc and rc['view'] == 'mentee' and 'body' not in rc, 'notifications: the exam review is there, linking to the assignment (student view)', nt)
+before = nt['unread']
+s, r = stud(f"/api/notifications/{rc['id']}/read", 'POST')
+s2, nt2 = stud('/api/notifications')
+ok(s == 200 and nt2['unread'] == before - (0 if rc['read'] else 1), 'mark one read: the count drops', (before, nt2.get('unread')))
+s, r = stud('/api/notifications/read-all', 'POST')
+s2, nt3 = stud('/api/notifications?unread=1&limit=100')
+ok(s == 200 and nt3['unread'] == 0 and nt3['items'] == [], 'mark all read: nothing unread', nt3)
+s, r = stud('/api/notifications/preferences', 'PUT', [{'type': 'deadline_soon', 'email': False}])
+s2, prefs = stud('/api/notifications/preferences')
+ok(s == 200 and {p_['type']: p_['email'] for p_ in prefs}.get('deadline_soon') is False and len(prefs) == 7, 'email switch saved: deadline_soon off', prefs)
+stud('/api/notifications/preferences', 'PUT', [{'type': 'deadline_soon', 'email': True}])
+ok([location(stud, p_)[:2] for p_ in ('/mentor/submissions/7', '/app/cohorts/3/courses/5', '/app/cohorts/3/lessons/9')] == [(302, '/reviews/7'), (302, '/courses/3/5'), (302, '/assignments/3-9')]
+   and location(stud, '/mentor')[0] == 200, 'old email links redirect; /mentor stays the mentor page', [location(stud, p_)[:2] for p_ in ('/mentor/submissions/7', '/mentor')])
+
+s, gr = stud('/api/grades')
+gc = next((c_ for c_ in gr.get('cohorts', []) if c_['id'] == str(cid)), None)
+gk = gc and next((k for k in gc['courses'] if k['courseId'] == str(CID)), None)
+mid = gk and next((r_ for r_ in gk['rows'] if r_['title'] == 'Midterm'), None)
+ok(s == 200 and mid and mid['maxScore'] == 10 and mid['result']['score'] == 8 and isinstance(mid['result']['late'], bool) and mid['to'] == f"/assignments/{cid}/{ex['id']}"
+   and gk['totals']['score'] >= 8 and gk['totals']['graded'] >= 1,
+   'grades: the exam shows 8 of 10 with its link, and the course totals count it', gk and gk['totals'])
+drill = gk and next((r_ for r_ in gk['rows'] if r_['mode'] == 'practice'), None)
+ok(gk and gk['totals']['all'] == len([r_ for r_ in gk['rows'] if r_['mode'] != 'practice']) and drill is not None, 'grades: practice is listed but never counted', gk and gk['totals'])
+s, r = mentor('/api/grades')
+ok(s == 403, 'grades are the student view only', s)
+
+s, r = stud('/api/me/verify-email', 'POST')
+ok(s == 200, 'resend verification answers alike (non-enumerable)', r)
+s, r = stud('/api/me/email', 'POST', {'newEmail': f'moved{RUN}@example.com', 'password': 'wrong-pass-1A!'})
+ok(s == 400, 'change email: a wrong password is refused', (s, r))
+s, r = stud('/api/me/email', 'POST', {'newEmail': f'moved{RUN}@example.com', 'password': 'Str0ng-pass-123!'})
+time.sleep(1.5)
+msgs = req(MAIL + '/api/v1/messages')[1]['messages']
+mm = next((m for m in msgs if any(t['Address'] == f'moved{RUN}@example.com' for t in m['To'])), None)
+link = mm and re.search(r'(/confirm-email-change\?token=\S+)', req(f"{MAIL}/api/v1/message/{mm['ID']}")[1]['Text'])
+ok(s == 200 and link, 'change email: the link goes to the new address, /confirm-email-change', (r, mm and mm['To']))
+tok = link.group(1).split('token=')[1]
+s, r = stud('/api/auth/email-change', 'POST', {'token': tok})
+s2, me_ = stud('/api/me')
+s3, r3 = Bff()('/api/auth/email-change', 'POST', {'token': tok})
+ok(s == 200 and r['email'] == f'moved{RUN}@example.com' and me_['email'] == f'moved{RUN}@example.com' and me_['emailVerified'] and s3 == 400,
+   'confirm: the address changes, verified; the link works once', (r, me_.get('email'), s3))
+other = Bff()
+s, r = other('/api/auth/login', 'POST', {'login': student_u, 'password': 'Str0ng-pass-123!'})
+s2, r2 = stud('/api/auth/logout-all', 'POST')
+s3, r3 = other('/api/me')
+s4, r4 = stud('/api/me')
+ok(s == 200 and s2 == 200 and s3 == 401 and s4 == 401, 'log out everywhere: every session of mine ends', (s, s2, s3, s4))
+stud('/api/auth/login', 'POST', {'login': student_u, 'password': 'Str0ng-pass-123!'})
+
 s, r = stud('/api/auth/logout', 'POST')
 s, r = stud('/api/dashboard/mentee')
 ok(s == 401, 'logged out user gets 401', r)

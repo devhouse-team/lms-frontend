@@ -2683,6 +2683,10 @@ export interface components {
              * @description Exams only
              */
             window_source: ("relative" | "override") | null;
+            /** Max Score */
+            max_score: number | null;
+            /** @description Students only: latest counted submission and its review; else null */
+            my_result: components["schemas"]["MyResult"] | null;
         };
         /** CohortCourseAttach */
         CohortCourseAttach: {
@@ -3997,6 +4001,33 @@ export interface components {
             completed_lesson_ids: number[];
             /** Released Lessons */
             released_lessons: number;
+        };
+        /**
+         * MyResult
+         * @description The caller's latest counted submission of an assignment and its review, for a student's grades view.
+         */
+        MyResult: {
+            /** Version */
+            version: number;
+            /**
+             * Submitted At
+             * Format: date-time
+             */
+            submitted_at: string;
+            /** Is Late */
+            is_late: boolean;
+            /**
+             * Score
+             * @description Set by the reviewer; null until reviewed or when no score was given
+             */
+            score: number | null;
+            /**
+             * Feedback
+             * @description The review's feedback; null until reviewed
+             */
+            feedback: string | null;
+            /** Reviewed At */
+            reviewed_at: string | null;
         };
         /** NextDeadline */
         NextDeadline: {

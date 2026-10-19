@@ -9,6 +9,33 @@ Newest first. One entry per merged change: what changed, for whom, and anything 
   requests); "Show inactive" jumps to where they start. Criteria in [cohorts.md](features/cohorts.md#pages-students-assignments-solutions);
   server paging for very large cohorts is [O31](open-items.md).
 
+## 2026-10-19: student area built
+
+- Built per [notifications](features/notifications.md), [grades](features/grades.md) and
+  [profile](features/profile.md) on backend `3b61765` (types regenerated): the bell and panel on every app page,
+  `/notifications` with email switches, the legacy-link redirect middleware, `/grades` (nav "Grades", course sidebar
+  link), `/me` Email / Notifications / Sessions, and `/confirm-email-change` (client-only, like `/accept-invite`).
+  O14 closed. Differences are in each spec's "As built".
+- e2e smoke covers notifications (review, read, read all, email switch, old-link redirects), grades (8 of 10, practice
+  not counted, staff 403) and account settings (resend, change email end to end, log out everywhere).
+
+## 2026-10-19: student area spec (not built)
+
+- New [features/notifications.md](features/notifications.md): a bell with the unread count in every page's navbar
+  (`AppPage`, home), a panel with the latest 20, `/notifications` (latest 100, All / Unread, mark all read) and the
+  per-type email switches (`#email`). Polls every 60 s while the tab is visible and on focus; opening a notification
+  marks it read and switches view when the link needs one. Russian / English type labels and icons; the API's English
+  title is shown under the label. Wrong API links are rewritten in one function (`fixLink`) used by the list and by a
+  server middleware that redirects the same paths for email links. O14 specified; new O29 (backend links, texts,
+  paging).
+- New [features/grades.md](features/grades.md): `/grades` (student nav and course sidebar link): per course, assignment,
+  lesson, mode, status, submitted (attempt, late), score / max, feedback excerpt; totals over graded homework and exams
+  (practice excluded). Needs the backend's `max_score` and `my_result` on `GET /cohorts/{c}/assignments`
+  (2026-10-19); regenerate types. `GET /cohorts/{c}/progress/me` and `GET /enrollments/me` are not needed.
+- [features/profile.md](features/profile.md): `/me` gains Email (resend verification, change email), Notifications
+  (link to email settings) and Sessions (log out on all devices); new public page `/confirm-email-change?token=`
+  (crudauth's default path). New O30 (OAuth-only accounts can't change email).
+
 ## 2026-10-18: student (cohort) invites built
 
 - Built per [features/invites.md](features/invites.md) on backend `d69f872` (migration `a7d1be8a51ca`; types

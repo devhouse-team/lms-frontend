@@ -13,6 +13,7 @@ const { t } = useI18n()
           <UButton v-if="back" :to="back" icon="i-lucide-arrow-left" color="neutral" variant="ghost" size="sm" :aria-label="t('common.back')" />
         </template>
         <template #right>
+          <NotificationBell />
           <slot name="right" />
           <UBadge v-if="mock" :label="t('common.synthetic')" color="neutral" variant="outline" size="sm" />
         </template>

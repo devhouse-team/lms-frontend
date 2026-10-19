@@ -12,6 +12,7 @@ const navByRole: Record<Role, { key: string, icon: string, to: string, all?: boo
     { key: 'home', icon: 'i-lucide-layout-dashboard', to: '/' },
     { key: 'courses', icon: 'i-lucide-book-open', to: '/courses' },
     { key: 'assignments', icon: 'i-lucide-git-pull-request', to: '/assignments' },
+    { key: 'grades', icon: 'i-lucide-graduation-cap', to: '/grades' },
     { key: 'calendar', icon: 'i-lucide-calendar-days', to: '/calendar' },
     { key: 'contest', icon: 'i-lucide-trophy', to: '/contest' },
     { key: 'career', icon: 'i-lucide-briefcase', to: '/career' },
