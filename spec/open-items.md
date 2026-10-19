@@ -17,7 +17,7 @@ Known gaps and undecided questions. Backend items are mirrored in `../backend/sp
 | O11 | Staff can't see earlier submission attempts | BE | | Review detail shows no history. Course content Phase 2: `SubmissionDetail.versions[]` and `trials[]` (backend content.md). |
 | O12 | Mock features lose state on Vercel | FE | | See [mock features](features/mock-features.md). |
 | O13 | ~~One mentor per cohort in the UI~~ | PO | | Decided 2026-10-16: several mentors and reviewers, a mentor per student. See [cohorts](features/cohorts.md). |
-| O14 | Notification links point at paths that don't exist | FE + BE | Notifications | Backend sends `/mentor/submissions/{id}`, `/app/cohorts/…`; the app has `/reviews/{id}`, `/assignments/{c}-{l}`. No notifications UI yet. Course content (Phase 2): backend content.md sends `review_completed`, `exam_opens_soon` and `solution_released` to `/assignments/{c}/{a}`, which this app serves; older types still open. |
+| O14 | Notification links point at paths that don't exist | FE + BE | | Specified 2026-10-19: [notifications](features/notifications.md) (bell, panel, `/notifications`, email switches). `fixLink()` rewrites `/mentor/submissions/{id}` → `/reviews/{id}`, `/app/cohorts/{c}/courses/{course}` → `/courses/{c}/{course}`, `/app/cohorts/{c}/lessons/{l}` → `/assignments/{c}-{l}` in the list, and a server middleware 302s the same paths for links in emails. BE should still send the real paths and add `assignment_id` to `deadline.soon` (O29). Close when built. |
 | O15 | No cohort capacity, timezone or reopening finished cohorts | PO | | Deliberately out of v2 (backend D5 for timezone). |
 | O16 | ~~`/programs` shows one mentor per cohort~~ | FE | | Programs v2 spec lists all mentors (from the cohort list item's `mentors`). |
 | O17 | No student lesson screen | FE | | "Mark complete" in a finished cohort has no UI to disable yet. Specced: [course content](features/course-content.md) Phase 1. |
@@ -32,3 +32,5 @@ Known gaps and undecided questions. Backend items are mirrored in `../backend/sp
 | O26 | Concurrent edits of the same material | PO | | Last write wins; no versioning or "changed by someone else" warning (out of scope). |
 | O27 | "Download all" | FE + BE | | Phase 3 search uses the backend's course search (titles and released text). A zip of a lesson's files is later (backend X14). |
 | O28 | Drive and Loom videos need link sharing | PO | | Can't be checked from the browser; the editor shows a hint. |
+| O29 | Notification texts from the API | BE + PO | | Links fixed in the backend on 2026-10-19 (real app paths; `deadline.soon` carries `assignment_id`); `fixLink` stays for rows created before. Still open: titles/bodies are English-only without parameters to translate (backend D8). |
+| O30 | OAuth-only accounts and email change | BE | | Changing email needs the current password; `UserRead` has no `has_password`, so the profile can't hide the form for accounts without one. |

@@ -111,5 +111,4 @@ checks) and a browser run for the UI-only criteria (prefill, form rules, token s
 
 ## Known gaps
 
-[O3](../open-items.md) per-IP limits see Vercel's IP · no "resend verification" or "change email" UI (the API has
-`/auth/email/verify-request` and `/auth/email/change-*`) · email texts are English only (backend D8)
+[O3](../open-items.md) per-IP limits see Vercel's IP · "resend verification" and "change email" are specified on [My profile](profile.md) (not built) · email texts are English only (backend D8)
