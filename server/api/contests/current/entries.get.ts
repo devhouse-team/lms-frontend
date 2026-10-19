@@ -1,7 +1,7 @@
 import type { ContestEntry } from '~~/shared/types'
 
 export default defineEventHandler(async (event): Promise<ContestEntry[]> => {
-  await requireMockRole(event, 'head', 'all')
+  await requireRole(event, 'head', 'all')
   const c = db.contest
   return [...db.contestRegistrations]
     .map(id => db.users.find(u => u.id === id))

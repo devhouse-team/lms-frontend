@@ -2,7 +2,7 @@ import { z } from 'zod'
 import type { ContestView } from '~~/shared/types'
 
 export default defineEventHandler(async (event): Promise<ContestView> => {
-  await requireMockRole(event, 'head', 'all')
+  await requireRole(event, 'head', 'all')
   const c = db.contest
   const body = z.object({
     results: z.array(z.object({ menteeId: z.string(), solved: z.number().int().min(0).max(c.problems) })).max(500)
