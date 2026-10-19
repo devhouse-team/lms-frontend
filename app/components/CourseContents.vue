@@ -16,7 +16,9 @@ const { short } = useCohortFormat()
 const base = computed(() => `/courses/${props.outline.cohort.id}/${props.outline.id}`)
 const footer = computed(() => [
   { to: `${base.value}/materials`, icon: 'i-lucide-layers', label: t('byType.title'), current: props.byType },
-  { to: `/calendar?cohort=${props.outline.cohort.id}`, icon: 'i-lucide-calendar-days', label: t('calendar.title'), current: false }
+  { to: `/calendar?cohort=${props.outline.cohort.id}`, icon: 'i-lucide-calendar-days', label: t('calendar.title'), current: false },
+  // Students only: staff have no grades of their own here
+  ...(props.outline.staff ? [] : [{ to: `/grades?cohort=${props.outline.cohort.id}#course-${props.outline.id}`, icon: 'i-lucide-graduation-cap', label: t('grades.title'), current: false }])
 ])
 /**
  * Expanded: the current module and the next one (else the last open module and the next); what the reader opened or

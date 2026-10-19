@@ -1,12 +1,21 @@
 # Notifications
 
 **Roles:** everyone (students get most types, mentors and reviewers get `submission_created`) · **Data:** API ·
-**Status:** spec, not built (2026-10-19)
+**Status:** built (2026-10-19)
 
 The API already writes an in-app notification for every event a user cares about and emails it unless they opted out.
 This feature shows them: a bell with the unread count on every page, a panel with the latest ones, a full list at
 `/notifications`, and the per-type email switches. Success: a student sees "Работа проверена" within a minute of the
 review, one click lands on the assignment, and the badge goes down. Closes [O14](../open-items.md).
+
+### As built
+
+- `fixLink` lives in `shared/utils/notificationLink.ts` with `isLegacyLink`; its self-check is
+  `scripts/notification-link.check.ts` (beside the other `*.check.ts`), run with `node --experimental-strip-types`.
+- Times use `useCountdown().relative` (`Intl.RelativeTimeFormat`, numeric auto: "2 часа назад", "позавчера") under 7 days,
+  then the `short` date; no `notifications.time.*` keys.
+- The bell is a `UChip` over a ghost button inside the `USlideover` trigger; polling lives in `useNotifications().poll()`,
+  called by the bell. `PUT /api/notifications/preferences` needed `ApiOptions.body` to accept arrays.
 
 ## Screens
 
@@ -175,22 +184,22 @@ spans; add the keys only if it doesn't.
 Verified by `npm run typecheck` and, against a local backend, `scripts/e2e-smoke.py` extended for items marked (e2e);
 the rest by the manual browser check the item describes.
 
-- [ ] The bell shows on every app page (home, lists, course pages) and nowhere on auth pages.
-- [ ] After a mentor reviews a student's homework, the student's badge shows 1 within 60 s without reloading, and the
-      panel's top row reads "Работа проверена" with the API title. (e2e: `GET /api/notifications` → `unread: 1`,
+- [x] The bell shows on every app page (home, lists, course pages) and nowhere on auth pages. ✓ browser
+- [x] After a mentor reviews a student's homework, the student's badge shows 1 within 60 s without reloading, and the
+      panel's top row reads "Работа проверена" with the API title. (e2e: `GET /api/notifications` → `unread: 1`, ✓ e2e (API) + browser (badge and panel)
       `items[0].type = review_completed`, `to = /assignments/{c}/{a}`)
 - [ ] Clicking that row lands on the assignment page and the badge drops to 0; reloading keeps it at 0. (e2e: read → unread 0)
-- [ ] A hidden tab makes no `/api/notifications` requests; returning to it refreshes at once.
-- [ ] "Mark all as read" sets the badge to 0 and the "Unread" tab shows "You're all caught up". (e2e)
-- [ ] `fixLink`: `/mentor/submissions/7` → `/reviews/7`, `/app/cohorts/3/courses/5` → `/courses/3/5`,
+- [x] A hidden tab makes no `/api/notifications` requests; returning to it refreshes at once. ✓ browser (65 s hidden: 0 requests; visible: 1)
+- [x] "Mark all as read" sets the badge to 0 and the "Unread" tab shows "You're all caught up". (e2e) ✓ e2e
+- [x] `fixLink`: `/mentor/submissions/7` → `/reviews/7`, `/app/cohorts/3/courses/5` → `/courses/3/5`, ✓ `scripts/notification-link.check.ts`
       `/app/cohorts/3/lessons/9` → `/assignments/3-9`, `/assignments/3/4` unchanged, `https://x` and `//x` → `null`.
       (a `shared/utils/notificationLink.check.ts` beside the other `*.check.ts` scripts)
-- [ ] Opening `/mentor/submissions/7` and `/app/cohorts/3/courses/5` directly (as from an email) redirects (302); `/mentor`
-      still shows the mentor page. (e2e: status and `Location`)
+- [x] Opening `/mentor/submissions/7` and `/app/cohorts/3/courses/5` directly (as from an email) redirects (302); `/mentor`
+      still shows the mentor page. (e2e: status and `Location`) ✓ e2e
 - [ ] A user with mentor and student views, in the student view, clicking a `submission_created` row lands on
       `/reviews/{id}` in the mentor view.
-- [ ] A student's email section lists six switches (no "New submission to review"); turning "Due tomorrow" off survives
-      a reload (e2e: PUT then GET shows `deadline_soon: false`); a failing save flips the switch back with a toast.
+- [x] A student's email section lists six switches (no "New submission to review"); turning "Due tomorrow" off survives
+      a reload (e2e: PUT then GET shows `deadline_soon: false`); a failing save flips the switch back with a toast. ✓ e2e (PUT / GET) + browser (six switches); the flip-back on error not checked
 - [ ] Russian counts read correctly for 1, 2, 5 and 21 unread (bell label and page header).
 - [ ] Screen reader: the bell reads "Уведомления, непрочитанных: 3"; a new notification is announced once.
 

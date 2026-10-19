@@ -20,9 +20,9 @@ contract is `../backend/openapi.json` (types in `shared/types/api.d.ts`).
 | [Password reset and email verification](features/account-recovery.md) | everyone | API |
 | [Cohorts](features/cohorts.md) | head, mentor, student | API |
 | [People](features/people.md): list and per-person profile | head | API |
-| [My profile](features/profile.md): own account, name, username, password; account settings (spec, not built): change email, resend verification, log out everywhere | everyone | API |
-| [Notifications](features/notifications.md) (spec, not built): bell with unread count, panel, `/notifications`, email switches | everyone | API |
-| [My grades](features/grades.md) (spec, not built): `/grades`, per-course results and totals | student | API |
+| [My profile](features/profile.md): own account, name, username, password; account settings: change email, resend verification, log out everywhere | everyone | API |
+| [Notifications](features/notifications.md): bell with unread count, panel, `/notifications`, email switches | everyone | API |
+| [My grades](features/grades.md): `/grades`, per-course results and totals | student | API |
 | [Programs](features/programs.md) | head, program lead; student and mentor read-only | API |
 | [Assignments](features/assignments.md) | head, mentor, student | API |
 | [Reviews](features/reviews.md) | mentor, student | API |

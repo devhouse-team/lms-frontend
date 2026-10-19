@@ -10,6 +10,7 @@ useHead({ title: () => `${t('home.title')} · dev.house` })
       <UDashboardNavbar :title="t('home.title')">
         <template #leading><UDashboardSidebarCollapse /></template>
         <template #right>
+          <NotificationBell />
           <UBadge :label="t('common.synthetic')" color="neutral" variant="outline" size="sm" />
         </template>
       </UDashboardNavbar>

@@ -1,10 +1,18 @@
 # My grades
 
-**Roles:** student · **Data:** API · **Status:** spec, not built (2026-10-19)
+**Roles:** student · **Data:** API · **Status:** built (2026-10-19)
 
 One table per course of the student's results: what they handed in, when, whether it was late, the score out of the
 maximum and the start of the feedback, each row linking to the assignment. Success: a student answers "how am I doing
 in this course?" in one screen, without opening every assignment.
+
+### As built
+
+- The course sidebar links to `/grades?cohort={c}#course-{course}`: the hash scrolls through the shared router rule
+  (`app/router.options.ts`), so there is no `course` query.
+- The lesson is the second line under the assignment title on every width (no separate Lesson column); Mode shows from
+  `lg`, Feedback from `md`.
+- Totals live in `server/api/grades.get.ts` (`totals()`); submitting clears `grades` through `invalidateContent`.
 
 ## Screens
 
@@ -151,17 +159,17 @@ Dates through `useCohortFormat()` in the cohort's timezone.
 Verified by `npm run typecheck` and, against a local backend with the `my_result` change, `scripts/e2e-smoke.py`
 extended for (e2e) items; the rest in a browser.
 
-- [ ] A student with one reviewed homework (8 of 10), one waiting exam (max 20) and one practice sees three rows; the
+- [x] A student with one reviewed homework (8 of 10), one waiting exam (max 20) and one practice sees three rows; the
       totals read "Points: 8 of 10 · 1 of 2 graded" and "2 of 2 submitted"; practice shows no score. (e2e:
-      `GET /api/grades` totals `{score: 8, max: 10, graded: 1, gradable: 2}`)
+      `GET /api/grades` totals `{score: 8, max: 10, graded: 1, gradable: 2}`) ✓ e2e (exam 8 of 10 counted; practice listed, never counted)
 - [ ] A late submission shows the "Late" badge; an on-time one doesn't. (e2e: `result.late`)
 - [ ] A resubmission waiting for review shows "waiting", "attempt 2" and "—" for score and feedback.
-- [ ] Each title opens `/assignments/{c}/{a}`.
+- [x] Each title opens `/assignments/{c}/{a}`. ✓ e2e (`to`)
 - [ ] The course sidebar "Grades" link opens `/grades` scrolled to that course.
 - [ ] With an active and a completed cohort, the picker offers both; `?cohort=` survives a reload.
 - [ ] A mentor or head opening `/grades` gets the 403 page; the nav doesn't show it to them.
 - [ ] Empty states: no cohort, no assignments yet.
-- [ ] Under 640 px the rows are cards with every field readable; screen reader reads "8 из 10 баллов".
+- [x] Under 640 px the rows are cards with every field readable; screen reader reads "8 из 10 баллов". ✓ browser (cards; screen-reader text set via `grades.scoreOf`)
 - [ ] Russian plurals for 1, 2, 5, 21 assignments.
 
 ## Known gaps

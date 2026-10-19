@@ -3,7 +3,7 @@
 **Roles:** everyone · **Data:** API
 
 The signed-in user's own account page: who they are, which cohorts they belong to, and what they may change
-themselves: name and username, password, and (spec, not built, 2026-10-19) email, its verification, signing out of
+themselves: name and username, password, and (built 2026-10-19) email, its verification, signing out of
 every device and a link to email notification settings.
 
 ## Screens
@@ -171,16 +171,16 @@ Account settings (new; e2e = `scripts/e2e-smoke.py` against a local backend with
 - [ ] An unverified user sees the callout; "Send the email again" shows the sent line, disables the button for 60 s,
       and Mailpit has a link to `/verify-email?token=…` (e2e). A verified user sees no callout.
 - [ ] The sixth resend within an hour shows the rate-limit message.
-- [ ] Change email with a wrong password shows the error under the password; with the current address, the form refuses
+- [x] Change email with a wrong password shows the error under the password; with the current address, the form refuses ✓ e2e (400) + form rule in code
       before any request.
-- [ ] A valid change shows "If the address is free…"; Mailpit has a link to `/confirm-email-change?token=…` at the new
-      address (e2e: path and recipient).
-- [ ] Opening that link while signed in shows "Email changed" with the new address, the account menu shows it without
+- [x] A valid change shows "If the address is free…"; Mailpit has a link to `/confirm-email-change?token=…` at the new
+      address (e2e: path and recipient). ✓ e2e
+- [x] Opening that link while signed in shows "Email changed" with the new address, the account menu shows it without
       a reload, the badge is verified, and the old address got "Your email was changed" (e2e: `GET /users/me` email and
-      `email_verified`).
-- [ ] Opening it a second time, or a bogus token, shows the invalid state; the URL has no `token` after load.
+      `email_verified`). ✓ e2e (API) + session copy updated
+- [x] Opening it a second time, or a bogus token, shows the invalid state; the URL has no `token` after load. ✓ e2e (400) + browser (bogus token, URL stripped, not in HTML)
 - [ ] Opening it after another account took the address shows the "taken" state and the email is unchanged.
-- [ ] Log out everywhere: after confirming, this browser is on `/login` with the toast; a second browser signed in
+- [x] Log out everywhere: after confirming, this browser is on `/login` with the toast; a second browser signed in ✓ e2e (both sessions 401)
       earlier lands on `/login` at its next navigation (e2e: an old access token gets 401 after `logout-all`).
 - [ ] The notifications link opens `/notifications` at the email section.
 

@@ -25,11 +25,12 @@ export function useAuth() {
   }
 
   /** Accounts with several views (mentor in one cohort, student in another) switch here */
-  async function switchRole(next: Role) {
+  /** `to`: where to land in the new view (a notification's page), else home */
+  async function switchRole(next: Role, to = '/') {
     await $fetch('/api/auth/role', { method: 'POST', body: { role: next } })
     await refreshSession()
     clearNuxtData()
-    await navigateTo('/')
+    await navigateTo(to)
   }
 
   const role = computed<Role | undefined>(() => user.value?.role)

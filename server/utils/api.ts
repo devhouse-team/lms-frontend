@@ -15,7 +15,7 @@ type Query = Record<string, string | number | boolean | null | undefined | (stri
 export interface ApiOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   query?: Query
-  body?: Record<string, unknown> | URLSearchParams | FormData
+  body?: Record<string, unknown> | unknown[] | URLSearchParams | FormData
 }
 
 /** Backend codes the pages treat as "already exists / already done" (409 in the old mock API) */

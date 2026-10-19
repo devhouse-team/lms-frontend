@@ -11,8 +11,8 @@ export default defineNuxtConfig({
   app: { head: { link: [{ rel: 'icon', href: '/favicon.ico' }] } },
   modules: ['@nuxt/ui', '@nuxt/fonts', '@nuxtjs/i18n', 'nuxt-auth-utils'],
   css: ['~/assets/css/main.css'],
-  // The invite token is in this page's URL; rendered on the server, Nuxt would copy the URL into the HTML payload
-  routeRules: { '/accept-invite': { ssr: false } },
+  // These pages carry a one-time token in their URL; rendered on the server, Nuxt would copy the URL into the HTML payload
+  routeRules: { '/accept-invite': { ssr: false }, '/confirm-email-change': { ssr: false } },
   typescript: {
     tsConfig: { compilerOptions: STRICT_FLAGS },
     sharedTsConfig: { compilerOptions: STRICT_FLAGS },

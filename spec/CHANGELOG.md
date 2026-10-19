@@ -2,6 +2,16 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-10-19: student area built
+
+- Built per [notifications](features/notifications.md), [grades](features/grades.md) and
+  [profile](features/profile.md) on backend `3b61765` (types regenerated): the bell and panel on every app page,
+  `/notifications` with email switches, the legacy-link redirect middleware, `/grades` (nav "Grades", course sidebar
+  link), `/me` Email / Notifications / Sessions, and `/confirm-email-change` (client-only, like `/accept-invite`).
+  O14 closed. Differences are in each spec's "As built".
+- e2e smoke covers notifications (review, read, read all, email switch, old-link redirects), grades (8 of 10, practice
+  not counted, staff 403) and account settings (resend, change email end to end, log out everywhere).
+
 ## 2026-10-19: student area spec (not built)
 
 - New [features/notifications.md](features/notifications.md): a bell with the unread count in every page's navbar
