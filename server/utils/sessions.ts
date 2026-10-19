@@ -22,7 +22,7 @@ export function mentorSessions(mentorId: string, now = Date.now(), weeks = 3): S
     with: c.name,
     at: new Date(nextThursday1900(now) + w * WEEK_MS).toISOString()
   })))
-  const mentees = db.users.filter(u => cohorts.some(c => c.id === u.cohortId)).slice(0, 3)
+  const mentees = db.users.filter(u => u.role === 'mentee' && cohorts.some(c => c.id === u.cohortId)).slice(0, 3)
   const ones = mentees.map((m, i) => ({
     id: `o-${m.id}`,
     kind: 'one' as const,
