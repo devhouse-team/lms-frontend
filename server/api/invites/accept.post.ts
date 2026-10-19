@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { components } from '~~/shared/types/api'
 import type { AuthResponse } from '~~/shared/types'
 
 const body = z.object({
@@ -8,9 +9,13 @@ const body = z.object({
   password: z.string().min(8).max(128)
 })
 
-/** Create the invited account, then sign straight in with it */
-export default defineEventHandler(async (event): Promise<AuthResponse> => {
+/**
+ * Create the invited account (a cohort invite also enrolls it), then sign straight in with it. `cohortId` tells the page
+ * where to land: the cohort's courses, or home for a role invite.
+ */
+export default defineEventHandler(async (event): Promise<AuthResponse & { cohortId: string | null }> => {
   const data = await readValidatedBody(event, body.parse)
-  await apiPublic(event, '/invites/accept', { method: 'POST', body: data })
-  return signIn(event, data.username, data.password)
+  const res = await apiPublic<components['schemas']['InviteAccepted']>(event, '/invites/accept', { method: 'POST', body: data })
+  const cohortId = res?._data?.cohort_id
+  return { ...await signIn(event, data.username, data.password), cohortId: cohortId ? String(cohortId) : null }
 })

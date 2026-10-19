@@ -551,16 +551,38 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List Invites
-         * @description Invites, newest first.
+         * List All Invites
+         * @description Invites, newest first: `{data: InviteRead[], total_count, has_more}`.
+         *
+         *     Role invites only unless `kind=cohort` or `cohort_id` is given; revoked ones only with `status=revoked`.
          */
-        get: operations["list_invites"];
+        get: operations["list_all_invites"];
         put?: never;
         /**
          * Invite User
          * @description Email a one-time link that creates an account with the given role. Expires in 7 days.
          */
         post: operations["invite_user"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/invites/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview
+         * @description What an invite link is for (role, or cohort and program). Public, rate-limited; the token is the credential.
+         */
+        get: operations["preview"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -578,9 +600,49 @@ export interface paths {
         put?: never;
         /**
          * Accept
-         * @description Create the invited account. Public: the token is the credential.
+         * @description Create the invited account (and its cohort enrollment). Public: the token is the credential.
          */
         post: operations["accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/invites/{invite_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke
+         * @description Make the link unusable. `invite.create` holders, and enrollment managers for a cohort invite.
+         */
+        delete: operations["revoke"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/invites/{invite_id}/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resend
+         * @description New link and expiry, emailed again; the old link stops working.
+         */
+        post: operations["resend"];
         delete?: never;
         options?: never;
         head?: never;
@@ -953,9 +1015,10 @@ export interface paths {
         put?: never;
         /**
          * Import Enrollments
-         * @description Enroll existing users from a CSV with an ``email`` column (case-insensitive, at most 2000 rows).
+         * @description Enroll students from a CSV with an ``email`` column (case-insensitive, at most 2000 rows).
          *
-         *     Unknown emails are reported, not created; dropped students are reactivated; staff are skipped.
+         *     Existing accounts are enrolled (dropped students reactivated, staff skipped); emails without an account get a
+         *     cohort invite (`invited`, or `resent` when one is open). `unknown` lists invalid emails.
          */
         post: operations["import_enrollments"];
         delete?: never;
@@ -1024,6 +1087,32 @@ export interface paths {
         post?: never;
         /** Unassign Mentor */
         delete: operations["unassign_mentor"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cohorts/{cohort_id}/invites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Cohort Invites
+         * @description Pending and expired invites of this cohort, for its enrollment managers.
+         */
+        get: operations["list_cohort_invites"];
+        put?: never;
+        /**
+         * Invite To Cohort
+         * @description Invite students by email (at most 200).
+         *
+         *     Existing accounts are enrolled; the rest get a link that creates the account and enrolls them.
+         */
+        post: operations["invite_to_cohort"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2719,6 +2808,46 @@ export interface components {
              */
             courses_attached: number;
         };
+        /** CohortInvites */
+        CohortInvites: {
+            /** Emails */
+            emails: string[];
+        };
+        /** CohortInvitesResult */
+        CohortInvitesResult: {
+            /**
+             * Invited
+             * @description No account: invite created and emailed
+             */
+            invited: string[];
+            /**
+             * Resent
+             * @description No account: the open invite got a new link and expiry
+             */
+            resent: string[];
+            /**
+             * Enrolled
+             * @description Had an account: enrolled directly
+             */
+            enrolled: string[];
+            /**
+             * Reactivated
+             * @description Had a dropped enrollment: active again
+             */
+            reactivated: string[];
+            /** Already Enrolled */
+            already_enrolled: string[];
+            /**
+             * Skipped Staff
+             * @description Staff of this cohort or lead of its program
+             */
+            skipped_staff: string[];
+            /**
+             * Invalid
+             * @description Not an email, or the address of a deactivated account
+             */
+            invalid: string[];
+        };
         /** CohortListItem */
         CohortListItem: {
             /** Id */
@@ -2798,6 +2927,13 @@ export interface components {
             week: number;
             /** Total Weeks */
             total_weeks: number;
+        };
+        /** CohortRef */
+        CohortRef: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
         };
         /** CohortSolutionRead */
         CohortSolutionRead: {
@@ -3155,33 +3291,31 @@ export interface components {
          * @enum {string}
          */
         FileStatus: "pending" | "uploaded";
-        /**
-         * GetMultiResponseDict
-         * @description Response type for get_multi when return_as_model=False.
-         *
-         *     Note: This assumes the default multi_response_key="data".
-         *     If using a custom multi_response_key, the actual key will differ.
-         */
-        GetMultiResponseDict: {
-            /** Data */
-            data: {
-                [key: string]: unknown;
-            }[];
-            /** Total Count */
-            total_count?: number;
-        };
         /** ImportResult */
         ImportResult: {
             /** Enrolled */
             enrolled: string[];
             /** Already Enrolled */
             already_enrolled: string[];
-            /** Unknown */
+            /**
+             * Unknown
+             * @description Invalid emails, or ones of deactivated accounts
+             */
             unknown: string[];
             /** Reactivated */
             reactivated: string[];
             /** Skipped Staff */
             skipped_staff: string[];
+            /**
+             * Invited
+             * @description No account yet: a cohort invite was emailed
+             */
+            invited: string[];
+            /**
+             * Resent
+             * @description No account yet: the open invite got a new link
+             */
+            resent: string[];
         };
         /** InviteAccept */
         InviteAccept: {
@@ -3197,6 +3331,20 @@ export interface components {
              */
             password: string;
         };
+        /** InviteAccepted */
+        InviteAccepted: {
+            /** Id */
+            id: number;
+            /** Username */
+            username: string;
+            /** Email */
+            email: string;
+            /**
+             * Cohort Id
+             * @description Set for a cohort invite: the student is enrolled there
+             */
+            cohort_id: number | null;
+        };
         /** InviteCreate */
         InviteCreate: {
             /**
@@ -3207,14 +3355,46 @@ export interface components {
             /** Role Id */
             role_id: number;
         };
+        /** InvitePreview */
+        InvitePreview: {
+            /** Email */
+            email: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "role" | "cohort";
+            /**
+             * Role
+             * @description Role name for a role invite
+             */
+            role: string | null;
+            cohort: components["schemas"]["PreviewCohort"] | null;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+        };
         /** InviteRead */
         InviteRead: {
             /** Id */
             id: number;
             /** Email */
             email: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "role" | "cohort";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "accepted" | "expired" | "revoked";
             /** Role Id */
-            role_id: number;
+            role_id: number | null;
+            cohort: components["schemas"]["CohortRef"] | null;
             /** Invited By */
             invited_by: number | null;
             /**
@@ -3224,6 +3404,8 @@ export interface components {
             expires_at: string;
             /** Accepted At */
             accepted_at: string | null;
+            /** Revoked At */
+            revoked_at: string | null;
             /**
              * Created At
              * Format: date-time
@@ -3924,6 +4106,22 @@ export interface components {
             type: components["schemas"]["NotificationType"];
             /** Email */
             email: boolean;
+        };
+        /** PreviewCohort */
+        PreviewCohort: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Program Title */
+            program_title: string;
+            /**
+             * Starts On
+             * Format: date
+             */
+            starts_on: string;
+            /** @description `finished`: accepting will be refused, say so before the form */
+            status: components["schemas"]["CohortStatus"];
         };
         /** ProgramAccess */
         ProgramAccess: {
@@ -5624,11 +5822,14 @@ export interface operations {
             };
         };
     };
-    list_invites: {
+    list_all_invites: {
         parameters: {
             query?: {
                 offset?: number;
                 limit?: number;
+                kind?: "role" | "cohort";
+                cohort_id?: number | null;
+                status?: ("pending" | "accepted" | "expired" | "revoked")[] | null;
             };
             header?: never;
             path?: never;
@@ -5642,7 +5843,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GetMultiResponseDict"];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Error envelope; translate `error.message_key` */
@@ -5689,6 +5892,37 @@ export interface operations {
             };
         };
     };
+    preview: {
+        parameters: {
+            query: {
+                token: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitePreview"];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     accept: {
         parameters: {
             query?: never;
@@ -5708,9 +5942,67 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["InviteAccepted"];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    revoke: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invite_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    resend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invite_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteRead"];
                 };
             };
             /** @description Error envelope; translate `error.message_key` */
@@ -6723,6 +7015,72 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_cohort_invites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cohort_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteRead"][];
+                };
+            };
+            /** @description Error envelope; translate `error.message_key` */
+            "4XX": {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    invite_to_cohort: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cohort_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CohortInvites"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CohortInvitesResult"];
+                };
             };
             /** @description Error envelope; translate `error.message_key` */
             "4XX": {

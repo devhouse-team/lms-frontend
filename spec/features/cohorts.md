@@ -17,9 +17,9 @@ types win and this spec gets corrected.
 | Route | Who | What it shows / does |
 |---|---|---|
 | `/cohorts` | head | Status filter (Active, Planned, Finished; Active + Planned by default), cohorts table, "Create cohort". |
-| `/cohorts/[id]` | head | Header (name, program, status, dates, week), status-dependent actions, Staff, Roster, Add students, [Assignments](assignments.md). Read-only banner when finished. |
+| `/cohorts/[id]` | head | Header (name, program, status, dates, week), status-dependent actions, Staff, Roster, Add students, Invited ([invites](invites.md#cohortsid-invited-section-new)), [Assignments](assignments.md). Read-only banner when finished. |
 | Cohort modal | head | Create and edit: name, program (create only), start date, end date. |
-| Add students modal | head | One person, or a CSV file with a result report. |
+| Add students modal | head | One person, invite by email ([invites](invites.md)), or a CSV file with a result report. |
 | `/cohort` | mentor, reviewer | Every cohort they staff: header, roster (read-only), assignments. Finished cohorts collapsed. |
 | `/`, `/assignments`, `/assignments/[id]` | student | A finished cohort's work stays readable; submitting is closed. See [Student side](#student-side) and [dashboards](dashboards.md). |
 
@@ -163,7 +163,8 @@ types win and this spec gets corrected.
 
 ### Add students modal
 
-Two tabs.
+Three tabs: "One person", "Invite by email" ([invites](invites.md#add-students--invite-by-email-new)),
+"CSV file".
 
 **One person**: searchable select over `/api/people/options` (fetched when the modal first opens, not when the page
 loads). Lists everyone except this cohort's staff and students enrolled here as active, paused or completed.
@@ -171,7 +172,7 @@ Dropped students of this cohort are listed with the suffix "(dropped, re-add)". 
 added" or, when the API reactivated a dropped enrollment, "{name} re-added". The modal closes; the roster refreshes.
 
 **CSV file**: file input (`.csv`, `text/csv`), help: "UTF-8. One email per line, or a column named `email`. Up to
-2000 rows. Only people who already have an account are added." Client checks before upload: a file is chosen, size
+2000 rows. People with an account are added; the others get an invite by email." Client checks before upload: a file is chosen, size
 ≤ 1 MB. "Import" uploads; then the modal shows the report instead of the form:
 
 | Group (API field) | Text |
@@ -179,11 +180,14 @@ added" or, when the API reactivated a dropped enrollment, "{name} re-added". The
 | `enrolled` | "Added: {n}" |
 | `reactivated` | "Re-added (were dropped): {n}" |
 | `already_enrolled` | "Already in this cohort: {n}" |
-| `unknown` | "No account with this email: {n}". These people need to register first (O2). "Copy emails" copies the list, one per line. |
+| `invited` | "Invited: {n}". No account: a cohort invite was emailed ([invites](invites.md)). |
+| `resent` | "Invite re-sent: {n}". Had an open invite to this cohort; new link and expiry. |
+| `unknown` | "Not a valid email or account deactivated: {n}". "Copy emails" copies the list, one per line. |
 | `skipped_staff` | "Skipped, on this cohort's staff: {n}" |
 
 Each group with n > 0 expands to its email list; groups with 0 are hidden; all zero → "The file had no emails."
-Buttons: "Import another file" (back to the form) and "Done". The roster refreshes as soon as the report arrives.
+Buttons: "Import another file" (back to the form) and "Done". The roster (and, with cohort invites, the Invited
+section) refreshes as soon as the report arrives.
 
 ### `/cohort` (mentor and reviewer)
 
@@ -222,7 +226,8 @@ The page reads `status` from the API (never from dates) and applies:
 | Edit (modal) | yes | yes, start date locked | hidden |
 | Finish / Cancel cohort | Cancel | Finish | hidden |
 | Delete | only with an empty roster | hidden | hidden |
-| Add students (one / CSV) | yes | yes | hidden |
+| Add students (one / invite by email / CSV) | yes | yes | hidden |
+| Invited section: resend / revoke ([invites](invites.md)) | both | both | revoke only |
 | Roster row menu (status, move) | yes | yes | hidden |
 | Mentor select, bulk bar, Auto-assign | yes | yes | hidden (names shown) |
 | Staff add / role / remove | yes | yes | hidden |
@@ -318,6 +323,7 @@ Detail page load errors: 404 → "Cohort not found" empty state; anything else �
 | `cohort-options` | Move dialog (on first open) | Planned + active cohorts |
 | `cohort:<id>` | `/cohorts/[id]` | Header, staff, assignments |
 | `cohort-roster:<id>` | `/cohorts/[id]` | Roster rows |
+| `cohort-invites:<id>` | `/cohorts/[id]` | Pending + expired cohort invites ([invites](invites.md#cache-keys)) |
 | `cohorts-mine` | `/cohort` | Mentor's cohorts with rosters |
 | `people-options` | Add students, Add staff (on first open) | Light user list for pickers |
 | `program-options` | Cohort modal (on open) | Active programs for the picker ([programs](programs.md#cache-keys)); not cleared by cohort mutations |
@@ -334,7 +340,7 @@ After every cohort mutation one helper, `invalidateCohorts()` in `app/utils/`, c
 | Delete | none | Clear `cohort:<id>`, `cohort-roster:<id>`; navigate to `/cohorts` |
 | Staff add / role / remove | `cohort:<id>`, `cohort-roster:<id>` | |
 | Mentor assign / unassign / bulk / auto | `cohort-roster:<id>` | |
-| Enroll, import, status change | `cohort-roster:<id>` | |
+| Enroll, import, status change | `cohort-roster:<id>` | Import and invite by email also `cohort-invites:<id>` |
 | Move | `cohort-roster:<id>` | Clear `cohort-roster:<target>` |
 
 On any mutation error, refetch the affected keys so the UI resets to the server value.
@@ -361,7 +367,8 @@ checks still apply. Pages call only these routes.
 | `DELETE /api/cohorts/[id]/mentors/[menteeId]` | `DELETE /cohorts/{c}/mentors/{mentee}` | `mentor_assignment_not_found` → `{ok}`. (new) |
 | `POST /api/cohorts/[id]/mentors/auto` | `POST /cohorts/{c}/mentors/auto` | → `{assigned: n}` (count of returned assignments). (new) |
 | `POST /api/cohorts/[id]/enrollments` `{userId}` | `POST /cohorts/{c}/enrollments {user_id}` | API 201 → 201 `{result: 'enrolled'}`; API 200 → 200 `{result: 'reactivated'}`. No mentor call any more. |
-| `POST /api/cohorts/[id]/enrollments/import` (multipart `file`) | `POST /cohorts/{c}/enrollments/import` (FormData passed through) | → `ImportReport {enrolled, reactivated, alreadyEnrolled, unknown, skippedStaff}` (email lists). Over 1 MB → `validation_error` before calling. (new) |
+| `POST /api/cohorts/[id]/enrollments/import` (multipart `file`) | `POST /cohorts/{c}/enrollments/import` (FormData passed through) | → `ImportReport {enrolled, reactivated, alreadyEnrolled, unknown, skippedStaff}` (email lists); plus `invited`, `resent` (cohort invites). Over 1 MB → `validation_error` before calling. (new) |
+| `POST /api/cohorts/[id]/invites`, `GET /api/cohorts/[id]/invites` | `POST` / `GET /cohorts/{c}/invites` | See [invites](invites.md#api) |
 | `PATCH /api/enrollments/[id]` `{status}` | `PATCH /enrollments/{id} {status}` | Unchanged. |
 | `POST /api/enrollments/[id]/move` `{cohortId}` | `POST /enrollments/{id}/move {cohort_id}` | → `{enrollmentId, cohortId}` of the target. Replaces enroll-then-drop. (new) |
 | `GET /api/people/options` | `GET /users/` (all pages of 100) | → `{id, name, email, username, avatar}[]`, deleted accounts left out. No per-cohort calls; pickers filter against the cohort's own staff and roster. (new) |
@@ -440,8 +447,8 @@ marked (e2e); the rest by the manual check the item describes.
 - [x] The people list loads when the modal opens, not with the page. ✓ code read
 - [x] Adding a new person shows "{name} added"; re-adding a dropped student shows "{name} re-added" and they're active again (e2e). ✓ e2e-smoke (enrolled / reactivated)
 - [x] The picker doesn't offer staff, or active/paused/completed students of this cohort. ✓ code read
-- [x] A CSV with one new, one dropped, one already enrolled, one unknown and one staff email shows each in its own report group, 1/1/1/1/1 (e2e). ✓ e2e-smoke
-- [x] "Copy emails" copies the unknown emails one per line. ✓ code read
+- [x] A CSV with one new account, one dropped, one already enrolled, one address without an account and one staff email shows each in its own report group: Added, Re-added, Already, Invited (not "unknown"), Skipped staff, 1 each (e2e). ✓ e2e-smoke
+- [x] "Copy emails" copies the invalid emails (`unknown`: not a valid email, or a deactivated account) one per line. ✓ browser (invite tab, same report)
 - [x] A file over 1 MB is refused before upload; a file over 2000 rows shows the `import_too_large` message. ✓ code read
 
 ### `/cohort` (mentor)
@@ -465,7 +472,7 @@ marked (e2e); the rest by the manual check the item describes.
 
 - No capacity limit per cohort (deliberate; add if seats become a product rule).
 - Release, due and finish dates are UTC calendar days (D5): a cohort ends at 05:00 Almaty time.
-- CSV unknown emails are only reported; they can't be invited as students yet (D4, [O2](../open-items.md)).
+- CSV addresses without an account are invited into the cohort ([invites](invites.md); closed D4 and [O2](../open-items.md)).
 - Finished is final: no reopen. A cohort cancelled by mistake is recreated.
 - No course attach/detach or start-offset UI ([O10](../open-items.md)); when built it must warn on active cohorts
   (released lessons may re-lock) and be hidden on finished ones.

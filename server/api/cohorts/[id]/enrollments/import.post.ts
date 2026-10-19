@@ -3,7 +3,7 @@ import type { ImportReport } from '~~/shared/types'
 
 const MAX_BYTES = 1024 * 1024
 
-/** CSV of emails (or an `email` column); only existing accounts are enrolled. The API caps it at 2000 rows. */
+/** CSV of emails (or an `email` column): accounts are enrolled, other addresses invited. The API caps it at 2000 rows. */
 export default defineEventHandler(async (event): Promise<ImportReport> => {
   await requireRole(event, 'head')
   const cohortId = apiId(getRouterParam(event, 'id'))
@@ -13,5 +13,5 @@ export default defineEventHandler(async (event): Promise<ImportReport> => {
   const form = new FormData()
   form.append('file', new Blob([file.data], { type: file.type || 'text/csv' }), file.filename || 'students.csv')
   const r = await apiFetch<components['schemas']['ImportResult']>(event, `/cohorts/${cohortId}/enrollments/import`, { method: 'POST', body: form })
-  return { enrolled: r.enrolled, reactivated: r.reactivated, alreadyEnrolled: r.already_enrolled, unknown: r.unknown, skippedStaff: r.skipped_staff }
+  return { enrolled: r.enrolled, reactivated: r.reactivated, alreadyEnrolled: r.already_enrolled, invited: r.invited, resent: r.resent, unknown: r.unknown, skippedStaff: r.skipped_staff }
 })

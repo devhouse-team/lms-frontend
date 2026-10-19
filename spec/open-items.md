@@ -5,10 +5,10 @@ Known gaps and undecided questions. Backend items are mirrored in `../backend/sp
 | # | Item | Owner | Blocks | Notes |
 |---|---|---|---|---|
 | O1 | Production role ids for `admin` and `mentor` | BE | Invites in prod | No roles endpoint; ids are per database (local had 3/4). Set `NUXT_PUBLIC_ROLE_IDS_*`, or BE adds `GET /roles`. |
-| O2 | No student role to invite with | PO + BE | Student onboarding | Student invites are disabled. Students need an account another way, then the head enrolls them. Related to backend D4. |
+| O2 | ~~No student role to invite with~~ | PO + BE | | Decided 2026-10-18: students are invited into a cohort (cohort invites; backend domain.md "Invites", closes D4). Built 2026-10-18: [invites](features/invites.md). Closed. |
 | O3 | Login lockout and registration limits per IP see Vercel's IP | BE + Ops | Pilot at scale | Nitro sends `X-Forwarded-For`; the API must trust it (`TRUSTED_PROXY_HOPS`) and be reachable only via trusted proxies. Backend D1. |
 | O4 | Deleting an assignment deletes its submissions | BE | | The frontend refuses while submissions exist; the API should too. |
-| O5 | Invites: no preview, copy-link or revoke | BE | | The token is only in the email. |
+| O5 | ~~Invites: no preview, copy-link or revoke~~ | BE + FE | | Backend adds `GET /invites/preview`, `DELETE /invites/{id}`, `POST /invites/{id}/resend`. Built 2026-10-18: [invites](features/invites.md). No copy-link (by design). Closed. |
 | O6 | `GET /users/` has no roles | BE | | People roles are derived from cohort relations; non-superuser admins can't be shown as head. |
 | O7 | One API call per lesson to find assignments | BE | Large cohorts | Roster fan-out is done by `GET /cohorts/{c}/roster`; assignments per lesson are still open. `GET /cohorts/{c}/assignments` is in backend content.md and [course content](features/course-content.md) Phase 2. |
 | O8 | ~~`/verify-email` and `/reset-password` pages~~ | FE | | Done: [account-recovery](features/account-recovery.md). |

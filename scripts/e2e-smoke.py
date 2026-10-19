@@ -135,7 +135,7 @@ ok(s == 200 and sess['user']['role'] == 'head' and 'secure' not in sess, 'sessio
 s, r = head('/api/invites', 'POST', {'email': f'mentor{RUN}@example.com', 'role': 'mentor'})
 ok(s == 201 and r['role'] == 'mentor', 'head invites mentor', r)
 s, r = head('/api/invites', 'POST', {'email': f'x{RUN}@example.com', 'role': 'mentee'})
-ok(s == 422, 'student invite refused without role id', r)
+ok(s == 400, 'no student role invites (students are invited into a cohort)', r)
 
 # Mentor accepts from the emailed link (mailpit)
 time.sleep(1.5)
@@ -148,6 +148,14 @@ s, r = mentor('/api/invites/accept', 'POST', {'token': token, 'name': 'Nurzhan M
 ok(s == 200 and r['role'] == 'mentor', 'mentor accepts invite and is signed in', r)
 s, r = mentor('/api/invites/accept', 'POST', {'token': token, 'name': 'Again', 'username': f'ment{RUN}b', 'password': 'Str0ng-pass-123!'})
 ok(s == 422 and r['statusMessage'] == 'invite_invalid', 'used invite is rejected', r)
+
+def mail_token(email):
+    """Token from the newest invite email to this address (mailpit lists newest first)"""
+    time.sleep(1.2)
+    msgs = req(MAIL + '/api/v1/messages')[1]['messages']
+    mid = next(m['ID'] for m in msgs if any(t['Address'] == email for t in m['To']))
+    return re.search(r'accept-invite\?token=(\S+)', req(f'{MAIL}/api/v1/message/{mid}')[1]['Text']).group(1)
+
 
 def invite_user(email, username, name):
     """A second account without the 5-per-hour registration limit: invite (mentor role, which grants nothing) + accept"""
@@ -165,14 +173,14 @@ def invite_user(email, username, name):
 
 day = lambda offset: time.strftime('%Y-%m-%d', time.gmtime(time.time() + offset * 86400))
 mentor_b = invite_user(f'mentorb{RUN}@example.com', f'mentb{RUN}', 'Aliya Mentor')
-for i in range(2, 6):
+for i in range(2, 7):
     invite_user(f'stud{i}x{RUN}@example.com', f'stud{i}x{RUN}', f'Student {i}')
 
 s, people = head('/api/people/options')
 ok(s == 200 and len(people) >= 7, 'people options for pickers', len(people) if isinstance(people, list) else people)
 uid = {p['username']: p['id'] for p in people}
 A, B, S1 = uid[f'ment{RUN}'], uid[f'mentb{RUN}'], uid[student_u]
-S2, S3, S4, S5 = (uid[f'stud{i}x{RUN}'] for i in range(2, 6))
+S2, S3, S4, S5, S6 = (uid[f'stud{i}x{RUN}'] for i in range(2, 7))
 
 # --- programs v2 (spec programs.md) -------------------------------------------------------
 s, r = head('/api/programs', 'POST', {'title': f'Frontend {RUN}', 'slug': f'frontend-{RUN}', 'description': 'Line one\nLine two', 'durationWeeks': 12})
@@ -313,7 +321,67 @@ boundary = 'b' + RUN
 body = (f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="s.csv"\r\nContent-Type: text/csv\r\n\r\n').encode() + csv + f'\r\n--{boundary}--\r\n'.encode()
 rq = urllib.request.Request(FE + f'/api/cohorts/{cid}/enrollments/import', data=body, method='POST', headers={'Content-Type': f'multipart/form-data; boundary={boundary}', 'Cookie': head.cookie})
 rep = json.loads(urllib.request.urlopen(rq).read())
-ok([len(rep[k]) for k in ('enrolled', 'reactivated', 'alreadyEnrolled', 'unknown', 'skippedStaff')] == [1, 1, 1, 1, 1], 'CSV report 1/1/1/1/1', rep)
+ok([len(rep[k]) for k in ('enrolled', 'reactivated', 'alreadyEnrolled', 'invited', 'resent', 'unknown', 'skippedStaff')] == [1, 1, 1, 1, 0, 0, 1], 'CSV report: an address without an account is invited', rep)
+s, inv_ = head(f'/api/cohorts/{cid}/invites')
+ok(s == 200 and [i['email'] for i in inv_] == [f'nobody{RUN}@example.com'] and inv_[0]['status'] == 'pending', 'the CSV invite shows in the cohort\'s Invited list', inv_)
+rq = urllib.request.Request(FE + f'/api/cohorts/{cid}/enrollments/import', data=body, method='POST', headers={'Content-Type': f'multipart/form-data; boundary={boundary}', 'Cookie': head.cookie})
+rep = json.loads(urllib.request.urlopen(rq).read())
+ok(rep['resent'] == [f'nobody{RUN}@example.com'] and not rep['invited'], 'CSV again: the open invite is re-sent', rep)
+s, r = head(f"/api/invites/{inv_[0]['id']}", 'DELETE')
+ok(s == 200, 'revoke the CSV invite (keeps the roster checks below unchanged)', r)
+
+# --- cohort invites (spec invites.md), in a cohort of their own ----------------------------------------------------
+s, ic_ = head('/api/cohorts', 'POST', {'name': f'INV-{RUN}', 'programId': pid, 'startsOn': day(-1), 'endsOn': day(60)})
+ic = ic_['id']
+for u in (S5, S4):
+    head(f'/api/cohorts/{ic}/enrollments', 'POST', {'userId': u})
+s, roster_i = head(f'/api/cohorts/{ic}/roster')
+head(f"/api/enrollments/{next(x['enrollmentId'] for x in roster_i if x['id'] == S4)}", 'PATCH', {'status': 'dropped'})
+head(f'/api/cohorts/{ic}/staff/{A}', 'PUT', {'role': 'mentor'})
+s, r1 = head(f'/api/cohorts/{ic}/invites', 'POST', {'emails': [f'again{RUN}@example.com']})
+old_again = mail_token(f'again{RUN}@example.com')
+emails = [f'new{RUN}@example.com', f'stud6x{RUN}@example.com', f'stud4x{RUN}@example.com', f'stud5x{RUN}@example.com', f'mentor{RUN}@example.com', f'again{RUN}@example.com', 'not-an-email']
+s, rep = head(f'/api/cohorts/{ic}/invites', 'POST', {'emails': emails})
+ok(s == 200 and [len(rep[k]) for k in ('invited', 'enrolled', 'reactivated', 'alreadyEnrolled', 'skippedStaff', 'resent', 'invalid')] == [1] * 7,
+   'invite by email: one address per outcome (invited, added, re-added, already, staff, re-sent, invalid)', rep)
+s, r = head(f'/api/cohorts/{ic}/invites', 'POST', {'emails': [f'u{i}@x.kz' for i in range(201)]})
+ok(s == 400, 'more than 200 emails refused before the API', s)
+s, lst_i = head(f'/api/cohorts/{ic}/invites')
+ok(s == 200 and sorted(i['email'] for i in lst_i) == sorted([f'new{RUN}@example.com', f'again{RUN}@example.com']) and all(i['status'] == 'pending' for i in lst_i),
+   'Invited list: pending invites only (added people are on the roster)', lst_i)
+s, ppl = head('/api/people')
+ci = next((i for i in ppl['invites'] if i['email'] == f'new{RUN}@example.com'), None)
+ok(s == 200 and ci and ci['kind'] == 'cohort' and ci['cohort']['id'] == str(ic), 'People rail lists the cohort invite with its cohort', ci)
+again_id = next(i['id'] for i in lst_i if i['email'] == f'again{RUN}@example.com')
+s, rs = head(f'/api/invites/{again_id}/resend', 'POST')
+anon = Bff()
+s2, pv_old = anon(f'/api/invites/preview?token={old_again}')
+ok(s == 200 and rs['status'] == 'pending' and s2 == 404 and pv_old['statusMessage'] == 'invite_not_found', 'resend: new link, the old one stops working', (rs, pv_old))
+new_again = mail_token(f'again{RUN}@example.com')
+s, r = head(f'/api/invites/{again_id}', 'DELETE')
+s2, lst_i = head(f'/api/cohorts/{ic}/invites')
+s3, pv = anon(f'/api/invites/preview?token={new_again}')
+ok(s == 200 and again_id not in [i['id'] for i in lst_i] and s3 == 404, 'revoke: gone from the list, the link shows the invalid state', (r, lst_i, pv))
+tok_new = mail_token(f'new{RUN}@example.com')
+s, pv = anon(f'/api/invites/preview?token={tok_new}')
+ok(s == 200 and pv['kind'] == 'cohort' and pv['email'] == f'new{RUN}@example.com' and pv['cohort']['name'] == f'INV-{RUN}' and pv['cohort']['programTitle'] == f'Frontend {RUN}'
+   and pv['cohort']['startsOn'] == day(-1) and pv['cohort']['status'] == 'active' and pv['expiresAt'], 'preview: cohort, program, start, email, expiry', pv)
+s, pv = anon('/api/invites/preview?token=nope')
+ok(s == 404 and pv['statusMessage'] == 'invite_not_found', 'preview of an unknown token: invite_not_found', pv)
+newbie = Bff()
+s, r = newbie('/api/invites/accept', 'POST', {'token': tok_new, 'name': 'New Student', 'username': f'new{RUN}', 'password': 'Str0ng-pass-123!'})
+s2, mc_ = newbie('/api/courses')
+ok(s == 200 and r['role'] == 'mentee' and r['cohortId'] == str(ic) and any(str(g['cohort']['id']) == str(ic) for g in mc_['cohorts']),
+   'accepting a cohort invite signs the student in and their courses show the cohort', (r, mc_))
+s, r = head(f'/api/cohorts/{ic}/invites', 'POST', {'emails': [f'late{RUN}@example.com']})
+tok_late = mail_token(f'late{RUN}@example.com')
+head(f'/api/cohorts/{ic}/finish', 'POST')
+s, pv = anon(f'/api/invites/preview?token={tok_late}')
+s2, r2 = Bff()('/api/invites/accept', 'POST', {'token': tok_late, 'name': 'Late Student', 'username': f'late{RUN}', 'password': 'Str0ng-pass-123!'})
+ok(s == 200 and pv['cohort']['status'] == 'finished' and s2 == 422 and r2['statusMessage'] == 'invite_invalid' and r2['data']['details']['reason'] == 'cohort_finished',
+   'finished cohort: the preview says so and accept is refused with the reason', (pv, r2))
+s, r = head(f'/api/cohorts/{ic}/invites', 'POST', {'emails': [f'later{RUN}@example.com']})
+ok(r.get('statusMessage') == 'cohort_finished', 'no invites into a finished cohort', r)
 
 s, roster = head(f'/api/cohorts/{cid}/roster')
 enr = {x['id']: x['enrollmentId'] for x in roster}

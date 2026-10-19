@@ -25,7 +25,10 @@ const waitingTotal = computed(() => roster.value.reduce((sum, r) => sum + r.wait
 
 const editing = ref(false)
 const adding = ref(false)
-const refreshAll = () => Promise.all([refresh(), refreshRoster()])
+const invitesSection = useTemplateRef<{ refresh: () => Promise<void> }>('invitesSection')
+/** Adding students changes the roster (enrolled, re-added) and the Invited list (invited, re-sent) */
+const refreshPeople = () => Promise.all([refreshRoster(), invitesSection.value?.refresh()])
+const refreshAll = () => Promise.all([refresh(), refreshPeople()])
 
 // ---- finish / cancel / delete --------------------------------------------------
 const dialog = ref<'finish' | 'cancel' | 'delete'>()
@@ -86,7 +89,7 @@ const onStale = () => refreshAll()
     <HomeState v-else :status="status" :has-data="!!data" @retry="refresh()">
       <div v-if="data" class="mx-auto w-full max-w-5xl space-y-8">
         <CohortFormModal v-if="!finished" v-model:open="editing" :cohort="data" @saved="refreshAll()" @stale="onStale" />
-        <AddStudentsModal v-if="!finished" v-model:open="adding" :cohort-id="data.id" :roster="roster" :staff="data.staff" @added="refreshRoster()" @stale="onStale" />
+        <AddStudentsModal v-if="!finished" v-model:open="adding" :cohort-id="data.id" :roster="roster" :staff="data.staff" @added="refreshPeople()" @stale="onStale" />
 
         <header class="space-y-3">
           <div class="flex flex-wrap items-start justify-between gap-4">
@@ -135,6 +138,8 @@ const onStale = () => refreshAll()
           @stale="onStale"
           @add="adding = true"
         />
+
+        <CohortInvites ref="invitesSection" :cohort-id="data.id" :finished="finished" @changed="refreshRoster()" @stale="onStale" />
 
         <CohortAssignments :assignments="data.assignments" :timezone="data.timezone" />
         <CohortExamWindows :cohort-id="data.id" :exams="data.assignments.filter(a => a.mode === 'exam')" :timezone="data.timezone" :manage="!finished" @changed="refresh()" />

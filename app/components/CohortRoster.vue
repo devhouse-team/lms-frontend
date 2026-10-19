@@ -16,7 +16,6 @@ const emit = defineEmits<{ changed: [], stale: [], add: [] }>()
 
 const { t, locale } = useI18n()
 const toast = useToast()
-const now = useNow()
 const { toastError, code } = useCohortErrors()
 
 const NO_MENTOR = '__none'
@@ -187,14 +186,8 @@ const flag = (m: CohortRosterRow) => m.enrollment !== 'active'
   ? { label: t(`enrollment.${m.enrollment}`), color: statusColor[m.enrollment] }
   : m.atRisk ? { label: t('mentor.atRisk'), color: 'error' as const } : null
 
-const rtf = computed(() => new Intl.RelativeTimeFormat(locale.value, { numeric: 'auto' }))
 /** "3 days ago" with the absolute date in the tooltip */
-function relative(iso: string) {
-  const sec = (Date.parse(iso) - now.value) / 1000
-  const steps: [Intl.RelativeTimeFormatUnit, number][] = [['year', 31_536_000], ['month', 2_592_000], ['week', 604_800], ['day', 86_400], ['hour', 3_600], ['minute', 60]]
-  const [unit, size] = steps.find(([, s]) => Math.abs(sec) >= s) ?? ['minute', 60]
-  return rtf.value.format(Math.round(sec / size), unit)
-}
+const { relative } = useCountdown()
 const absolute = (iso: string) => new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso))
 </script>
 

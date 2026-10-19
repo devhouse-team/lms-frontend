@@ -1,5 +1,5 @@
 export function useCountdown() {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const now = useNow()
 
   /** Time until `iso`: "2д 4ч" / "3h 12m" / "5m" */
@@ -33,5 +33,14 @@ export function useCountdown() {
     return now.value - new Date(iso).getTime() > hours * 3_600_000
   }
 
-  return { left, ago, urgent, stale }
+  const rtf = computed(() => new Intl.RelativeTimeFormat(locale.value, { numeric: 'auto' }))
+  /** "3 days ago" / "in 2 hours" in words, for a date with the absolute value in a tooltip */
+  function relative(iso: string) {
+    const sec = (Date.parse(iso) - now.value) / 1000
+    const steps: [Intl.RelativeTimeFormatUnit, number][] = [['year', 31_536_000], ['month', 2_592_000], ['week', 604_800], ['day', 86_400], ['hour', 3_600], ['minute', 60]]
+    const [unit, size] = steps.find(([, s]) => Math.abs(sec) >= s) ?? ['minute', 60]
+    return rtf.value.format(Math.round(sec / size), unit)
+  }
+
+  return { left, ago, urgent, stale, relative }
 }
