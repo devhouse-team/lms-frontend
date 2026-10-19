@@ -54,20 +54,22 @@ async function call(s: CohortSolution, method: 'PUT' | 'DELETE') {
       <div v-if="status === 'pending'" class="space-y-2 border-t border-default p-4"><USkeleton v-for="i in 2" :key="i" class="h-8 w-full" /></div>
       <p v-else-if="status === 'error'" class="border-t border-default px-4 py-4 text-sm text-muted">{{ t('home.loadError') }}</p>
       <p v-else-if="!data.length" class="border-t border-default px-4 py-4 text-sm text-muted">{{ t('solution.none') }}</p>
-      <ul v-else class="divide-y divide-default border-t border-default">
-        <li v-for="s in items" :key="s.materialId" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
-          <div class="min-w-0 flex-1 basis-48">
-            <p class="truncate text-sm text-highlighted">{{ s.title }}</p>
-            <p class="truncate text-xs text-muted">{{ s.assignment.title }}<template v-if="s.lessonTitle"> · {{ s.lessonTitle }}</template></p>
-          </div>
-          <span class="num text-xs" :class="s.isReleased || s.releasedAt ? 'text-success' : 'text-muted'">{{ state(s) }}</span>
-          <template v-if="s.canRelease">
-            <UButton v-if="!s.isReleased && !s.releasedAt" :label="t('solution.releaseNow')" color="neutral" variant="outline" size="xs" @click="releasing = s" />
-            <UButton v-if="s.releasedAt" :label="t('solution.hideAgain')" color="neutral" variant="ghost" size="xs" :loading="busy" @click="call(s, 'DELETE')" />
-          </template>
-        </li>
-      </ul>
-      <ListPager v-model:page="page" :total="total" :size="size" class="border-t border-default px-4 py-2" />
+      <template v-else>
+        <ul class="divide-y divide-default border-t border-default">
+          <li v-for="s in items" :key="s.materialId" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
+            <div class="min-w-0 flex-1 basis-48">
+              <p class="truncate text-sm text-highlighted">{{ s.title }}</p>
+              <p class="truncate text-xs text-muted">{{ s.assignment.title }}<template v-if="s.lessonTitle"> · {{ s.lessonTitle }}</template></p>
+            </div>
+            <span class="num text-xs" :class="s.isReleased || s.releasedAt ? 'text-success' : 'text-muted'">{{ state(s) }}</span>
+            <template v-if="s.canRelease">
+              <UButton v-if="!s.isReleased && !s.releasedAt" :label="t('solution.releaseNow')" color="neutral" variant="outline" size="xs" @click="releasing = s" />
+              <UButton v-if="s.releasedAt" :label="t('solution.hideAgain')" color="neutral" variant="ghost" size="xs" :loading="busy" @click="call(s, 'DELETE')" />
+            </template>
+          </li>
+        </ul>
+        <ListPager v-model:page="page" :total="total" :size="size" class="border-t border-default px-4 py-2" />
+      </template>
     </template>
   </UCollapsible>
   <UModal v-model:open="confirmOpen" :title="t('solution.releaseTitle')">

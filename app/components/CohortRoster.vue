@@ -28,7 +28,8 @@ const inactive = computed(() => props.rows.filter(r => !isCurrent(r)).sort((a, b
 const showInactive = ref(false)
 const visible = computed(() => (showInactive.value ? [...current.value, ...inactive.value] : current.value))
 const { page, items: pageRows, total: visibleTotal, size: pageSize } = usePaged(visible, 25)
-watch(showInactive, () => (page.value = 1))
+/** Showing inactive students jumps to the page where they start (they follow the current ones); hiding them, to page 1 */
+watch(showInactive, on => (page.value = on ? Math.floor(current.value.length / pageSize) + 1 : 1))
 const unassigned = computed(() => current.value.filter(r => !r.mentor).length)
 
 // ---- selection and bulk ------------------------------------------------------

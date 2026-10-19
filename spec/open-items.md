@@ -32,3 +32,4 @@ Known gaps and undecided questions. Backend items are mirrored in `../backend/sp
 | O26 | Concurrent edits of the same material | PO | | Last write wins; no versioning or "changed by someone else" warning (out of scope). |
 | O27 | "Download all" | FE + BE | | Phase 3 search uses the backend's course search (titles and released text). A zip of a lesson's files is later (backend X14). |
 | O28 | Drive and Loom videos need link sharing | PO | | Can't be checked from the browser; the editor shows a hint. |
+| O31 | Server-side paging for large cohorts | BE + FE | Cohorts over a few hundred students | The roster, assignments and solutions come in one call each and page on the client (`usePaged`); fine for cohort sizes today. If a cohort grows to hundreds, the API needs `limit` / `offset` on `GET /cohorts/{c}/roster` and the UI moves the page into the query. |

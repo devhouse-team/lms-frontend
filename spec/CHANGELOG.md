@@ -2,6 +2,13 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-10-19: pages on the cohort page
+
+- Head and program leads, `/cohorts/[id]`: Students page by 25, Assignments and Solutions by 10, with "21–40 of 57" and
+  page buttons (names translated), hidden while one page is enough. Client-side over the lists already loaded (no new
+  requests); "Show inactive" jumps to where they start. Criteria in [cohorts.md](features/cohorts.md#pages-students-assignments-solutions);
+  server paging for very large cohorts is [O31](open-items.md).
+
 ## 2026-10-18: student (cohort) invites built
 
 - Built per [features/invites.md](features/invites.md) on backend `d69f872` (migration `a7d1be8a51ca`; types

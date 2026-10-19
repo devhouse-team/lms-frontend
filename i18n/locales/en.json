@@ -1399,6 +1399,11 @@
     }
   },
   "list": {
-    "range": "{from}–{to} of {total}"
+    "range": "{from}–{to} of {total}",
+    "page": "Page {n}",
+    "first": "First page",
+    "prev": "Previous page",
+    "next": "Next page",
+    "last": "Last page"
   }
 }
