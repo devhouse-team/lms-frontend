@@ -90,9 +90,12 @@ async function sendInvites() {
   } catch (e) {
     const c = code(e) ?? ''
     if (c === 'validation_error') inviteError.value = t('invites.err.validation_error')
-    else if (te(`invites.err.${c}`)) toast.add({ title: t(`invites.err.${c}`), color: 'error', icon: 'i-lucide-circle-alert' })
-    else toastError(e)
+    else if (te(`invites.err.${c}`)) {
+      toast.add({ title: t(`invites.err.${c}`), color: 'error', icon: 'i-lucide-circle-alert' })
+      leaveIfGone(e)
+    } else toastError(e) // leaves the page for cohort_not_found
     if (c === 'cohort_finished') emit('stale')
+    else emit('added') // refetch the roster and the Invited list: someone else may have changed them
   } finally {
     saving.value = false
   }
@@ -180,7 +183,7 @@ async function copyEmails(list: string[]) {
           />
         </UFormField>
         <p v-if="parsed.emails.length" class="num text-xs" :class="tooMany ? 'text-error' : 'text-muted'" aria-live="polite">
-          {{ tooMany ? t('invites.tooMany', { n: parsed.emails.length }) : t('invites.count', parsed.emails.length) + (parsed.dupes ? t('invites.dupes', { d: parsed.dupes }) : '') }}
+          {{ tooMany ? t('invites.tooMany', { n: parsed.emails.length }) : t('invites.count', parsed.emails.length) + (parsed.dupes ? t('invites.dupes', { d: parsed.dupes }, parsed.dupes) : '') }}
         </p>
       </div>
 

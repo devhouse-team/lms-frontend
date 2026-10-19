@@ -16,6 +16,7 @@ const invalidate = () => clearNuxtData(k => k !== props.keep
   && (k === 'people' || k === 'dashboard-head' || (!!props.invite.cohortId && k === `cohort-invites:${props.invite.cohortId}`)))
 
 async function run(action: 'resend' | 'revoke') {
+  if (busy.value) return // a second click from the button or the menu while the first call runs
   busy.value = true
   try {
     await $fetch(`/api/invites/${props.invite.id}${action === 'resend' ? '/resend' : ''}`, { method: action === 'resend' ? 'POST' : 'DELETE' })

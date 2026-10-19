@@ -1362,7 +1362,7 @@
     "emailsHelp": "Separate with commas, spaces or new lines. Up to 200 at a time; for more, use a CSV file. People who already have an account are added straight away; the others get an email with a link valid for 7 days.",
     "placeholder": "ana{'@'}example.com, timur{'@'}example.com",
     "count": "{n} address | {n} addresses",
-    "dupes": ", {d} duplicates removed",
+    "dupes": ", {d} duplicate removed | , {d} duplicates removed",
     "tooMany": "{n} addresses: up to 200 at a time. Split the list or use a CSV file.",
     "send": "Send invites ({n})",
     "more": "Invite more",

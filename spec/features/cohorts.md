@@ -447,8 +447,8 @@ marked (e2e); the rest by the manual check the item describes.
 - [x] The people list loads when the modal opens, not with the page. ✓ code read
 - [x] Adding a new person shows "{name} added"; re-adding a dropped student shows "{name} re-added" and they're active again (e2e). ✓ e2e-smoke (enrolled / reactivated)
 - [x] The picker doesn't offer staff, or active/paused/completed students of this cohort. ✓ code read
-- [x] A CSV with one new, one dropped, one already enrolled, one unknown and one staff email shows each in its own report group, 1/1/1/1/1 (e2e). ✓ e2e-smoke
-- [x] "Copy emails" copies the unknown emails one per line. ✓ code read
+- [x] A CSV with one new account, one dropped, one already enrolled, one address without an account and one staff email shows each in its own report group: Added, Re-added, Already, Invited (not "unknown"), Skipped staff, 1 each (e2e). ✓ e2e-smoke
+- [x] "Copy emails" copies the invalid emails (`unknown`: not a valid email, or a deactivated account) one per line. ✓ browser (invite tab, same report)
 - [x] A file over 1 MB is refused before upload; a file over 2000 rows shows the `import_too_large` message. ✓ code read
 
 ### `/cohort` (mentor)

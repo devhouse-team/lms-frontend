@@ -3,7 +3,7 @@ import type { components } from '~~/shared/types/api'
 import type { InviteReport } from '~~/shared/types'
 
 /** No email check here: the API reports malformed addresses as `invalid`, so there is one rule for what an email is */
-const body = z.object({ emails: z.array(z.string().trim().min(1).max(320)).min(1).max(200) })
+const body = z.object({ emails: z.array(z.string().trim().min(1)).min(1).max(200) })
 
 /** Invite a list of emails into the cohort: accounts are enrolled at once, the rest get an emailed invite */
 export default defineEventHandler(async (event): Promise<InviteReport> => {

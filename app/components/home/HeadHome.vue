@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { t, locale } = useI18n()
+const { user } = useAuth()
 const { data, status, refresh } = useFetch('/api/dashboard/head', { key: 'dashboard-head' })
 const { left } = useCountdown()
 
@@ -40,7 +41,8 @@ const totals = computed(() => {
       </div>
 
       <HomeRail>
-        <section class="p-4" aria-labelledby="invites-title">
+        <!-- A program lead without admin rights can't list invites (the route answers []) -->
+        <section v-if="user?.headScope !== 'programs'" class="p-4" aria-labelledby="invites-title">
           <div class="flex items-baseline justify-between gap-3">
             <h2 id="invites-title" class="text-sm font-semibold text-highlighted">{{ t('head.invites') }}</h2>
             <span class="num text-xs text-muted">{{ data.invites.length }}</span>

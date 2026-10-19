@@ -138,10 +138,9 @@ export interface CohortRow extends CohortTiming {
   backlog: number
 }
 
-/** A pending invite. The link itself is only in the invitee's email. */
 export type InviteStatus = 'pending' | 'expired'
 
-/** A pending or expired invite, as staff see it (never its token) */
+/** A pending or expired invite, as staff see it. The link itself is only in the invitee's email. */
 export interface InvitePublic {
   id: string
   email: string

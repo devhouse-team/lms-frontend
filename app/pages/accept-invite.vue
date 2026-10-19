@@ -121,7 +121,7 @@ async function onSubmit() {
       <UIcon name="i-lucide-circle-alert" class="size-6 text-muted" />
       <h1 class="mt-4 text-2xl font-semibold tracking-tight text-highlighted">{{ problem === 'rate' ? t('invite.problem.rate.title') : t('invite.problem.load.title') }}</h1>
       <p class="mt-2 text-sm text-muted">{{ problem === 'rate' ? t('invite.problem.rate.text') : t('invite.problem.load.text') }}</p>
-      <UButton :label="t('common.retry')" icon="i-lucide-rotate-ccw" color="neutral" variant="outline" class="mt-8" @click="refresh()" />
+      <UButton :label="t('common.retry')" icon="i-lucide-rotate-ccw" color="neutral" variant="outline" class="mt-8" :loading="status === 'pending'" @click="refresh()" />
     </template>
 
     <template v-else-if="preview">
