@@ -49,6 +49,11 @@ types win and this spec gets corrected.
 
 ### `/cohorts/[id]` (detail)
 
+**Pages** (2026-10-19): Students (25 per page; current students, plus inactive ones when shown), Assignments and
+Solutions (10 per page) page on the client (`usePaged`, `ListPager`: "21–40 of 57" and page buttons, hidden while
+everything fits). The API returns each list in one call, so there are no extra requests. "Select all" in the roster
+still selects every current student, not only the page.
+
 **Header**: name; program title; status badge; dates "12 Jan – 13 Jul 2027"; then by status:
 
 | Status | Week line | Actions (right) |

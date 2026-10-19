@@ -1397,5 +1397,8 @@
       "permission_denied": "You can't manage invites for this cohort.",
       "validation_error": "Enter between 1 and 200 emails."
     }
+  },
+  "list": {
+    "range": "{from}–{to} of {total}"
   }
 }

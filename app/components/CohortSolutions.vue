@@ -18,6 +18,7 @@ const { data, status, refresh, execute } = useLazyFetch<CohortSolution[]>(() => 
 watch(open, (o) => {
   if (o && status.value === 'idle') execute()
 })
+const { page, items, total, size } = usePaged(data, 10)
 const fmt = (iso: string) => new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
 function state(s: CohortSolution) {
   if (s.releasedAt) return t('solution.releasedBy', { date: fmt(s.releasedAt), name: s.releasedBy ?? '—' })
@@ -54,7 +55,7 @@ async function call(s: CohortSolution, method: 'PUT' | 'DELETE') {
       <p v-else-if="status === 'error'" class="border-t border-default px-4 py-4 text-sm text-muted">{{ t('home.loadError') }}</p>
       <p v-else-if="!data.length" class="border-t border-default px-4 py-4 text-sm text-muted">{{ t('solution.none') }}</p>
       <ul v-else class="divide-y divide-default border-t border-default">
-        <li v-for="s in data" :key="s.materialId" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
+        <li v-for="s in items" :key="s.materialId" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
           <div class="min-w-0 flex-1 basis-48">
             <p class="truncate text-sm text-highlighted">{{ s.title }}</p>
             <p class="truncate text-xs text-muted">{{ s.assignment.title }}<template v-if="s.lessonTitle"> · {{ s.lessonTitle }}</template></p>
@@ -66,6 +67,7 @@ async function call(s: CohortSolution, method: 'PUT' | 'DELETE') {
           </template>
         </li>
       </ul>
+      <ListPager v-model:page="page" :total="total" :size="size" class="border-t border-default px-4 py-2" />
     </template>
   </UCollapsible>
   <UModal v-model:open="confirmOpen" :title="t('solution.releaseTitle')">
