@@ -1429,6 +1429,14 @@
       "validation_error": "Enter between 1 and 200 emails."
     }
   },
+  "list": {
+    "range": "{from}–{to} of {total}",
+    "page": "Page {n}",
+    "first": "First page",
+    "prev": "Previous page",
+    "next": "Next page",
+    "last": "Last page"
+  },
   "notifications": {
     "title": "Notifications",
     "open": "Notifications, {n} unread",

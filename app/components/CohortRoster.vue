@@ -27,6 +27,9 @@ const current = computed(() => props.rows.filter(isCurrent).sort(byName))
 const inactive = computed(() => props.rows.filter(r => !isCurrent(r)).sort((a, b) => RANK[a.enrollment] - RANK[b.enrollment] || byName(a, b)))
 const showInactive = ref(false)
 const visible = computed(() => (showInactive.value ? [...current.value, ...inactive.value] : current.value))
+const { page, items: pageRows, total: visibleTotal, size: pageSize } = usePaged(visible, 25)
+/** Showing inactive students jumps to the page where they start (they follow the current ones); hiding them, to page 1 */
+watch(showInactive, on => (page.value = on ? Math.floor(current.value.length / pageSize) + 1 : 1))
 const unassigned = computed(() => current.value.filter(r => !r.mentor).length)
 
 // ---- selection and bulk ------------------------------------------------------
@@ -240,7 +243,7 @@ const absolute = (iso: string) => new Intl.DateTimeFormat(locale.value, { dateSt
           </tr>
         </thead>
         <tbody class="divide-y divide-default">
-          <tr v-for="m in visible" :key="m.enrollmentId" class="transition-colors hover:bg-elevated/60">
+          <tr v-for="m in pageRows" :key="m.enrollmentId" class="transition-colors hover:bg-elevated/60">
             <td v-if="manage" class="w-0 py-2.5 ps-4">
               <UCheckbox v-if="isCurrent(m)" :model-value="selected.has(m.id)" :aria-label="t('roster.select', { name: m.name })" @update:model-value="v => toggle(m.id, v)" />
             </td>
@@ -303,6 +306,7 @@ const absolute = (iso: string) => new Intl.DateTimeFormat(locale.value, { dateSt
         </tbody>
       </table>
     </div>
+    <ListPager v-model:page="page" :total="visibleTotal" :size="pageSize" />
     <UButton
       v-if="inactive.length"
       :label="showInactive ? t('roster.hideInactive') : t('roster.showInactive', { n: inactive.length })"

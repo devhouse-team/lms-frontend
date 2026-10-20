@@ -49,6 +49,11 @@ types win and this spec gets corrected.
 
 ### `/cohorts/[id]` (detail)
 
+**Pages** (2026-10-19): Students (25 per page; current students, plus inactive ones when shown), Assignments and
+Solutions (10 per page) page on the client (`usePaged`, `ListPager`: "21–40 of 57" and page buttons, hidden while
+everything fits). The API returns each list in one call, so there are no extra requests. "Select all" in the roster
+still selects every current student, not only the page.
+
 **Header**: name; program title; status badge; dates "12 Jan – 13 Jul 2027"; then by status:
 
 | Status | Week line | Actions (right) |
@@ -441,6 +446,17 @@ marked (e2e); the rest by the manual check the item describes.
 - [x] Last activity shows a relative time, or "—" for a student with none. ✓ e2e-smoke (value present) + screenshot (—)
 - [x] The Lessons column header reads "Lessons" and shows completed / released. ✓ screenshot
 - [x] The section count counts active + paused only. ✓ screenshot
+
+### Pages (students, assignments, solutions)
+
+- [x] A cohort with 30 current students shows 25 rows and "1–25 of 30"; page 2 shows the other 5. ✓ browser (32 / 30)
+- [x] 25 or fewer students: no pager. ✓ browser (25 rows, no pager)
+- [x] Fewer students after a refetch (dropped, moved) keep the page in range (`usePaged` clamps on the new total). ✓ code read
+- [x] "Show inactive" jumps to the page where the inactive ones start; "Hide inactive" goes back to page 1. ✓ browser
+- [x] "Select all" still selects every current student, on every page. ✓ code read
+- [x] Assignments and solutions page by 10 over the lists already loaded: no extra requests. ✓ code read
+- [x] The pager's buttons are named in the active language ("Страница 2", "Следующая страница"). ✓ browser
+- The page number isn't in the URL: a reload starts on page 1 (by choice; add `?page=` if people share links to it).
 
 ### Add students
 

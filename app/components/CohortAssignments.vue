@@ -2,7 +2,8 @@
 import type { CohortAssignment } from '~~/shared/types'
 
 /** The cohort's assignments, read-only: authoring happens in the course editor (spec course-content.md) */
-defineProps<{ assignments: CohortAssignment[], timezone: string }>()
+const props = defineProps<{ assignments: CohortAssignment[], timezone: string }>()
+const { page, items, total, size } = usePaged(() => props.assignments, 10)
 const { t, locale } = useI18n()
 const { short } = useCohortFormat()
 const when = (a: CohortAssignment, tz: string) => (a.mode === 'exam' && a.opensAt
@@ -15,7 +16,7 @@ const when = (a: CohortAssignment, tz: string) => (a.mode === 'exam' && a.opensA
     <h2 id="cohort-assignments" class="text-sm font-semibold text-highlighted">{{ t('assignments.manage') }}</h2>
     <p v-if="!assignments.length" class="text-sm text-muted">{{ t('assignments.none') }}</p>
     <ul v-else class="divide-y divide-default rounded-lg ring-1 ring-inset ring-default">
-      <li v-for="a in assignments" :key="a.id" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
+      <li v-for="a in items" :key="a.id" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
         <div class="min-w-0 flex-1 basis-48">
           <p class="truncate text-sm text-highlighted">{{ a.title }}</p>
           <p class="truncate text-xs text-muted">{{ t('assignments.inLesson', { lesson: a.lessonTitle }) }}</p>
@@ -24,5 +25,6 @@ const when = (a: CohortAssignment, tz: string) => (a.mode === 'exam' && a.opensA
         <span class="num shrink-0 text-xs text-muted">{{ when(a, timezone) }}</span>
       </li>
     </ul>
+    <ListPager v-model:page="page" :total="total" :size="size" />
   </section>
 </template>
