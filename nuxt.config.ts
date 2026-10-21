@@ -21,10 +21,10 @@ export default defineNuxtConfig({
   nitro: { typescript: { tsConfig: { compilerOptions: STRICT_FLAGS } } },
   runtimeConfig: {
     /** Server side (Nitro's file redirect); override with NUXT_API_BASE (e.g. http://localhost:8000/api/v1) */
-    apiBase: 'http://localhost:8000/api/v1',
+    apiBase: 'https://api.devhouse.kz/api/v1',
     public: {
       /** What the browser calls; NUXT_PUBLIC_API_BASE. The API must allow this site's origin (CORS) */
-      apiBase: 'http://localhost:8000/api/v1',
+      apiBase: 'https://api.devhouse.kz/api/v1',
       /** Backend role ids that invites grant (no roles endpoint yet); NUXT_PUBLIC_ROLE_IDS_<ROLE>. 0 = can't invite */
       roleIds: { head: 1, mentor: 2, mentee: 0 }
     }
