@@ -1,51 +1,23 @@
 import type { H3Event } from 'h3'
-import type { components } from '~~/shared/types/api'
 import type { Role } from '~~/shared/types'
 
-type Schemas = components['schemas']
+/**
+ * The mock features have no real session: Nitro no longer holds the API's tokens (the browser talks to the API
+ * directly), so the browser says who it is in `x-mock-*` headers (app/api/router.ts). Fine for demo data only.
+ */
+export interface MockUser { id: string, role: Role, headScope?: 'all' | 'programs' }
 
-/** `scope: 'all'`: head routes a program lead without admin rights may not call (people, invites, contests) */
-export async function requireRole(event: H3Event, role: Role, scope?: 'all') {
-  const { user } = await requireUserSession(event)
+export async function requireMockUser(event: H3Event) {
+  const id = getHeader(event, 'x-mock-user')
+  const role = getHeader(event, 'x-mock-role') as Role | undefined
+  if (!id || !role || !['head', 'mentor', 'mentee'].includes(role)) throw createError({ statusCode: 401, statusMessage: 'unauthorized' })
+  const headScope = getHeader(event, 'x-mock-scope') === 'programs' ? 'programs' : getHeader(event, 'x-mock-scope') === 'all' ? 'all' : undefined
+  return { user: { id, role, headScope } satisfies MockUser }
+}
+
+/** `scope: 'all'`: head routes a program lead without admin rights may not call (contests) */
+export async function requireMockRole(event: H3Event, role: Role, scope?: 'all') {
+  const { user } = await requireMockUser(event)
   if (user.role !== role || (scope === 'all' && user.headScope === 'programs')) throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   return user
-}
-
-const isAdmin = (a: Schemas['MyAccess']) => a.is_superuser || a.roles.includes('admin')
-
-/** UI views from backend access (frontend.md "Roles in the UI"); most privileged first. A program lead gets the head view. */
-export function rolesOf(a: Schemas['MyAccess']): Role[] {
-  const roles: Role[] = []
-  if (isAdmin(a) || a.programs.some(p => p.relation === 'lead')) roles.push('head')
-  if (a.roles.includes('mentor') || a.cohorts.some(c => c.relation === 'mentor' || c.relation === 'reviewer')) roles.push('mentor')
-  if (a.cohorts.some(c => c.relation === 'student')) roles.push('mentee')
-  return roles.length ? roles : ['mentee']
-}
-
-/** Store fresh tokens, then load who the user is and which views they get */
-export async function startSession(event: H3Event, tokens: { accessToken: string, refreshToken: string }) {
-  await replaceUserSession(event, { secure: tokens })
-  const [me, access] = await Promise.all([
-    apiFetch<Schemas['UserRead']>(event, '/users/me'),
-    apiFetch<Schemas['MyAccess']>(event, '/me/access')
-  ])
-  const roles = rolesOf(access)
-  await setUserSession(event, {
-    user: {
-      id: String(me.id), name: me.name, email: me.email, username: me.username, avatar: avatarUrl(me.profile_image_url), roles, role: roles[0]!,
-      headScope: roles.includes('head') ? (isAdmin(access) ? 'all' : 'programs') : undefined
-    }
-  })
-  return { role: roles[0]! }
-}
-
-/** Exchange credentials for tokens and open a session */
-export async function signIn(event: H3Event, login: string, password: string) {
-  const res = await apiPublic<Schemas['TokenResponse']>(event, '/auth/token', {
-    method: 'POST',
-    body: new URLSearchParams({ username: login, password })
-  })
-  const refreshToken = refreshTokenFrom(res.headers)
-  if (!res._data || !refreshToken) throw createError({ statusCode: 502, statusMessage: 'no_refresh_token' })
-  return startSession(event, { accessToken: res._data.access_token, refreshToken })
 }
