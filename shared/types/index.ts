@@ -910,3 +910,23 @@ export interface GradesResponse {
   }[]
 }
 
+/** The signed-in user as the browser keeps it (built from `/users/me` and `/me/access`) */
+export interface SessionUser {
+  id: string
+  /** Active view; one of `roles` */
+  role: Role
+  /** Every view this account can switch to (head, mentor, mentee) */
+  roles: Role[]
+  /** Head view scope: 'all' for admins, 'programs' for a program lead without admin rights */
+  headScope?: 'all' | 'programs'
+  name: string
+  email: string
+  username: string
+  avatar?: string
+}
+
+/** Contest and career data that still comes from Nitro's mock store (`/api/mock/overview`) */
+export interface MockOverview {
+  contest: { title: string, at: string, registered: boolean, registrations: number }
+  career: CareerStep[]
+}

@@ -7,7 +7,7 @@ export function rankResults(c: DbContest): ContestResultRow[] | undefined {
     .map((r) => {
       const m = db.users.find(u => u.id === r.menteeId)
       const cohort = db.cohorts.find(x => x.id === m?.cohortId)
-      return m ? { mentee: { id: m.id, name: m.name, avatar: m.avatar }, cohortName: cohort?.name ?? '—', solved: r.solved } : null
+      return m ? { mentee: { id: m.id, name: m.name }, cohortName: cohort?.name ?? '—', solved: r.solved } : null
     })
     .filter(r => r !== null)
     .sort((a, b) => b.solved - a.solved || a.mentee.name.localeCompare(b.mentee.name, 'ru'))
