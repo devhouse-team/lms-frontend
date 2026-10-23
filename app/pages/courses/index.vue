@@ -6,7 +6,7 @@ import type { CourseGroup, CoursesResponse } from '~~/shared/types'
  * cohorts first, finished ones collapsed), then "Editing" for course editors with "Create course".
  */
 const { t } = useI18n()
-const { short, long } = useCohortFormat()
+const { short, long, finishedDay } = useCohortFormat()
 const { role } = useAuth()
 useHead({ title: () => `${t('nav.courses')} · dev.house` })
 const { data, status, refresh } = await useFetch<CoursesResponse>('/api/courses', { key: 'my-courses' })
@@ -17,7 +17,7 @@ const current = computed(() => groups.value.filter(g => g.cohort.status !== 'fin
 const archive = computed(() => groups.value.filter(g => g.cohort.status === 'finished'))
 const heading = (g: CourseGroup) => g.cohort.status === 'active'
   ? t('courses.groupActive', { cohort: g.cohort.name, week: g.cohort.week, total: g.cohort.totalWeeks })
-  : g.cohort.status === 'planned' ? t('courses.groupPlanned', { cohort: g.cohort.name, date: short(g.cohort.startsOn) }) : t('courses.groupArchive', { cohort: g.cohort.name })
+  : g.cohort.status === 'planned' ? t('courses.groupPlanned', { cohort: g.cohort.name, date: short(g.cohort.startsOn) }) : t('courses.groupArchive', { cohort: g.cohort.name, date: long(finishedDay(g.cohort)) })
 const soon = (day: string) => Date.parse(`${day}T23:59:59Z`) - Date.now() < 86_400_000
 const creating = ref(false)
 </script>

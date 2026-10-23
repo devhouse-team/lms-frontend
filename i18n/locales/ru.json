@@ -400,7 +400,7 @@
     },
     "groupActive": "{cohort} · неделя {week} из {total}",
     "groupPlanned": "{cohort} · старт {date}",
-    "groupArchive": "Архив · {cohort}",
+    "groupArchive": "Архив · {cohort} · завершена {date}",
     "archive": "Завершённые когорты ({n})",
     "editing": "Редактирование",
     "noEditing": "Курсов для редактирования пока нет.",

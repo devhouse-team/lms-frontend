@@ -400,7 +400,7 @@
     },
     "groupActive": "{cohort} · week {week} of {total}",
     "groupPlanned": "{cohort} · starts {date}",
-    "groupArchive": "Archive · {cohort}",
+    "groupArchive": "Archive · {cohort} · finished {date}",
     "archive": "Finished cohorts ({n})",
     "editing": "Editing",
     "noEditing": "No courses to edit yet.",
