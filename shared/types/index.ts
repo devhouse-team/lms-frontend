@@ -475,6 +475,7 @@ export interface MeCohort {
 export interface MeProfile extends Person {
   email: string
   username: string
+  leetcode?: string
   emailVerified: boolean
   roles: Role[]
   cohorts: MeCohort[]
@@ -796,9 +797,26 @@ export interface ContestsResponse {
   past: ContestView[]
 }
 
-export interface ContestEntry {
-  mentee: Person
-  cohortName: string
+/** A LeetCode contest; `startsAt` is ISO */
+export interface LeetcodeContest {
+  slug: string
+  title: string
+  startsAt: string
+  durationSec: number
+}
+
+/** A contest the academy saved to track results for */
+export interface SavedContest extends LeetcodeContest {
+  id: string
+}
+
+/** One active user with a LeetCode id; `solved` and `place` are null when they didn't take part */
+export interface ContestStanding {
+  place: number | null
+  name: string
+  username: string
+  email: string
+  leetcodeId: string
   solved: number | null
 }
 

@@ -11,31 +11,38 @@ const { data, status, refresh } = await useFetch('/api/me', { key: 'me' })
 /* ---------- profile ---------- */
 const profileSchema = computed(() => z.object({
   name: z.string().trim().min(2, t('invite.err.name')).max(80, t('invite.err.name')),
-  username: z.string().trim().regex(/^[a-z0-9_]{2,32}$/, t('invite.err.username'))
+  username: z.string().trim().regex(/^[a-z0-9_]{2,32}$/, t('invite.err.username')),
+  leetcode: z.string().trim().regex(/^([A-Za-z0-9_-]{1,30})?$/, t('me.err.leetcode'))
 }))
-const profile = reactive({ name: '', username: '' })
+const profile = reactive({ name: '', username: '', leetcode: '' })
 watch(data, (d) => {
-  if (d) Object.assign(profile, { name: d.name, username: d.username })
+  if (d) Object.assign(profile, { name: d.name, username: d.username, leetcode: d.leetcode ?? '' })
 }, { immediate: true })
-const profileDirty = computed(() => !!data.value && (profile.name.trim() !== data.value.name || profile.username.trim() !== data.value.username))
+const profileDirty = computed(() => !!data.value && (
+  profile.name.trim() !== data.value.name
+  || profile.username.trim() !== data.value.username
+  || profile.leetcode.trim() !== (data.value.leetcode ?? '')
+))
 const profileSaving = ref(false)
-const profileError = ref<{ username?: string, general?: string }>({})
+const profileError = ref<{ username?: string, general?: string, leetcode?: string }>({})
 
 async function saveProfile() {
   if (!data.value) return
   profileError.value = {}
   profileSaving.value = true
+  const body: { name?: string, username?: string, leetcode?: string | null } = {}
   try {
-    const body: { name?: string, username?: string } = {}
     if (profile.name.trim() !== data.value.name) body.name = profile.name.trim()
     if (profile.username.trim() !== data.value.username) body.username = profile.username.trim()
+    if (profile.leetcode.trim() !== (data.value.leetcode ?? '')) body.leetcode = profile.leetcode.trim() || null
     await $fetch('/api/me', { method: 'PATCH', body })
     await Promise.all([refreshSession(), refresh()])
     toast.add({ title: t('me.saved'), color: 'success', icon: 'i-lucide-check' })
   } catch (e) {
     const err = apiError(e)
-    if (err.status === 409) profileError.value = { username: t('me.taken') }
-    else profileError.value = { username: err.field('username'), general: err.field('name') ?? (err.field('username') ? undefined : t('common.saveError')) }
+    const leetcode = err.field('leetcode_id')
+    if (err.status === 409) profileError.value = body.username ? { username: t('me.taken') } : { leetcode: t('me.leetcodeTaken') }
+    else profileError.value = { username: err.field('username'), leetcode, general: err.field('name') ?? (err.field('username') || leetcode ? undefined : t('common.saveError')) }
   } finally {
     profileSaving.value = false
   }
@@ -174,6 +181,9 @@ async function logoutAll() {
               </UFormField>
               <UFormField :label="t('invite.username')" name="username" :hint="t('invite.usernameHint')" :error="profileError.username">
                 <UInput v-model="profile.username" autocomplete="username" autocapitalize="none" spellcheck="false" class="w-full" />
+              </UFormField>
+              <UFormField :label="t('invite.leetcode')" name="leetcode" :error="profileError.leetcode">
+                <UInput v-model="profile.leetcode" autocomplete="off" autocapitalize="none" spellcheck="false" class="w-full" />
               </UFormField>
               <UButton type="submit" color="primary" :label="t('common.save')" :loading="profileSaving" :disabled="!profileDirty" />
             </UForm>

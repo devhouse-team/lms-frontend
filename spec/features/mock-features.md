@@ -8,7 +8,7 @@ can vanish between requests).
 
 | Feature | Screens | Mock routes | Backend status |
 |---|---|---|---|
-| LeetCode contests | `/contest` (student), `/contests` (head), home rail | `GET /api/contests`, `POST /api/contest/registration`, `GET /api/contests/current/entries`, `POST /api/contests/current/results` | Phase 4 (E11) |
+| LeetCode contests | `/contest` (student), home rail (`/contests` for head is live on API `/contest`) | `GET /api/contests`, `POST /api/contest/registration` | Phase 4 (E11) |
 | Career steps | `/career`, home rail | `PATCH /api/career/[id]` | Not planned |
 | Mentoring sessions | `/sessions` (mentor), `/mentor` (student), rails | `GET /api/sessions`; inside `/api/mentor/profile` and dashboards | S7.3, S7.4 |
 

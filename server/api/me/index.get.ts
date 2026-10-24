@@ -1,10 +1,12 @@
 import type { MeCohort, MeProfile } from '~~/shared/types'
 import type { components } from '~~/shared/types/api'
 
+type UserRead = components['schemas']['UserRead'] & { leetcode_id?: string | null }
+
 /** The signed-in user's own account: profile from `/users/me`, roles and cohorts from `/me/access` */
 export default defineEventHandler(async (event): Promise<MeProfile> => {
   const { user } = await requireUserSession(event)
-  const [me, access] = await Promise.all([apiFetch<components['schemas']['UserRead']>(event, '/users/me'), myAccess(event)])
+  const [me, access] = await Promise.all([apiFetch<UserRead>(event, '/users/me'), myAccess(event)])
   const cohorts = access.cohorts
     .filter((c): c is typeof c & { relation: MeCohort['relation'] } => ['student', 'mentor', 'reviewer'].includes(c.relation))
     .map((c): MeCohort => ({
@@ -19,6 +21,7 @@ export default defineEventHandler(async (event): Promise<MeProfile> => {
     avatar: avatarUrl(me.profile_image_url),
     email: me.email,
     username: me.username,
+    leetcode: me.leetcode_id ?? undefined,
     emailVerified: me.email_verified,
     roles: user.roles,
     cohorts,
