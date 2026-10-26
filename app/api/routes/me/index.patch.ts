@@ -5,14 +5,17 @@ import { defineEventHandler, readValidatedBody } from '~/api/utils/h3'
 // Same bounds as invite acceptance; the API validates again and its message reaches the field
 const body = z.object({
   name: z.string().trim().min(2).max(80).optional(),
-  username: z.string().trim().regex(/^[a-z0-9_]{2,32}$/).optional()
-}).refine(v => v.name !== undefined || v.username !== undefined)
+  username: z.string().trim().regex(/^[a-z0-9_]{2,32}$/).optional(),
+  leetcode: z.string().trim().regex(/^[A-Za-z0-9_-]{1,30}$/).nullable().optional()
+}).refine(v => v.name !== undefined || v.username !== undefined || v.leetcode !== undefined)
 
-/** Edit own name and username; the session copy follows so the sidebar and the next PATCH use the new values */
 export default defineEventHandler(async (event): Promise<OkResponse> => {
   const { user } = await requireUserSession(event)
-  const changes = await readValidatedBody(event, body.parse)
-  await apiFetch(event, `/users/${encodeURIComponent(user.username)}`, { method: 'PATCH', body: changes })
+  const { leetcode, ...changes } = await readValidatedBody(event, body.parse)
+  await apiFetch(event, `/users/${encodeURIComponent(user.username)}`, {
+    method: 'PATCH',
+    body: { ...changes, ...(leetcode !== undefined && { leetcode_id: leetcode }) }
+  })
   await setUserSession(event, { user: { ...user, ...changes } })
   return { ok: true }
 })

@@ -2,6 +2,15 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-10-24: contests page on the API
+
+- Head (admins), `/contests`: saved contests from API `/contest` (latest first) with delete; results of the selected one
+  (every active user with a LeetCode ID, ranked by solved, "—" when they didn't take part; fetched on the client as the
+  API asks LeetCode once per user); add from LeetCode's upcoming or past list (past by 10, "Show more"). 422 and 503
+  from LeetCode get their own messages. BFF: `/api/contests/saved`, `/api/contests/saved/[slug]`,
+  `/api/contests/saved/[slug]/results`, `/api/contests/leetcode/{upcoming,past}`. The mock entry and results routes are
+  gone; the student `/contest` page and home rails stay on the mock.
+
 ## 2026-10-19: pages on the cohort page
 
 - Head and program leads, `/cohorts/[id]`: Students page by 25, Assignments and Solutions by 10, with "21–40 of 57" and

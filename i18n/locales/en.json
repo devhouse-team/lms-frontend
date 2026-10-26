@@ -159,6 +159,7 @@
       }
     },
     "username": "Username",
+    "leetcode": "LeetCode nickname",
     "usernameHint": "You can sign in with it instead of email",
     "joining": "You're joining {cohort}",
     "startsOn": "{program} · starts {date}",
@@ -417,13 +418,30 @@
     "you": "you",
     "solvedLabel": "Solved {n} of {total}",
     "noResults": "No results yet.",
-    "enter": "Current contest results",
-    "filled": "Entered {n} of {total} · problems: {problems}",
-    "solvedFor": "Problems solved: {name}",
-    "noEntries": "Nobody has registered yet.",
-    "save": "Save results",
-    "saved": "Saved {n} results",
-    "standings": "Standings"
+    "saved": "Saved contests",
+    "noSaved": "No contests saved yet. Add one from LeetCode below.",
+    "minutes": "{n} min",
+    "standings": "Results",
+    "took": "{n} of {total} took part",
+    "loadingResults": "Fetching results from LeetCode, this can take a while…",
+    "absent": "Did not take part",
+    "noLeetcodeUsers": "No active users have a LeetCode ID.",
+    "addFrom": "Add from LeetCode",
+    "upcoming": "Upcoming",
+    "loading": "Loading…",
+    "more": "Show more",
+    "add": "Add",
+    "isSaved": "Added",
+    "added": "Added {title}",
+    "noneListed": "No contests.",
+    "removeFor": "Remove {title}",
+    "removeTitle": "Remove contest",
+    "removeConfirm": "Remove {title}? Its results stay on LeetCode and can be fetched again after adding it back.",
+    "err": {
+      "unknown": "LeetCode doesn't know this contest.",
+      "leetcode": "LeetCode can't be reached. Try again later.",
+      "results": "Could not load results."
+    }
   },
   "reviews": {
     "waiting": "Waiting",
@@ -1356,6 +1374,7 @@
     "profileHint": "Your name and username are visible to your cohort.",
     "saved": "Profile saved",
     "taken": "This username is already taken.",
+    "leetcodeTaken": "This LeetCode nickname is already linked to another account.",
     "password": "Password",
     "passwordHint": "You stay signed in here; other devices are signed out.",
     "current": "Current password",
@@ -1365,7 +1384,8 @@
     "wrongPassword": "The current password is wrong.",
     "rateLimited": "Too many attempts. Wait a minute and try again.",
     "err": {
-      "current": "Enter your current password"
+      "current": "Enter your current password",
+      "leetcode": "Letters, digits, - and _ only, up to 30 characters"
     },
     "email": "Email",
     "unverified": "Your address isn't confirmed. Confirm it so you can recover access if you forget your password.",
