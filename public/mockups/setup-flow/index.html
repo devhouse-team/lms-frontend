@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Мастер настройки · макет · dev.house</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <div class="top-brand">
+      <span class="logo">dev.house</span>
+      <span class="tag">Макет · данные ненастоящие</span>
+    </div>
+    <div class="scenarios" role="group" aria-label="Сценарий">
+      <span class="scenarios-label">Состояние:</span>
+      <button class="chip" data-scenario="empty">Пусто</button>
+      <button class="chip" data-scenario="program">Есть программа</button>
+      <button class="chip" data-scenario="courses">Есть курсы</button>
+      <button class="chip" data-scenario="ready">Всё готово</button>
+    </div>
+  </header>
+
+  <div class="shell">
+    <nav class="steps" id="steps" aria-label="Шаги настройки"></nav>
+    <main class="main" id="view" tabindex="-1"></main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
