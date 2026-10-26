@@ -10,6 +10,8 @@
     return `${n} ${m100 >= 11 && m100 <= 14 ? many : m10 === 1 ? one : m10 >= 2 && m10 <= 4 ? few : many}`;
   };
   const W = n => plural(n, 'неделя', 'недели', 'недель');
+  // Shared surface for the wizard scripts (wizard-*.js), filled at the bottom
+  const M = window.M = { wizards: {}, hooks: { click: [], input: [], change: [], submit: [] }, acts: {} };
 
   // ---------- dates ----------
   const parseDay = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
@@ -132,6 +134,7 @@
   });
   const setScenario = name => {
     scenario = name; S = SCENARIOS[name](); I = null; panel = null; resetDrafts();
+    if (M.onScenario) M.onScenario(name);
     location.hash = '#/hub'; render();
   };
 
@@ -172,7 +175,7 @@
       <p class="steps-title">Настройка обучения</p>
       <a class="step-link steps-hub ${route.name === 'hub' ? '' : ''}" href="#/hub" ${route.name === 'hub' ? 'aria-current="step"' : ''}>
         <span class="step-dot" aria-hidden="true">←</span>
-        <span class="step-text"><span class="step-name">Что дальше</span></span>
+        <span class="step-text"><span class="step-name">Что создать</span></span>
       </a>
       ${STEPS.map((s, i) => {
         const why = lockedWhy(s.id), done = isDone(s.id);
@@ -688,20 +691,33 @@
   function route() {
     const h = (location.hash || '#/hub').slice(2).split('/');
     const name = h[0] || 'hub';
-    if (!['hub', 'program', 'courses', 'import', 'cohort', 'people', 'done'].includes(name)) return { name: 'hub' };
+    if (M.wizards[name]) return { name, n: Math.min(M.wizards[name].steps.length + 1, Math.max(1, Number(h[1]) || 1)) };
+    if (!['hub', 'all', 'program', 'courses', 'import', 'cohort', 'people', 'done'].includes(name)) return { name: 'hub' };
     if (name === 'import') return { name, n: Math.min(4, Math.max(1, Number(h[1]) || 1)) };
     return { name };
   }
   function render() {
     let r = route();
-    const lock = r.name === 'import' ? lockedWhy('courses') : r.name === 'done' ? (S.cohort ? '' : 'x') : lockedWhy(r.name);
+    const lock = (r.name === 'hub' || r.name === 'all' || M.wizards[r.name]) ? '' : r.name === 'import' ? lockedWhy('courses') : r.name === 'done' ? (S.cohort ? '' : 'x') : lockedWhy(r.name);
     if (lock) { location.replace('#/hub'); r = { name: 'hub' }; }
     if (r.name !== 'import' && r.name !== 'hub') { /* keep import session while navigating */ }
     if (r.name === 'program' || r.name === 'cohort') { if (!F.program) resetDrafts(); }
-    const views = { hub: viewHub, program: viewProgram, courses: viewCourses, cohort: viewCohort, people: viewPeople, done: viewDone, import: () => viewImport(r.n) };
+    if (M.wizards[r.name]) {
+      M.cur = r;
+      const wz = M.wizards[r.name];
+      M.W.reach[r.name] = Math.max(M.W.reach[r.name] || 1, r.n);
+      $('#view').innerHTML = wz.view(r.n);
+      $('#steps').innerHTML = M.rail(r.name, r.n);
+      $$('.chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.scenario === scenario)));
+      if (wz.after) wz.after(r.n);
+      return window.scrollTo(0, 0);
+    }
+    M.cur = r;
+    const views = { hub: () => M.hubView(), all: viewHub, program: viewProgram, courses: viewCourses, cohort: viewCohort, people: viewPeople, done: viewDone, import: () => viewImport(r.n) };
     const html = views[r.name]();
     $('#view').innerHTML = html;
     renderSteps(r);
+    if (r.name === 'hub') $('#steps').innerHTML = M.hubRail();
     if (r.name === 'import' && r.n === 4 && I && !I.imported) runImportAnim();
     if (r.name === 'import' && r.n === 4 && I && I.imported) { $('#log').innerHTML = ''; runImportAnim(); }
     if (r.name === 'program') updateProgramHelp();
@@ -718,6 +734,7 @@
   }
 
   document.addEventListener('input', (e) => {
+    if (M.hooks.input.some(h => h(e))) return;
     const t = e.target;
     if (t.dataset.model) {
       const root = ROOT(), key = t.dataset.model;
@@ -738,6 +755,7 @@
   });
 
   document.addEventListener('change', (e) => {
+    if (M.hooks.change.some(h => h(e))) return;
     const t = e.target, a = t.dataset.actChange;
     if (t.dataset.model && 'rerender' in t.dataset) render();
     if (t.matches('[data-file]')) {
@@ -769,6 +787,7 @@
   });
 
   document.addEventListener('click', (e) => {
+    if (M.hooks.click.some(h => h(e))) return;
     const sc = e.target.closest('[data-scenario]'); if (sc) return setScenario(sc.dataset.scenario);
     const b = e.target.closest('[data-act]'); if (!b) return;
     const a = b.dataset.act, i = Number(b.dataset.i);
@@ -816,6 +835,7 @@
 
   document.addEventListener('submit', (e) => {
     e.preventDefault();
+    if (M.hooks.submit.some(h => h(e))) return;
     const f = e.target;
     if (f.id === 'program-form') {
       const p = F.program, err = $('#p-title-err');
@@ -849,6 +869,10 @@
   });
 
   window.addEventListener('hashchange', render);
-  resetDrafts();
-  render();
+  Object.assign(M, {
+    esc, plural, weeks: W, toast, initials, MENTORS, EXISTING, SAMPLES, render,
+    parse: { md: parseMd, csv: parseCsv, json: parseJson, validate, stats },
+    date: { parse: parseDay, iso: isoDay, add: addDays, short: fmtShort, long: fmtLong, nextMonday }
+  });
+  M.boot = () => { resetDrafts(); if (M.onScenario) M.onScenario('empty'); render(); };
 })();

@@ -267,8 +267,8 @@ input[type=checkbox], input[type=radio] { accent-color: var(--yellow); width: 16
 
 /* ---- cohort plan ---- */
 .plan { list-style: none; margin: 0; padding: 0; }
-.plan li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; padding: 12px 16px; border-top: 1px solid var(--line); }
-.plan li:first-child { border-top: 0; }
+.plan > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.plan > li:first-child { border-top: 0; }
 .plan .when { font-family: var(--mono); font-size: 12px; color: var(--text-toned); text-align: right; }
 
 /* ---- people ---- */
@@ -282,6 +282,23 @@ input[type=checkbox], input[type=radio] { accent-color: var(--yellow); width: 16
 .done-list { list-style: none; margin: 0; padding: 0; }
 .done-list li { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); }
 .done-list li:first-child { border-top: 0; }
+
+/* ---- wizards ---- */
+.two { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 32px; align-items: start; }
+.lpick { display: flex; flex-direction: column; gap: 2px; position: sticky; top: 72px; max-height: calc(100vh - 100px); overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-panel); padding: 8px; }
+.lpick-mod { font-size: 12px; font-weight: 500; color: var(--text-dim); text-transform: uppercase; letter-spacing: .05em; padding: 10px 8px 4px; display: flex; justify-content: space-between; }
+.lbtn { display: flex; justify-content: space-between; align-items: center; gap: 8px; font: inherit; color: var(--text-toned); background: transparent; border: 0; border-radius: var(--r-ctl); padding: 6px 8px; cursor: pointer; text-align: left; }
+.lbtn:hover { background: var(--raised); }
+.lbtn[aria-current="true"] { background: var(--yellow-ink); color: var(--yellow); }
+.kinds { display: flex; flex-wrap: wrap; gap: 6px; }
+.kbtn { font: 500 13px var(--sans); color: var(--text-toned); background: var(--bg); border: 1px solid var(--line-strong); border-radius: var(--r-ctl); padding: 6px 12px; cursor: pointer; }
+.kbtn:hover { background: var(--raised); }
+.kbtn[aria-checked="true"] { color: var(--yellow); border-color: var(--yellow); background: var(--yellow-ink); }
+details > summary { list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "▸"; color: var(--text-dim); margin-right: 8px; }
+details[open] > summary::before { content: "▾"; }
+.courses input[type=checkbox] { margin-right: 4px; }
 
 /* ---- toast ---- */
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 16px); background: var(--pressed); color: var(--text-hi); border: 1px solid var(--line-strong); border-radius: var(--r-ctl); padding: 10px 16px; opacity: 0; pointer-events: none; transition: opacity .15s, transform .15s; z-index: 50; }
@@ -298,7 +315,8 @@ input[type=checkbox], input[type=radio] { accent-color: var(--yellow); width: 16
   .split, .split.src, .split.cohort { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .pcard { position: static; }
   .ways, .grid3, .report { grid-template-columns: minmax(0, 1fr); }
-  .grid2, .mentors { grid-template-columns: minmax(0, 1fr); }
+  .grid2, .mentors, .two { grid-template-columns: minmax(0, 1fr); }
+  .lpick { position: static; max-height: 260px; }
   .top { padding: 10px 16px; position: static; }
   .summary { top: 0; }
   .tless { padding-left: 16px; }
