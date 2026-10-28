@@ -1,6 +1,7 @@
 {
   "nav": {
     "home": "Home",
+    "create": "Create",
     "courses": "Courses",
     "assignments": "Assignments",
     "contest": "Contest",
@@ -1536,8 +1537,6 @@
       "title": "What do you want to create?",
       "lead": "Pick what you need now. The wizard walks you through the steps and points out what is missing.",
       "recommended": "Recommended",
-      "noProgramTitle": "Create a program",
-      "noProgramText": "A program is the learning route. A cohort cannot start without an active program, so begin with one.",
       "program": {
         "title": "Program",
         "text": "A set of courses laid out by week.",
@@ -1552,6 +1551,56 @@
         "title": "Cohort",
         "text": "A group of students with mentors on a program.",
         "cta": "Create a cohort"
+      },
+      "rec": {
+        "program": {
+          "title": "Create a program",
+          "text": "A program is the learning route. A cohort cannot start without an active program, so begin with one.",
+          "cta": "Create a program"
+        },
+        "courses": {
+          "title": "Add courses to the program",
+          "text": "The program has no courses yet. Pick existing ones or create a course step by step.",
+          "cta": "Add courses"
+        },
+        "activate": {
+          "title": "Activate the program",
+          "text": "Cohorts start only from active programs. Open the last step of the program wizard.",
+          "cta": "Finish the program"
+        },
+        "cohort": {
+          "title": "Start the first cohort",
+          "text": "The program and its courses are ready. Choose a start date and the weeks of the plan become real dates.",
+          "cta": "Create a cohort"
+        },
+        "people": {
+          "title": "Add mentors and students",
+          "text": "A cohort exists, but nobody studies in it yet. Open it to add the team and students.",
+          "cta": "Open cohorts"
+        }
+      },
+      "allSet": "Everything is set up: a program, courses and a cohort with students. You can create more.",
+      "chain": {
+        "title": "All at once",
+        "lead": "The usual order: program, courses, cohort, people. Each item opens the right wizard.",
+        "program": "Program",
+        "courses": "Courses",
+        "cohort": "Cohort",
+        "people": "People",
+        "locked": {
+          "program": "Create a program first.",
+          "cohort": "Needs an active program.",
+          "people": "Needs a cohort."
+        },
+        "state": {
+          "program": "{n} programs, {active} active",
+          "courses": "{n} courses in programs",
+          "cohort": "{n} cohorts",
+          "people": "{n} active students",
+          "none": "Not yet"
+        },
+        "done": "Done",
+        "open": "Open"
       }
     },
     "program": {

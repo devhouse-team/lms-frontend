@@ -5,7 +5,7 @@ Step-by-step creation of a program, a cohort and a course, for heads. Prototype:
 
 | Stage | What | State |
 |---|---|---|
-| 0 | `WizardShell`, `/create` hub | built 2026-10-27 |
+| 0 | `WizardShell`, `/create` hub (chain checklist 2026-10-28) | built 2026-10-27 |
 | 1 | Program wizard | built 2026-10-27 |
 | 2 | Cohort wizard | built 2026-10-28 |
 | 3 | Course wizard (manual structure) | built 2026-10-28 |
@@ -27,8 +27,11 @@ N: name" line below `md`. Route is `base?step=n`. `current` above the step count
 
 ## Hub: `/create`
 
-Head only. Cards: Program (wizard), Course (`/courses`), Cohort (`/cohorts`) until their wizards exist. A recommendation
-shows when there is no program yet.
+Head only, also in the nav ("Create"). Cards: Program, Course, Cohort, each to its wizard. A recommendation follows the
+chain: no program → create one; no courses → add them (an empty draft opens at its courses step); no active program →
+activation step of a draft; no cohort → cohort wizard; no students → `/cohorts`. Below it the "All at once" checklist
+(program, courses, cohort, people): done / locked-with-reason / open. Everything is read off `/api/programs`
+(`courseCount`, `cohortCounts`, `activeStudents`): no extra requests.
 
 ## Program wizard: `/create/program[/:id]?step=1..5`
 

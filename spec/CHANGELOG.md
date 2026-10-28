@@ -2,6 +2,11 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-10-28: create hub checklist
+
+- Head, `/create`: the recommendation now follows the whole chain (program, courses, activation, cohort, students) and
+  an "All at once" checklist shows each step's state. "Create" is in the head's navigation.
+
 ## 2026-10-28: course wizard
 
 - `/create/course`: basics, structure, materials, assignments, review and publish. The course is created as a draft
