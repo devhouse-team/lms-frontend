@@ -7,7 +7,7 @@ Step-by-step creation of a program, a cohort and a course, for heads. Prototype:
 |---|---|---|
 | 0 | `WizardShell`, `/create` hub | built 2026-10-27 |
 | 1 | Program wizard | built 2026-10-27 |
-| 2 | Cohort wizard | planned |
+| 2 | Cohort wizard | built 2026-10-28 |
 | 3 | Course wizard (manual structure) | planned |
 | 4 | Course plan import | blocked on the backend ([O32](../open-items.md)) |
 
@@ -45,12 +45,22 @@ Course length on the timeline is its module count (min 1), as one week per modul
 
 Errors: `slug_taken` on the slug field, everything else through `useProgramErrors`.
 
-## Stage 2: cohort wizard (planned)
+## Cohort wizard: `/create/cohort[/:id]?step=1..6`
 
-Program (active only, `?program=` preselects) → dates (name, start, computed end, timezone; the cohort is created here
-and takes the curriculum snapshot) → plan (real dates from the cohort calendar, exam window overrides) → team (staff)
-→ students (email list, CSV, invites; mentor auto-assign). Reuse `AddStudentsModal` tabs, `CohortStaff`,
-`CohortExamWindows`.
+`?program=` preselects the program. Without an id only steps 1-2 exist; with one, steps 2-6. A finished cohort
+redirects to its page (a started cohort is still wizard material: team and students make sense once it runs).
+
+| Step | Fields / UI | Calls |
+|---|---|---|
+| 1 Program | active programs only (`/api/programs/options`); none → link to the program wizard | |
+| 2 Dates | name (defaults to "program · start" until typed), start, end (computed from the program length, read-only), timezone. Creates the cohort. Revisiting edits it; start and timezone are locked once it has started. | `POST /api/cohorts`, then `PATCH /api/cohorts/{id}` with changed fields |
+| 3 Plan | start, end, item and exam counts; the cohort calendar by week; exam windows | `GET /api/calendar?cohort=`, `CohortExamWindows` |
+| 4 Team | `CohortStaff`; next needs a mentor | |
+| 5 Students | `AddStudentsPanel` (one person, emails, CSV); "assign automatically" runs once on finish | `POST /api/cohorts/{id}/mentors/auto` |
+| 6 Done | open the cohort, create something else | |
+
+Errors: `cohort_name_taken` on the name, `cohort_started` and `cohort_ends_in_past` on the start date, the rest through
+`useCohortErrors`. The calendar leaves out unpublished courses (the step says so).
 
 ## Stage 3: course wizard (planned)
 

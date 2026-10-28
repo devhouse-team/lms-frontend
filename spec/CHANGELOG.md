@@ -2,6 +2,14 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-10-28: cohort wizard
+
+- Head, `/create/cohort`: program, dates, plan, team and students steps. The cohort is created after the dates step
+  (the API copies the program's curriculum); the plan step shows it on the calendar with exam-window overrides; the
+  team step needs a mentor; the students step adds people, emails or a CSV and can assign mentors automatically.
+  "Create cohort" on `/cohorts` and on a program page now opens the wizard (`?program=` preselects); the modal stays
+  for editing. `AddStudentsModal` now wraps the new `AddStudentsPanel`. Spec: [setup-flow](features/setup-flow.md).
+
 ## 2026-10-27: create wizards, program first
 
 - Head, `/create` and `/create/program`: a hub ("what to create") and a four-step program wizard (basics, courses,

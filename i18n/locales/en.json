@@ -1545,7 +1545,7 @@
       "cohort": {
         "title": "Cohort",
         "text": "A group of students with mentors on a program.",
-        "cta": "Go to cohorts"
+        "cta": "Create a cohort"
       }
     },
     "program": {
@@ -1592,6 +1592,70 @@
         "title": "The program is active",
         "text": "You can now create cohorts from it.",
         "open": "Open the program",
+        "another": "Create something else"
+      }
+    },
+    "cohort": {
+      "title": "New cohort",
+      "step": {
+        "program": "Program",
+        "dates": "Dates",
+        "plan": "Plan",
+        "team": "Team",
+        "students": "Students"
+      },
+      "program": {
+        "title": "Program",
+        "lead": "A cohort studies a program: it sets the length and the courses.",
+        "noActive": "There are no active programs. Cohorts start only from active ones: activate a draft in the program wizard.",
+        "none": "There are no programs yet. Create one and come back.",
+        "createProgram": "Create a program",
+        "draft": "Draft",
+        "meta": "{weeks} weeks"
+      },
+      "dates": {
+        "title": "Name and dates",
+        "lead": "The end date is calculated from the program length.",
+        "defaultName": "{program} · {start}",
+        "monday": "Monday: a good start",
+        "notMonday": "Cohorts usually start on a Monday",
+        "draftNote": "The cohort is created after this step and copies the program's curriculum. Later steps edit it."
+      },
+      "plan": {
+        "title": "Plan by dates",
+        "lead": "How the program's curriculum lands on the calendar. Exam times can be moved for this cohort only.",
+        "snapshot": "The cohort has its own copy of the plan: later changes to the program or courses do not affect it.",
+        "empty": "The cohort has no scheduled items. The program may have no published courses.",
+        "unpublished": "Unpublished courses are left out of the calendar.",
+        "week": "Week {n}",
+        "opens": "Opens",
+        "due": "Deadline",
+        "exam": "Exam",
+        "stat": {
+          "start": "Start",
+          "end": "End",
+          "items": "Items",
+          "exams": "Exams"
+        }
+      },
+      "team": {
+        "title": "Team",
+        "lead": "Mentors review students' work. At least one is needed to continue.",
+        "need": "Add at least one mentor"
+      },
+      "students": {
+        "title": "Students",
+        "lead": "Add people, paste emails or upload a CSV. Accounts are enrolled at once, other addresses get an invite.",
+        "auto": "Assign students to mentors automatically",
+        "autoHelp": "Splits students evenly between mentors when you finish.",
+        "finish": "Finish",
+        "skipHint": "You can skip this and add students later from the cohort page."
+      },
+      "done": {
+        "title": "The cohort is ready",
+        "text": "The weeks of the plan open on schedule.",
+        "assigned": "Students assigned to mentors: {n}",
+        "open": "Open the cohort",
         "another": "Create something else"
       }
     }
