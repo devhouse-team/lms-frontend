@@ -2,6 +2,15 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-10-27: create wizards, program first
+
+- Head, `/create` and `/create/program`: a hub ("what to create") and a four-step program wizard (basics, courses,
+  schedule, activation). The program is saved as a draft after step 1; later steps use the same calls as the program
+  page. "Create program" on `/programs` now opens the wizard; the modal stays for editing. Spec:
+  [setup-flow](features/setup-flow.md). Cohort and course wizards follow; plan import waits for the backend
+  ([O32](open-items.md)).
+- `api:types` reads `../lms-backend/openapi.json`.
+
 ## 2026-10-24: contests page on the API
 
 - Head (admins), `/contests`: saved contests from API `/contest` (latest first) with delete; results of the selected one

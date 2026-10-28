@@ -21,7 +21,6 @@ const tabs = computed(() => TABS.map(s => ({ value: s, label: t(`programs.tab.${
 const byStatus = (s: ProgramStatus) => data.value?.programs.filter(p => p.status === s) ?? []
 const shown = computed(() => byStatus(tab.value))
 
-const creating = ref(false)
 const reordering = ref(false)
 
 /** Swap within the tab, put the tab's programs back into their own slots of the full order, send every id */
@@ -64,21 +63,19 @@ const BADGE = { draft: { color: 'neutral', variant: 'outline' }, archived: { col
   <AppPage :title="t('nav.programs')">
     <HomeState :status="status" :has-data="!!data" @retry="refresh()">
       <div v-if="data" class="mx-auto w-full max-w-5xl space-y-6">
-        <ProgramFormModal v-if="data.can.create" v-model:open="creating" :can-manage="data.can.reorder" />
-
         <header class="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 class="text-xl font-semibold tracking-tight text-highlighted">{{ t('nav.programs') }}</h1>
             <p class="mt-1 text-sm text-muted">{{ t('programs.hint') }}</p>
           </div>
-          <UButton v-if="data.can.create" :label="t('programs.create')" icon="i-lucide-plus" @click="creating = true" />
+          <UButton v-if="data.can.create" :label="t('programs.create')" icon="i-lucide-plus" to="/create/program" />
         </header>
 
         <UEmpty
           v-if="!data.programs.length"
           icon="i-lucide-library"
           :description="user?.headScope === 'programs' ? t('programs.emptyLead') : t('programs.empty')"
-          :actions="data.can.create ? [{ label: t('programs.create'), icon: 'i-lucide-plus', onClick: () => { creating = true } }] : []"
+          :actions="data.can.create ? [{ label: t('programs.create'), icon: 'i-lucide-plus', to: '/create/program' }] : []"
         />
         <template v-else>
           <UTabs v-model="tab" :items="tabs" :content="false" variant="link" color="primary" />

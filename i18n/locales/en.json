@@ -1520,5 +1520,80 @@
     "toCourses": "Go to courses",
     "scoreOf": "{score} of {max} points",
     "assignmentsCount": "{n} assignment | {n} assignments"
+  },
+  "wizard": {
+    "stepOf": "Step {n} of {total}",
+    "next": "Next",
+    "back": "Back",
+    "cancel": "Cancel",
+    "hub": {
+      "title": "What do you want to create?",
+      "lead": "Pick what you need now. The wizard walks you through the steps and points out what is missing.",
+      "recommended": "Recommended",
+      "noProgramTitle": "Create a program",
+      "noProgramText": "A program is the learning route. A cohort cannot start without an active program, so begin with one.",
+      "program": {
+        "title": "Program",
+        "text": "A set of courses laid out by week.",
+        "cta": "Create a program"
+      },
+      "course": {
+        "title": "Course",
+        "text": "Modules and lessons, materials, assignments.",
+        "cta": "Go to courses"
+      },
+      "cohort": {
+        "title": "Cohort",
+        "text": "A group of students with mentors on a program.",
+        "cta": "Go to cohorts"
+      }
+    },
+    "program": {
+      "title": "New program",
+      "draftNote": "The program is saved as a draft after the first step. You can come back any time: Programs → Drafts.",
+      "step": {
+        "basics": "Basics",
+        "courses": "Courses",
+        "schedule": "Schedule",
+        "activation": "Activation"
+      },
+      "basics": {
+        "title": "Basics",
+        "lead": "Title, length and description. Add the cover and the lead later on the program page."
+      },
+      "courses": {
+        "title": "Courses",
+        "lead": "Tick the courses students take. You set order and weeks next.",
+        "search": "Find a course",
+        "empty": "There are no courses yet. Create the first one on the courses page and come back.",
+        "create": "Create a course",
+        "noMatch": "Nothing found.",
+        "selected": "Selected: {n}"
+      },
+      "schedule": {
+        "title": "Schedule",
+        "lead": "Place the courses on the weeks. For courses that run in parallel, give them the same start week.",
+        "pack": "Place one after another",
+        "packed": "Courses placed one after another",
+        "week": "Week",
+        "empty": "Add courses on the previous step first."
+      },
+      "activation": {
+        "title": "Activation",
+        "lead": "Cohorts are only created from active programs. Check the plan and activate.",
+        "noCourses": "The program has no courses: cohorts will get an empty plan.",
+        "draftCourse": "\"{course}\" is not published: students will not see it.",
+        "noModules": "The course \"{course}\" has no modules.",
+        "ok": "Nothing to fix.",
+        "activate": "Activate",
+        "keepDraft": "Keep as a draft"
+      },
+      "done": {
+        "title": "The program is active",
+        "text": "You can now create cohorts from it.",
+        "open": "Open the program",
+        "another": "Create something else"
+      }
+    }
   }
 }
