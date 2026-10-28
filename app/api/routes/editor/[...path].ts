@@ -8,7 +8,7 @@ const ID = '\\d+'
 const ROUTES: [string, RegExp][] = [
   ['POST', /^courses$/],
   ['GET|PATCH', new RegExp(`^courses/${ID}$`)],
-  ['POST', new RegExp(`^courses/${ID}/(modules|materials)$`)],
+  ['POST', new RegExp(`^courses/${ID}/(modules|materials|import)$`)],
   ['PUT', new RegExp(`^courses/${ID}/(modules|pages)/order$`)],
   ['GET', new RegExp(`^courses/${ID}/editors$`)],
   ['PUT|DELETE', new RegExp(`^courses/${ID}/editors/${ID}$`)],

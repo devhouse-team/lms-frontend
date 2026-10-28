@@ -44,6 +44,11 @@ const step = computed(() => {
 const done = computed(() => step.value === 6)
 const go = (n: number) => navigateTo({ path: base, query: withReturn({ step: n }) })
 
+const structureTab = ref<'manual' | 'import'>('manual')
+const structureTabs = computed(() => [
+  { value: 'manual', label: t('wizard.course.structure.manual') },
+  { value: 'import', label: t('wizard.course.structure.import') }
+])
 const lessonCount = computed(() => course.value?.modules.reduce((n, m) => n + m.lessons.length, 0) ?? 0)
 
 // ---- step 1: basics -----------------------------------------------------------------
@@ -225,7 +230,9 @@ async function backToProgram() {
             <h1 id="wiz-title" class="text-lg font-semibold text-highlighted">{{ t('wizard.course.structure.title') }}</h1>
             <p class="mt-1 text-sm text-muted">{{ t('wizard.course.structure.lead') }}</p>
           </header>
-          <EditorOutline focus="structure" />
+          <UTabs v-model="structureTab" :items="structureTabs" :content="false" variant="link" color="primary" />
+          <EditorOutline v-if="structureTab === 'manual'" focus="structure" />
+          <CoursePlanImport v-else @applied="structureTab = 'manual'" />
           <footer class="flex items-center justify-between gap-3 border-t border-default pt-4">
             <UButton :label="t('wizard.back')" icon="i-lucide-arrow-left" color="neutral" variant="ghost" @click="go(1)" />
             <div class="flex items-center gap-3">

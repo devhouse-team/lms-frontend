@@ -2,6 +2,12 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-10-28: course plan import (frontend)
+
+- `/create/course`, structure step: "Import from file" tab. Markdown, CSV or JSON is parsed in the browser, checked,
+  previewed with its issues and applied (append or replace). Needs `POST /courses/{id}/import`; the API contract for the
+  backend is [plan-import-api](features/plan-import-api.md) ([O32](open-items.md)). Until then Apply is off.
+
 ## 2026-10-28: create hub checklist
 
 - Head, `/create`: the recommendation now follows the whole chain (program, courses, activation, cohort, students) and

@@ -9,7 +9,7 @@ Step-by-step creation of a program, a cohort and a course, for heads. Prototype:
 | 1 | Program wizard | built 2026-10-27 |
 | 2 | Cohort wizard | built 2026-10-28 |
 | 3 | Course wizard (manual structure) | built 2026-10-28 |
-| 4 | Course plan import | blocked on the backend ([O32](../open-items.md)) |
+| 4 | Course plan import | frontend built 2026-10-28; waits for the API ([O32](../open-items.md)) |
 
 ## Rules
 
@@ -85,7 +85,18 @@ Differences from the prototype: module release is in days (the API's `release_of
 lesson is a list of titles, not a student view (no cohort-less preview exists); solutions are attached in the
 assignment editor.
 
-## Stage 4: plan import
+## Plan import (course wizard, structure step)
 
-Needs a backend endpoint that takes a parsed tree (see O32). The parsers (Markdown, CSV, JSON) and the validation rules
-are in the prototype's `app.js`.
+Second tab "Import from file" next to the manual outline (`CoursePlanImport`). Format Markdown, CSV or JSON, pasted or
+uploaded, with a sample.
+
+1. **Check**: `app/utils/planImport.ts` parses the text into a tree. Syntax problems are found in the browser (lines that
+   belong to no lesson, unknown type, missing titles). Without errors, the tree goes to the API as a dry run.
+2. **Preview**: counts of what would be created, and every issue with its place ("Module › Lesson › item 3"). The
+   issue `code` is translated under `wizard.course.import.issue`; unknown codes show the API's `message`.
+3. **Apply**: append to the end, or replace the structure. Errors block the button. Imported content is unpublished;
+   the last wizard step publishes. After applying the tab returns to the outline.
+
+The API contract is [plan-import-api](plan-import-api.md). Until the endpoint exists, Check shows the local preview and a
+notice that the server cannot check plans, and Apply stays off. Module release days are chosen by the API (7 days
+apart); the prototype's weeks and per-item tags are not imported.

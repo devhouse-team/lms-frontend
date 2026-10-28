@@ -971,7 +971,8 @@
         "files": "This assignment doesn't accept files.",
         "max_files": "Too many files for this assignment.",
         "file_type": "This file type isn't allowed here."
-      }
+      },
+      "import_replace_blocked": "Replacing is not possible: a cohort is studying this course, or students have submitted work in it."
     }
   },
   "course": {
@@ -1731,7 +1732,9 @@
       "structure": {
         "title": "Structure",
         "lead": "Modules open by day, lessons live inside them. Course pages (syllabus, about, grading) sit above the modules.",
-        "need": "Add a module with at least one lesson"
+        "need": "Add a module with at least one lesson",
+        "manual": "By hand",
+        "import": "Import from file"
       },
       "materials": {
         "title": "Materials",
@@ -1792,6 +1795,46 @@
         "open": "Open the editor",
         "program": "Build a program",
         "another": "Create another course"
+      },
+      "import": {
+        "text": "Course plan",
+        "placeholder": "Paste the plan or upload a file",
+        "format": "Format",
+        "sample": "Insert a sample",
+        "upload": "Upload a file",
+        "parse": "Check",
+        "preview": "What will be created",
+        "noIssues": "No problems found.",
+        "append": "Add to the end",
+        "appendHelp": "Modules already in the course stay.",
+        "replace": "Replace the structure",
+        "replaceHelp": "Existing modules and lessons are deleted first. Not possible while a cohort is studying the course.",
+        "apply": "Apply to the course",
+        "fixFirst": "Fix the errors in the text and check again.",
+        "done": "Imported: {m} modules, {l} lessons. They are unpublished.",
+        "line": "line {n}",
+        "item": "item {n}",
+        "untitled": "(untitled)",
+        "err": {
+          "json_invalid": "This is not valid JSON.",
+          "json_shape": "Expected an object with a \"modules\" array.",
+          "nothing": "No modules found. Check the format.",
+          "unavailable": "The server cannot check or import plans yet."
+        },
+        "issue": {
+          "stray_line": "This line does not belong to a lesson and is skipped.",
+          "unknown_type": "Unknown type. Use video, pdf, link or task.",
+          "title_required": "A title is required.",
+          "title_too_long": "The title is longer than 200 characters.",
+          "bad_url": "The link must start with http:// or https://.",
+          "video_host_not_allowed": "This video host is not supported.",
+          "too_many_materials": "A lesson holds at most 50 materials.",
+          "too_many_assignments": "A lesson holds at most 10 assignments.",
+          "empty_module": "The module has no lessons and is skipped.",
+          "empty_lesson": "The lesson has no materials or assignments.",
+          "pdf_as_link": "A PDF by address is imported as a link.",
+          "title_from_url": "No title: the address is used."
+        }
       }
     }
   }
