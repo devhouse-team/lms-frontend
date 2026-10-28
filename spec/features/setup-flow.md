@@ -8,7 +8,7 @@ Step-by-step creation of a program, a cohort and a course, for heads. Prototype:
 | 0 | `WizardShell`, `/create` hub | built 2026-10-27 |
 | 1 | Program wizard | built 2026-10-27 |
 | 2 | Cohort wizard | built 2026-10-28 |
-| 3 | Course wizard (manual structure) | planned |
+| 3 | Course wizard (manual structure) | built 2026-10-28 |
 | 4 | Course plan import | blocked on the backend ([O32](../open-items.md)) |
 
 ## Rules
@@ -62,11 +62,25 @@ redirects to its page (a started cohort is still wizard material: team and stude
 Errors: `cohort_name_taken` on the name, `cohort_started` and `cohort_ends_in_past` on the start date, the rest through
 `useCohortErrors`. The calendar leaves out unpublished courses (the step says so).
 
-## Stage 3: course wizard (planned)
+## Course wizard: `/create/course[/:id]?step=1..6`
 
-Basics → structure (modules with release week, lessons, course pages) → materials → assignments (templates, max 10 per
-lesson) → publish (checklist, student preview). Goes through `useCourseEditor` and the editor allowlist. Returning to a
-program wizard: `?return=`.
+Anyone who may create courses (`course.create`), not only heads; the editor API decides. One page instance per course.
+`?return=/create/program/:id` (only that shape is accepted) adds the course to the program from the done screen.
+Steps 2-4 render `EditorOutline` with `focus="structure" | "materials" | "assignments"`: the same component and calls
+as the course editor, showing one part. `stay` keeps a new assignment in the wizard instead of opening its editor.
+
+| Step | UI | Calls |
+|---|---|---|
+| 1 Basics | title, slug (follows title), description. Creates the course as a draft; revisiting edits it. | `POST /api/editor/courses`, `PATCH courses/{id}` |
+| 2 Structure | course pages, modules (release day offset), lessons, reorder. Next needs a lesson. | editor allowlist |
+| 3 Materials | each lesson open with its materials: add by kind, publish, reorder, delete | editor allowlist |
+| 4 Assignments | each lesson with its assignments; templates fill mode, timing and file limit (`assignmentTemplates.ts`) | editor allowlist |
+| 5 Publish | stats; checklist (`courseReview.ts`, only an empty course blocks); "publish everything"; sample lesson; editors; draft or publish | `PATCH` lessons / materials / assignments, `PATCH courses/{id}` |
+| 6 Done | with `?return=`: add to the program (after its last content) and go back; else build a program, open the editor, create another | `PUT /api/programs/{p}/courses/{id}` |
+
+Differences from the prototype: module release is in days (the API's `release_offset_days`), not weeks; the sample
+lesson is a list of titles, not a student view (no cohort-less preview exists); solutions are attached in the
+assignment editor.
 
 ## Stage 4: plan import
 

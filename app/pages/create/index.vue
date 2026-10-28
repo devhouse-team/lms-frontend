@@ -11,7 +11,7 @@ const recommendProgram = computed(() => !!data.value && !data.value.programs.len
 
 const cards = computed(() => [
   { key: 'program', to: '/create/program', icon: 'i-lucide-library', primary: recommendProgram.value, show: data.value?.can.create },
-  { key: 'course', to: '/courses', icon: 'i-lucide-book-open', primary: false, show: true },
+  { key: 'course', to: '/create/course', icon: 'i-lucide-book-open', primary: false, show: true },
   { key: 'cohort', to: '/create/cohort', icon: 'i-lucide-users', primary: false, show: true }
 ].filter(c => c.show))
 </script>

@@ -2,6 +2,16 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-10-28: course wizard
+
+- `/create/course`: basics, structure, materials, assignments, review and publish. The course is created as a draft
+  after step 1; steps 2-4 are the editor's outline one part at a time (`EditorOutline focus=`), so they use the same
+  calls and permissions. New assignments can start from a template (weekly homework, exam, practice). The last step
+  has a checklist (`app/utils/courseReview.ts`), a sample lesson as a student sees it, editors and draft/publish.
+  With `?return=/create/program/:id` the finished course is added to that program. "Create course" on `/courses` and
+  the program wizard now lead here; `CourseCreateModal` is gone. Plan import is still waiting for
+  [O32](open-items.md).
+
 ## 2026-10-28: cohort wizard
 
 - Head, `/create/cohort`: program, dates, plan, team and students steps. The cohort is created after the dates step

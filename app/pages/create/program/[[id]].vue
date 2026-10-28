@@ -233,7 +233,7 @@ async function activate() {
           </div>
           <div v-else-if="!options.length" class="rounded-lg px-4 py-8 text-center ring-1 ring-inset ring-default">
             <p class="mx-auto max-w-prose text-sm text-muted">{{ t('wizard.program.courses.empty') }}</p>
-            <UButton :label="t('wizard.program.courses.create')" to="/courses" icon="i-lucide-plus" class="mt-4" />
+            <UButton :label="t('wizard.program.courses.create')" :to="`/create/course?return=${base}`" icon="i-lucide-plus" class="mt-4" />
           </div>
           <template v-else>
             <div class="flex flex-wrap items-center justify-between gap-3">
@@ -253,7 +253,7 @@ async function activate() {
                 />
               </li>
             </ul>
-            <UButton :label="t('wizard.program.courses.create')" to="/courses" icon="i-lucide-plus" color="neutral" variant="link" size="sm" />
+            <UButton :label="t('wizard.program.courses.create')" :to="`/create/course?return=${base}`" icon="i-lucide-plus" color="neutral" variant="link" size="sm" />
           </template>
           <footer class="flex items-center justify-between gap-3 border-t border-default pt-4">
             <UButton :label="t('wizard.back')" icon="i-lucide-arrow-left" color="neutral" variant="ghost" @click="go(1)" />

@@ -1215,7 +1215,13 @@
     "addSolution": "Add solution",
     "noSolutions": "No solution yet.",
     "solutionTitle": "{title} · solution",
-    "examSummary": "day {day}, {time}, {min} min"
+    "examSummary": "day {day}, {time}, {min} min",
+    "template": {
+      "label": "Template",
+      "weekly": "Weekly homework",
+      "exam": "Exam",
+      "practice": "Practice"
+    }
   },
   "exam": {
     "opensIn": "Opens in",
@@ -1540,7 +1546,7 @@
       "course": {
         "title": "Course",
         "text": "Modules and lessons, materials, assignments.",
-        "cta": "Go to courses"
+        "cta": "Create a course"
       },
       "cohort": {
         "title": "Cohort",
@@ -1657,6 +1663,86 @@
         "assigned": "Students assigned to mentors: {n}",
         "open": "Open the cohort",
         "another": "Create something else"
+      }
+    },
+    "course": {
+      "title": "New course",
+      "step": {
+        "basics": "Basics",
+        "structure": "Structure",
+        "materials": "Materials",
+        "assignments": "Assignments",
+        "publish": "Publish"
+      },
+      "basics": {
+        "title": "Course basics",
+        "lead": "Title, address and description. Structure, materials and assignments come next.",
+        "draftNote": "The course is saved as a draft after this step. Come back any time: Courses → Courses I edit."
+      },
+      "structure": {
+        "title": "Structure",
+        "lead": "Modules open by day, lessons live inside them. Course pages (syllabus, about, grading) sit above the modules.",
+        "need": "Add a module with at least one lesson"
+      },
+      "materials": {
+        "title": "Materials",
+        "lead": "Add materials to each lesson in the order students study them: text, video, PDF, links.",
+        "needLessons": "Add lessons on the structure step first."
+      },
+      "assignments": {
+        "title": "Assignments",
+        "lead": "Homework, exams and practice belong to lessons. Start from a template and fine-tune it in the assignment editor.",
+        "needLessons": "Add lessons on the structure step first."
+      },
+      "review": {
+        "title": "Review and publish",
+        "lead": "See what is missing and how a student will see the course. You can fix gaps later.",
+        "stat": {
+          "modules": "Modules",
+          "lessons": "Lessons",
+          "materials": "Materials",
+          "assignments": "Assignments"
+        },
+        "checklist": "Checklist",
+        "allGood": "Nothing is missing.",
+        "fix": "Fix",
+        "severity": {
+          "error": "Error",
+          "warn": "Attention",
+          "info": "Note"
+        },
+        "issue": {
+          "noModules": "The course has no modules.",
+          "emptyModule": "Module \"{title}\" has no lessons.",
+          "unpublishedLessons": "{n} lessons are not published: {names}. Students will not see them.",
+          "lessonsNoMaterials": "{n} lessons have no materials: {names}.",
+          "unpublishedMaterials": "{n} materials are not published, students will not see them.",
+          "noAssignments": "The course has no assignments.",
+          "lessonsNoAssignments": "{n} lessons have no assignments.",
+          "unpublishedAssignments": "{n} assignments are not published."
+        },
+        "publishAll": "Publish all lessons, materials and assignments",
+        "publishedAll": "Everything is published",
+        "preview": "How a student sees a lesson",
+        "previewEmpty": "No published materials or assignments yet.",
+        "status": "Status",
+        "draft": "Draft",
+        "draftHelp": "Only editors see it. You can add it to a program, but students will not see it.",
+        "publish": "Publish",
+        "publishHelp": "The course is available to cohorts that study it.",
+        "editors": "Editors",
+        "save": "Save course",
+        "publishNow": "Publish course"
+      },
+      "done": {
+        "title": "The course is ready",
+        "draft": "Saved as a draft.",
+        "published": "Published.",
+        "toProgram": "Add to the program and go back",
+        "added": "Course added to the program",
+        "open": "Open the editor",
+        "program": "Build a program",
+        "another": "Create another course"
       }
     }
   }

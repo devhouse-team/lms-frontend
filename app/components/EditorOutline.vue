@@ -7,8 +7,11 @@ type S = components['schemas']
 /**
  * The authoring outline (spec course-content.md, Course editor › Outline): course pages, modules with their lessons,
  * each lesson's materials and assignments. Up / down reorder sends the full order; moving across modules goes through
- * "Move to module…". Edits are live in running cohorts.
+ * "Move to module…". Edits are live in running cohorts. The course wizard shows one part per step (`focus`): the
+ * structure (pages, modules, lessons), every lesson's materials, or every lesson's assignments; `stay` keeps it on
+ * the page after an assignment is added.
  */
+const props = withDefaults(defineProps<{ focus?: 'all' | 'structure' | 'materials' | 'assignments', stay?: boolean }>(), { focus: 'all' })
 const { t } = useI18n()
 const toast = useToast()
 const { outline, call } = useCourseEditor()
@@ -18,6 +21,9 @@ const lessonsOf = (m: S['ModuleOutline']) => [...m.lessons].sort((a, b) => a.pos
 
 const expanded = ref(new Set<number>())
 const toggle = (id: number) => (expanded.value.has(id) ? expanded.value.delete(id) : expanded.value.add(id))
+const structure = computed(() => props.focus === 'all' || props.focus === 'structure')
+/** Lessons are folded in the full editor; the materials and assignments steps list them open, structure has nothing inside */
+const isOpen = (id: number) => (props.focus === 'all' ? expanded.value.has(id) : props.focus !== 'structure')
 
 // ---- prompts: add / rename module and lesson, release offset ---------------------------------------
 const prompt = ref<{ title: string, fields: PromptField[], initial?: Record<string, string | number>, submit: (v: Record<string, string | number>) => void }>()
@@ -121,7 +127,7 @@ const lessonMenu = (l: S['LessonOutline']) => [[
       :description="t('editor.liveHint', o.cohort_count)"
     />
 
-    <section aria-labelledby="pages-title" class="space-y-2">
+    <section v-if="structure" aria-labelledby="pages-title" class="space-y-2">
       <h2 id="pages-title" class="text-sm font-semibold text-highlighted">{{ t('editor.pages') }}</h2>
       <p v-if="!o.pages.length" class="text-sm text-muted">{{ t('editor.pagesHint') }}</p>
       <EditorMaterials :materials="o.pages" />
@@ -136,7 +142,7 @@ const lessonMenu = (l: S['LessonOutline']) => [[
             <p class="truncate text-sm font-semibold text-highlighted">{{ m.title }}</p>
             <p class="num text-xs text-muted">{{ t('editor.opensOnDay', { n: m.release_offset_days }) }}</p>
           </div>
-          <span class="flex items-center gap-0.5">
+          <span v-if="structure" class="flex items-center gap-0.5">
             <UButton :id="`mv-mod-${m.id}--1`" icon="i-lucide-arrow-up" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.moveUp', { title: m.title })" :disabled="mi === 0" @click="moveModule(mi, -1)" />
             <UButton :id="`mv-mod-${m.id}-1`" icon="i-lucide-arrow-down" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.moveDown', { title: m.title })" :disabled="mi === modules.length - 1" @click="moveModule(mi, 1)" />
             <UDropdownMenu :items="moduleMenu(m)" :content="{ align: 'end' }">
@@ -148,8 +154,8 @@ const lessonMenu = (l: S['LessonOutline']) => [[
         <ul class="divide-y divide-default">
           <li v-for="(l, li) in lessonsOf(m)" :id="`lesson-${l.id}`" :key="l.id" class="px-4 py-2.5">
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <button type="button" class="flex min-w-0 flex-1 basis-48 items-center gap-2 text-start" :aria-expanded="expanded.has(l.id)" @click="toggle(l.id)">
-                <UIcon name="i-lucide-chevron-right" class="size-4 shrink-0 text-dimmed transition-transform duration-150 ease-out" :class="expanded.has(l.id) && 'rotate-90'" aria-hidden="true" />
+              <button type="button" class="flex min-w-0 flex-1 basis-48 items-center gap-2 text-start" :disabled="focus !== 'all'" :aria-expanded="focus === 'all' ? isOpen(l.id) : undefined" @click="toggle(l.id)">
+                <UIcon v-if="focus === 'all'" name="i-lucide-chevron-right" class="size-4 shrink-0 text-dimmed transition-transform duration-150 ease-out" :class="isOpen(l.id) && 'rotate-90'" aria-hidden="true" />
                 <span class="min-w-0">
                   <span class="block truncate text-sm text-highlighted">{{ l.title }}</span>
                   <span class="block text-xs text-muted">{{ t('editor.lessonCounts', { m: t('editor.materials', l.materials.length), a: t('editor.assignments', l.assignments.length) }) }}</span>
@@ -157,7 +163,7 @@ const lessonMenu = (l: S['LessonOutline']) => [[
               </button>
               <UBadge v-if="l.is_published && !l.materials.some(x => x.is_published)" :label="t('editor.emptyForStudents')" color="warning" variant="subtle" size="sm" />
               <USwitch :model-value="l.is_published" size="sm" :label="t('editor.publishedShort')" @update:model-value="v => publishLesson(l, v)" />
-              <span class="flex items-center gap-0.5">
+              <span v-if="structure" class="flex items-center gap-0.5">
                 <UButton :id="`mv-l-${l.id}--1`" icon="i-lucide-arrow-up" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.moveUp', { title: l.title })" :disabled="li === 0" @click="moveLesson(m, li, -1)" />
                 <UButton :id="`mv-l-${l.id}-1`" icon="i-lucide-arrow-down" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.moveDown', { title: l.title })" :disabled="li === m.lessons.length - 1" @click="moveLesson(m, li, 1)" />
                 <UDropdownMenu :items="lessonMenu(l)" :content="{ align: 'end' }">
@@ -165,23 +171,23 @@ const lessonMenu = (l: S['LessonOutline']) => [[
                 </UDropdownMenu>
               </span>
             </div>
-            <div v-if="expanded.has(l.id)" class="mt-3 space-y-4 ps-6">
-              <div class="space-y-2">
+            <div v-if="isOpen(l.id)" class="mt-3 space-y-4" :class="focus === 'all' && 'ps-6'">
+              <div v-if="focus !== 'assignments'" class="space-y-2">
                 <p class="text-xs font-medium text-muted">{{ t('editor.materialsTitle') }}</p>
                 <EditorMaterials :materials="l.materials" :lesson-id="l.id" />
               </div>
-              <div class="space-y-2">
+              <div v-if="focus !== 'materials'" class="space-y-2">
                 <p class="text-xs font-medium text-muted">{{ t('editor.assignmentTitle') }}</p>
-                <EditorAssignments :lesson-id="l.id" :assignments="l.assignments" />
+                <EditorAssignments :lesson-id="l.id" :assignments="l.assignments" :stay="stay" />
               </div>
             </div>
           </li>
         </ul>
-        <div class="px-4 py-2">
+        <div v-if="structure" class="px-4 py-2">
           <UButton :label="t('editor.addLesson')" icon="i-lucide-plus" color="neutral" variant="ghost" size="xs" @click="addLesson(m)" />
         </div>
       </div>
-      <UButton :label="t('editor.addModule')" icon="i-lucide-plus" color="neutral" variant="outline" size="sm" @click="addModule" />
+      <UButton v-if="structure" :label="t('editor.addModule')" icon="i-lucide-plus" color="neutral" variant="outline" size="sm" @click="addModule" />
     </section>
 
     <EditorPrompt v-model:open="promptOpen" :title="prompt?.title ?? ''" :fields="prompt?.fields ?? []" :initial="prompt?.initial" @submit="v => prompt?.submit(v)" />

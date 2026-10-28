@@ -4,8 +4,11 @@ import type { AssignmentMode } from '~~/shared/types'
 
 type S = components['schemas']
 
-/** A lesson's assignments (up to 10): mode, timing, publish, order, edit, delete; "Add assignment" creates and opens one */
-const props = defineProps<{ lessonId: number, assignments: S['AssignmentSummary'][] }>()
+/**
+ * A lesson's assignments (up to 10): mode, timing, publish, order, edit, delete; "Add assignment" creates and opens one
+ * (`stay`: creates it and stays, for the course wizard). Templates fill in the mode and timing.
+ */
+const props = defineProps<{ lessonId: number, assignments: S['AssignmentSummary'][], stay?: boolean }>()
 const { t } = useI18n()
 const toast = useToast()
 const { courseId, call } = useCourseEditor()
@@ -41,22 +44,30 @@ async function remove() {
 const adding = ref(false)
 const title = ref('')
 const mode = ref<AssignmentMode>('homework')
+const template = ref<AssignmentTemplate>()
 const modes = computed(() => (['homework', 'exam', 'practice'] as AssignmentMode[]).map(m => ({ value: m, label: t(`lesson.mode.${m}`) })))
 function openAdd() {
   title.value = ''
   mode.value = 'homework'
+  template.value = undefined
   adding.value = true
 }
 async function create() {
   if (title.value.trim().length < 2) return
-  const timing = mode.value === 'homework' ? { due_offset_days: 7 }
+  const tpl = template.value && ASSIGNMENT_TEMPLATES[template.value]
+  const timing = tpl ? tpl.timing : mode.value === 'homework' ? { due_offset_days: 7 }
     : mode.value === 'exam' ? { opens_offset_days: 0, opens_time: '10:00', duration_minutes: 120, trial_enabled: false } : {}
   const a = await call<S['AssignmentRead']>('POST', `lessons/${props.lessonId}/assignments`, {
     title: title.value.trim(), mode: mode.value, statement: '', file_ids: [], is_published: false,
-    accepts_text: true, accepts_links: true, accepts_files: true, max_files: 10, file_types: [], trial_enabled: false, ...timing
+    accepts_text: true, accepts_links: true, accepts_files: true, max_files: tpl?.max_files ?? 10, file_types: [], trial_enabled: false, ...timing
   }, t('editor.added'))
   adding.value = false
-  if (a) await navigateTo(`/editor/${courseId}/assignments/${a.id}`)
+  if (a && !props.stay) await navigateTo(`/editor/${courseId}/assignments/${a.id}`)
+}
+function useTemplate(k: AssignmentTemplate) {
+  template.value = k
+  mode.value = ASSIGNMENT_TEMPLATES[k].mode
+  if (!title.value.trim()) title.value = t(`editor.template.${k}`)
 }
 const MODE_ICON = { homework: 'i-lucide-notebook-pen', exam: 'i-lucide-timer', practice: 'i-lucide-dumbbell' } as const
 </script>
@@ -87,8 +98,12 @@ const MODE_ICON = { homework: 'i-lucide-notebook-pen', exam: 'i-lucide-timer', p
           <UFormField :label="t('editor.title')">
             <UInput v-model="title" maxlength="200" autocomplete="off" class="w-full" autofocus />
           </UFormField>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs text-muted">{{ t('editor.template.label') }}</span>
+            <UButton v-for="k in (['weekly', 'exam', 'practice'] as const)" :key="k" :label="t(`editor.template.${k}`)" size="xs" color="neutral" :variant="template === k ? 'solid' : 'outline'" @click="useTemplate(k)" />
+          </div>
           <UFormField :label="t('editor.mode')" :help="t(`editor.modeHelp.${mode}`)">
-            <UTabs v-model="mode" :items="modes" :content="false" size="sm" color="neutral" />
+            <UTabs v-model="mode" :items="modes" :content="false" size="sm" color="neutral" @update:model-value="template = undefined" />
           </UFormField>
         </form>
       </template>
