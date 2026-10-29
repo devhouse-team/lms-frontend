@@ -122,7 +122,7 @@ const userMenu = computed<DropdownMenuItem[][]>(() => [
     >
       <template #header="{ collapsed }">
         <NuxtLink to="/" class="flex items-center px-1.5 py-1" :class="collapsed && 'justify-center'" aria-label="dev.house">
-          <img v-if="collapsed" src="/brand/devhouse-star.png" alt="" class="size-6" width="24" height="24">
+          <img v-if="collapsed" src="/brand/devhouse-star.svg" alt="" class="size-7" width="24" height="24">
           <img v-else src="/brand/devhouse-logo.png" alt="dev.house" class="h-6 w-auto" width="124" height="24">
         </NuxtLink>
       </template>
