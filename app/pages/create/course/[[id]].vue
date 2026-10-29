@@ -33,7 +33,7 @@ const { data: outline, status, error, refresh } = await useFetch<CourseOutlineAp
   key: `editor-outline:${id}`, immediate: !!id, watch: false, server: false
 })
 // Provided here and used by steps 2-4 (EditorOutline); `call` is the editor's authoring call for the steps' own edits
-const editorCall = id ? provideCourseEditor(id, outline, async () => { await refresh() }).call : undefined
+const editorCall = id ? provideCourseEditor(id, outline, async () => { await refresh() }, () => route.fullPath).call : undefined
 const course = computed(() => (id && outline.value && String(outline.value.id) === id ? outline.value : undefined))
 const denied = computed(() => !!id && [403, 404].includes(error.value?.statusCode ?? 0))
 

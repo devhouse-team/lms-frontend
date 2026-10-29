@@ -2,6 +2,29 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-10-29: empty modules and an empty cohort plan
+
+- Course wizard, materials and assignments steps: a module without lessons shows a hint and "Add lesson" (it had no
+  control there, so materials could only go into modules that already had a lesson).
+- Cohort wizard, plan step: when the plan is empty or partial it lists why (no courses, course not published, no
+  published lesson) with a link to the fix. New `GET /api/cohorts/{id}/courses`.
+
+## 2026-10-29: weeks for module release and the program schedule
+
+- Course editor and course wizard: a module opens in a **week** ("Opens in week 2"), not on a day. Stored as days
+  ((week - 1) × 7); an old value that is not a whole week shows as "week W, day D" and is kept until edited.
+- `/create/program`, schedule step: one list instead of timeline plus table. Each course has an editable start week, up /
+  down and a bar that runs to the week its last module opens (it was one week per module). The longer / shorter warning
+  sits under it. "Place one after another" uses the same lengths. The program page's start popover is week-only.
+- Backend ask: [program-course-weeks-api](features/program-course-weeks-api.md) ([O33](open-items.md)).
+
+## 2026-10-28: wizard fixes
+
+- `/create/program`, `/create/cohort`: after step 1 (program) or 2 (cohort) the wizard showed "not found" instead of the
+  next step. The new page reused the fetch of the id-less one (static key); keys now carry the id.
+- `/create/course`, steps 2-4: material and assignment editors opened from the wizard return to the wizard step
+  (`?back=`), not to the course editor.
+
 ## 2026-10-28: course plan import (frontend)
 
 - `/create/course`, structure step: "Import from file" tab. Markdown, CSV or JSON is parsed in the browser, checked,

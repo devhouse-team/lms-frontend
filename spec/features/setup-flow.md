@@ -39,12 +39,14 @@ activation step of a draft; no cohort → cohort wizard; no students → `/cohor
 |---|---|---|
 | 1 Basics | title, slug (follows title), duration weeks 1-104, description (markdown). Cover and lead stay in the edit modal. Revisiting edits the draft. | `POST /api/programs`, then `PATCH /api/programs/{id}` with changed fields |
 | 2 Courses | searchable checklist of `course-options`; ticking adds the course after the last content, unticking removes it | `PUT` / `DELETE /api/programs/{id}/courses/{course}` |
-| 3 Schedule | `CurriculumTimeline` (bars on a week grid, flagged past the program length); "Place one after another"; `ProgramCurriculum` for order, start week, remove | `PUT .../courses/{course}`, `PUT .../courses/order` |
+| 3 Schedule | `CurriculumTimeline`: one row per course with an editable start week (saved after a short pause), up / down, and a bar on the week grid (flagged past the program length); "Place one after another"; longer / shorter warning | `PUT .../courses/{course}`, `PUT .../courses/order` |
 | 4 Activation | warnings, none blocks: no courses, unpublished course, course without modules, content longer than the program. Activate or keep the draft. | `POST /api/programs/{id}/activate` |
 | 5 Done | open the program, create something else | |
 
-Course length on the timeline is its module count (min 1), as one week per module. The API has no per-course length;
-`weeksOfContent` only covers the whole program.
+A bar runs from the start week to the week the course's last module opens, read from each course's outline
+(`/api/editor/courses/{id}`). A course whose outline can't be read, or without modules, counts a week per module. The API
+has no per-course length: [program-course-weeks-api](program-course-weeks-api.md) asks for one. The start is a week;
+the program page's popover is week-only as well (a start that is not a week boundary keeps its day until changed).
 
 Errors: `slug_taken` on the slug field, everything else through `useProgramErrors`.
 
@@ -57,7 +59,7 @@ redirects to its page (a started cohort is still wizard material: team and stude
 |---|---|---|
 | 1 Program | active programs only (`/api/programs/options`); none → link to the program wizard | |
 | 2 Dates | name (defaults to "program · start" until typed), start, end (computed from the program length, read-only), timezone. Creates the cohort. Revisiting edits it; start and timezone are locked once it has started. | `POST /api/cohorts`, then `PATCH /api/cohorts/{id}` with changed fields |
-| 3 Plan | start, end, item and exam counts; the cohort calendar by week; exam windows | `GET /api/calendar?cohort=`, `CohortExamWindows` |
+| 3 Plan | start, end, item and exam counts; the cohort calendar by week; exam windows. "Left out of the plan" lists why items are missing: no courses, a course not published, a course without a published lesson (a module reaches the calendar only with one), each with a link to the fix | `GET /api/calendar?cohort=`, `GET /api/cohorts/{id}/courses`, `CohortExamWindows` |
 | 4 Team | `CohortStaff`; next needs a mentor | |
 | 5 Students | `AddStudentsPanel` (one person, emails, CSV); "assign automatically" runs once on finish | `POST /api/cohorts/{id}/mentors/auto` |
 | 6 Done | open the cohort, create something else | |
@@ -71,17 +73,20 @@ Anyone who may create courses (`course.create`), not only heads; the editor API 
 `?return=/create/program/:id` (only that shape is accepted) adds the course to the program from the done screen.
 Steps 2-4 render `EditorOutline` with `focus="structure" | "materials" | "assignments"`: the same component and calls
 as the course editor, showing one part. `stay` keeps a new assignment in the wizard instead of opening its editor.
+Material and assignment editors opened from these steps get `?back=<wizard step>` and their back link returns there
+(only `/create/course/…` is accepted).
 
 | Step | UI | Calls |
 |---|---|---|
 | 1 Basics | title, slug (follows title), description. Creates the course as a draft; revisiting edits it. | `POST /api/editor/courses`, `PATCH courses/{id}` |
 | 2 Structure | course pages, modules (release day offset), lessons, reorder. Next needs a lesson. | editor allowlist |
-| 3 Materials | each lesson open with its materials: add by kind, publish, reorder, delete | editor allowlist |
+| 3 Materials | each lesson open with its materials: add by kind, publish, reorder, delete. A module without lessons says so and offers "Add lesson" (steps 3-4 only; the rest of the structure is edited in step 2) | editor allowlist |
 | 4 Assignments | each lesson with its assignments; templates fill mode, timing and file limit (`assignmentTemplates.ts`) | editor allowlist |
 | 5 Publish | stats; checklist (`courseReview.ts`, only an empty course blocks); "publish everything"; sample lesson; editors; draft or publish | `PATCH` lessons / materials / assignments, `PATCH courses/{id}` |
 | 6 Done | with `?return=`: add to the program (after its last content) and go back; else build a program, open the editor, create another | `PUT /api/programs/{p}/courses/{id}` |
 
-Differences from the prototype: module release is in days (the API's `release_offset_days`), not weeks; the sample
+Differences from the prototype: module release is entered as a week (stored as `release_offset_days` = (week - 1) × 7;
+an old value that is not a whole week shows as "week 2, day 3" and is kept until changed); the sample
 lesson is a list of titles, not a student view (no cohort-less preview exists); solutions are attached in the
 assignment editor.
 

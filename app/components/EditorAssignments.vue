@@ -11,7 +11,7 @@ type S = components['schemas']
 const props = defineProps<{ lessonId: number, assignments: S['AssignmentSummary'][], stay?: boolean }>()
 const { t } = useI18n()
 const toast = useToast()
-const { courseId, call } = useCourseEditor()
+const { call, link } = useCourseEditor()
 
 const sorted = computed(() => [...props.assignments].sort((a, b) => a.position - b.position))
 const summary = (a: S['AssignmentSummary']) => a.mode === 'exam'
@@ -62,7 +62,7 @@ async function create() {
     accepts_text: true, accepts_links: true, accepts_files: true, max_files: tpl?.max_files ?? 10, file_types: [], trial_enabled: false, ...timing
   }, t('editor.added'))
   adding.value = false
-  if (a && !props.stay) await navigateTo(`/editor/${courseId}/assignments/${a.id}`)
+  if (a && !props.stay) await navigateTo(link(`assignments/${a.id}`))
 }
 function useTemplate(k: AssignmentTemplate) {
   template.value = k
@@ -77,7 +77,7 @@ const MODE_ICON = { homework: 'i-lucide-notebook-pen', exam: 'i-lucide-timer', p
     <ul v-if="sorted.length" class="divide-y divide-default rounded-md ring-1 ring-inset ring-default">
       <li v-for="(a, i) in sorted" :key="a.id" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
         <UIcon :name="MODE_ICON[a.mode]" class="size-4 shrink-0 text-muted" :aria-label="t(`lesson.mode.${a.mode}`)" />
-        <NuxtLink :to="`/editor/${courseId}/assignments/${a.id}`" class="min-w-0 flex-1 basis-40">
+        <NuxtLink :to="link(`assignments/${a.id}`)" class="min-w-0 flex-1 basis-40">
           <span class="block truncate text-sm text-highlighted underline-offset-4 hover:underline">{{ a.title }}</span>
           <span class="num block truncate text-xs text-muted">{{ t(`lesson.mode.${a.mode}`) }} · {{ summary(a) }} · {{ t('editor.submissions', a.submission_count) }}</span>
         </NuxtLink>
@@ -85,7 +85,7 @@ const MODE_ICON = { homework: 'i-lucide-notebook-pen', exam: 'i-lucide-timer', p
         <span class="flex items-center gap-0.5">
           <UButton :id="`mv-a-${a.id}--1`" icon="i-lucide-arrow-up" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.moveUp', { title: a.title })" :disabled="i === 0" @click="move(i, -1)" />
           <UButton :id="`mv-a-${a.id}-1`" icon="i-lucide-arrow-down" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.moveDown', { title: a.title })" :disabled="i === sorted.length - 1" @click="move(i, 1)" />
-          <UButton :to="`/editor/${courseId}/assignments/${a.id}`" icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.editItem', { title: a.title })" />
+          <UButton :to="link(`assignments/${a.id}`)" icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.editItem', { title: a.title })" />
           <UButton icon="i-lucide-trash-2" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.deleteItem', { title: a.title })" @click="deleting = a" />
         </span>
       </li>

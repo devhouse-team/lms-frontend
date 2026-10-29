@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { CourseOption, ProgramCourse, ProgramDetail, ProgramInput } from '~~/shared/types'
+import type { CourseOutlineApi } from '~/composables/useCourseEditor'
 
 /**
  * Program wizard: basics → courses → schedule → activation. The program is created as a draft after step 1 and
@@ -20,7 +21,7 @@ const stepLabels = STEPS.map(s => t(`wizard.program.step.${s}`))
 const base = computed(() => (id.value ? `/create/program/${id.value}` : '/create/program'))
 
 const { data, status, error, refresh, execute } = useFetch<ProgramDetail>(() => `/api/programs/${id.value}`, {
-  key: 'program-wizard', immediate: false, watch: false, server: false
+  key: () => `program-wizard:${id.value}`, immediate: false, watch: false, server: false
 })
 watch(id, v => v && execute(), { immediate: true })
 const program = computed(() => (id.value && data.value?.id === id.value ? data.value : undefined))
@@ -130,12 +131,51 @@ async function toggle(c: CourseOption, on: boolean) {
 }
 
 // ---- step 3: schedule ---------------------------------------------------------------
-const lenOf = (c: ProgramCourse) => Math.max(1, c.modules)
-const weekOf = (c: ProgramCourse) => Math.floor(c.startOffsetDays / 7) + 1
-const timeline = computed(() => (program.value?.courses ?? []).map(c => ({ id: c.courseId, title: c.title, start: weekOf(c), len: lenOf(c) })))
+// A course is as long as its last module's release day says, like the API's `weeks_of_content`; the program API has no
+// per-course length (spec: program-course-weeks-api.md), so the outlines are read here. Missing → a week per module.
+const lastRelease = ref<Record<string, number | null>>({})
+watch(() => program.value?.courses.map(c => c.courseId).join(), async () => {
+  const todo = (program.value?.courses ?? []).filter(c => !(c.courseId in lastRelease.value))
+  const results = await Promise.allSettled(todo.map(c => $fetch<CourseOutlineApi>(`/api/editor/courses/${c.courseId}`)))
+  results.forEach((r, i) => {
+    lastRelease.value[todo[i]!.courseId] = r.status === 'fulfilled' && r.value.modules.length ? Math.max(...r.value.modules.map(m => m.release_offset_days)) : null
+  })
+}, { immediate: true })
+const startWeek = (c: ProgramCourse) => Math.floor(c.startOffsetDays / 7) + 1
+/** Weeks the course occupies from its start week (the last module's week, inclusive) */
+function lenOf(c: ProgramCourse) {
+  const last = lastRelease.value[c.courseId]
+  return last == null ? Math.max(1, c.modules) : Math.floor((c.startOffsetDays + last) / 7) + 1 - startWeek(c) + 1
+}
+const timeline = computed(() => (program.value?.courses ?? []).map(c => ({ id: c.courseId, title: c.title, start: startWeek(c), len: lenOf(c), published: c.published, modules: c.modules })))
+const scheduleBusy = ref(false)
 const packing = ref(false)
 
-/** One course after another, a week per module */
+async function runSchedule(call: () => Promise<unknown>, done?: string) {
+  scheduleBusy.value = true
+  try {
+    await call()
+    if (done) toast.add({ title: done, icon: 'i-lucide-check', color: 'success' })
+  } catch (e) {
+    toastError(e)
+  } finally {
+    invalidatePrograms('program-wizard')
+    await refresh()
+    scheduleBusy.value = false
+  }
+}
+const setStart = (courseId: string, week: number) =>
+  runSchedule(() => $fetch(`/api/programs/${id.value}/courses/${courseId}`, { method: 'PUT', body: { startOffsetDays: (week - 1) * 7 } }))
+function moveCourse(courseId: string, dir: -1 | 1) {
+  const ids = program.value!.courses.map(c => c.courseId)
+  const i = ids.indexOf(courseId)
+  ;[ids[i], ids[i + dir]] = [ids[i + dir]!, ids[i]!]
+  return runSchedule(() => $fetch(`/api/programs/${id.value}/courses/order`, { method: 'PUT', body: { courseIds: ids } }))
+}
+/** Longer than the program, or 2+ weeks shorter, by when the last module opens */
+const contentWeeks = computed(() => Math.max(0, ...timeline.value.map(r => r.start + r.len - 1)))
+
+/** One course after another: each starts the week after the previous one's last module opens */
 async function pack() {
   const p = program.value!
   packing.value = true
@@ -144,7 +184,8 @@ async function pack() {
     for (const c of p.courses) {
       const offset = (Math.min(week, 104) - 1) * 7
       if (offset !== c.startOffsetDays) await $fetch(`/api/programs/${p.id}/courses/${c.courseId}`, { method: 'PUT', body: { startOffsetDays: offset } })
-      week += lenOf(c)
+      const last = lastRelease.value[c.courseId]
+      week += last == null ? Math.max(1, c.modules) : Math.floor(last / 7) + 1
     }
     toast.add({ title: t('wizard.program.schedule.packed'), icon: 'i-lucide-check', color: 'success' })
   } catch (e) {
@@ -269,17 +310,16 @@ async function activate() {
           </header>
           <p v-if="!program.courses.length" class="rounded-lg px-4 py-8 text-center text-sm text-muted ring-1 ring-inset ring-default">{{ t('wizard.program.schedule.empty') }}</p>
           <template v-else>
-            <CurriculumTimeline :weeks="program.durationWeeks" :rows="timeline" />
-            <UButton :label="t('wizard.program.schedule.pack')" icon="i-lucide-align-start-vertical" color="neutral" variant="outline" size="sm" :loading="packing" @click="pack" />
-            <ProgramCurriculum
-              :program-id="program.id"
-              :courses="program.courses"
-              :weeks-of-content="program.weeksOfContent"
-              :duration-weeks="program.durationWeeks"
-              :cohorts-total="0"
-              editable
-              @changed="refresh()"
+            <CurriculumTimeline :weeks="program.durationWeeks" :rows="timeline" :busy="scheduleBusy || packing" @start="setStart" @move="moveCourse" />
+            <UButton :label="t('wizard.program.schedule.pack')" icon="i-lucide-align-start-vertical" color="neutral" variant="outline" size="sm" :loading="packing" :disabled="scheduleBusy" @click="pack" />
+            <UAlert
+              v-if="contentWeeks > program.durationWeeks"
+              color="warning"
+              variant="subtle"
+              icon="i-lucide-triangle-alert"
+              :description="t('programs.curriculum.longer', { x: contentWeeks, d: program.durationWeeks })"
             />
+            <p v-else-if="program.durationWeeks - contentWeeks >= 2" class="text-sm text-muted">{{ t('programs.curriculum.shorter', { x: contentWeeks, d: program.durationWeeks }) }}</p>
           </template>
           <footer class="flex items-center justify-between gap-3 border-t border-default pt-4">
             <UButton :label="t('wizard.back')" icon="i-lucide-arrow-left" color="neutral" variant="ghost" @click="go(2)" />

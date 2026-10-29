@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { z } from 'zod'
-import type { CalendarView, CohortDetail, CohortRosterRow, ProgramOption } from '~~/shared/types'
+import type { CalendarView, CohortCourseRow, CohortDetail, CohortRosterRow, ProgramOption } from '~~/shared/types'
 
 /**
  * Cohort wizard: program → dates → plan → team → students. The cohort is created after step 2 (the API copies the
@@ -21,13 +21,13 @@ const stepLabels = STEPS.map(s => t(`wizard.cohort.step.${s}`))
 const base = computed(() => (id.value ? `/create/cohort/${id.value}` : '/create/cohort'))
 
 const { data, status, error, refresh, execute } = useFetch<CohortDetail>(() => `/api/cohorts/${id.value}`, {
-  key: 'cohort-wizard', immediate: false, watch: false, server: false
+  key: () => `cohort-wizard:${id.value}`, immediate: false, watch: false, server: false
 })
 watch(id, v => v && execute(), { immediate: true })
 const cohort = computed(() => (id.value && data.value?.id === id.value ? data.value : undefined))
 const notFound = computed(() => !!id.value && error.value?.statusCode === 404)
 const { data: roster, refresh: refreshRoster } = useLazyFetch<CohortRosterRow[]>(() => `/api/cohorts/${id.value}/roster`, {
-  key: 'cohort-wizard-roster', immediate: false, watch: false, server: false, default: () => []
+  key: () => `cohort-wizard-roster:${id.value}`, immediate: false, watch: false, server: false, default: () => []
 })
 watch(id, v => v && refreshRoster(), { immediate: true })
 
@@ -127,12 +127,30 @@ async function saveDates() {
 
 // ---- step 3: plan --------------------------------------------------------------------
 const { data: calendar, status: calendarStatus, execute: loadCalendar } = useFetch<CalendarView>(() => `/api/calendar?cohort=${id.value}`, {
-  key: 'cohort-wizard-calendar', immediate: false, watch: false, server: false
+  key: () => `cohort-wizard-calendar:${id.value}`, immediate: false, watch: false, server: false
 })
-const refreshCalendar = () => (id.value && step.value === 3 ? loadCalendar() : Promise.resolve())
+const { data: courses, status: coursesStatus, execute: loadCourses } = useFetch<CohortCourseRow[]>(() => `/api/cohorts/${id.value}/courses`, {
+  key: () => `cohort-wizard-courses:${id.value}`, immediate: false, watch: false, server: false
+})
+const refreshCalendar = () => (id.value && step.value === 3 ? Promise.all([loadCalendar(), loadCourses()]) : Promise.resolve())
 watch([step, id], ([s, i]) => {
-  if (s === 3 && i) loadCalendar()
+  if (s === 3 && i) {
+    loadCalendar()
+    loadCourses()
+  }
 }, { immediate: true })
+/** Why the calendar can be empty or partial: no courses, an unpublished course, a course without a published lesson */
+const leftOut = computed(() => {
+  const list = courses.value
+  if (!list || !cohort.value) return []
+  if (!list.length) return [{ key: 'none', text: t('wizard.cohort.plan.why.none'), label: t('wizard.cohort.plan.why.program'), to: `/programs/${cohort.value.programId}` }]
+  return list.flatMap((c) => {
+    const to = `/create/course/${c.courseId}?step=5`
+    if (!c.published) return [{ key: c.courseId, text: t('wizard.cohort.plan.why.unpublished', { course: c.title }), label: t('wizard.cohort.plan.why.publish'), to }]
+    if (!c.lessons) return [{ key: c.courseId, text: t('wizard.cohort.plan.why.noLessons', { course: c.title }), label: t('wizard.cohort.plan.why.publish'), to }]
+    return []
+  })
+})
 const weeks = computed(() => (calendar.value?.cohort?.id === id.value ? calendar.value!.weeks.filter(w => w.opens.length || w.due.length || w.exams.length) : []))
 const planStats = computed(() => ({
   items: weeks.value.reduce((n, w) => n + w.opens.length + w.due.length + w.exams.length, 0),
@@ -238,7 +256,7 @@ async function finish() {
           <div v-if="calendarStatus === 'pending' && !calendar" class="space-y-2" aria-busy="true">
             <USkeleton v-for="n in 3" :key="n" class="h-16 w-full rounded-lg" />
           </div>
-          <p v-else-if="!weeks.length" class="rounded-lg px-4 py-8 text-center text-sm text-muted ring-1 ring-inset ring-default">{{ t('wizard.cohort.plan.empty') }}</p>
+          <p v-else-if="!weeks.length" class="rounded-lg px-4 py-8 text-center text-sm text-muted ring-1 ring-inset ring-default">{{ leftOut.length ? t('wizard.cohort.plan.emptyWhy') : t('wizard.cohort.plan.empty') }}</p>
           <ol v-else class="divide-y divide-default rounded-lg ring-1 ring-inset ring-default">
             <li v-for="w in weeks" :key="w.n" class="px-4 py-3">
               <p class="num text-sm font-medium text-highlighted">{{ t('wizard.cohort.plan.week', { n: w.n }) }} <span class="font-normal text-muted">· {{ range(w.from, w.to) }}</span></p>
@@ -249,7 +267,16 @@ async function finish() {
               </ul>
             </li>
           </ol>
-          <p class="text-xs text-muted">{{ t('wizard.cohort.plan.unpublished') }}</p>
+          <div v-if="leftOut.length" class="rounded-lg px-4 py-3 ring-1 ring-inset ring-warning/50">
+            <p class="text-sm font-medium text-highlighted">{{ t('wizard.cohort.plan.why.title') }}</p>
+            <ul class="mt-2 space-y-2">
+              <li v-for="r in leftOut" :key="r.key" class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
+                <span class="min-w-0 flex-1 basis-64 text-default">{{ r.text }}</span>
+                <UButton :label="r.label" :to="r.to" color="neutral" variant="outline" size="xs" trailing-icon="i-lucide-arrow-up-right" />
+              </li>
+            </ul>
+          </div>
+          <p v-else-if="coursesStatus !== 'pending'" class="text-xs text-muted">{{ t('wizard.cohort.plan.unpublished') }}</p>
           <CohortExamWindows v-if="exams.length" :cohort-id="cohort.id" :exams="exams" :timezone="cohort.timezone" manage @changed="onExamChanged" />
           <footer class="flex items-center justify-between gap-3 border-t border-default pt-4">
             <UButton :label="t('wizard.back')" icon="i-lucide-arrow-left" color="neutral" variant="ghost" @click="go(2)" />

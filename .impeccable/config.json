@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "geist",
+        "createdAt": "2026-10-26T12:24:14.183Z",
+        "reason": "DESIGN.md and PRODUCT.md mandate Geist for dev.house LMS; mockup must match the real app"
+      }
+    ]
+  }
+}

@@ -29,21 +29,26 @@ const isOpen = (id: number) => (props.focus === 'all' ? expanded.value.has(id) :
 const prompt = ref<{ title: string, fields: PromptField[], initial?: Record<string, string | number>, submit: (v: Record<string, string | number>) => void }>()
 const promptOpen = computed({ get: () => !!prompt.value, set: (v) => { if (!v) prompt.value = undefined } })
 const titleField = (): PromptField => ({ name: 'title', label: t('editor.title') })
-const offsetField = (): PromptField => ({ name: 'offset', label: t('editor.offset'), type: 'number', min: 0, max: 3650, help: t('editor.offsetHelp') })
+const offsetField = (): PromptField => ({ name: 'offset', label: t('editor.offset'), type: 'number', min: 1, max: 522, help: t('editor.offsetHelp') })
+/** The API stores days from the cohort start; the editor speaks in weeks (1 = the first week) */
+const weekOf = (days: number) => Math.floor(days / 7) + 1
+const daysOf = (week: number) => (week - 1) * 7
+const opensLabel = (days: number) => (days % 7 ? t('editor.opensInWeekDay', { w: weekOf(days), d: (days % 7) + 1 }) : t('editor.opensInWeek', { n: weekOf(days) }))
 
 const addModule = () => (prompt.value = {
   title: t('editor.addModule'),
   fields: [titleField(), offsetField()],
-  initial: { offset: modules.value.length ? modules.value.at(-1)!.release_offset_days + 7 : 0 },
-  submit: v => call('POST', `courses/${o.value.id}/modules`, { title: v.title, position: modules.value.length, release_offset_days: v.offset }, t('editor.added'))
+  initial: { offset: modules.value.length ? weekOf(modules.value.at(-1)!.release_offset_days) + 1 : 1 },
+  submit: v => call('POST', `courses/${o.value.id}/modules`, { title: v.title, position: modules.value.length, release_offset_days: daysOf(Number(v.offset)) }, t('editor.added'))
 })
 const renameModule = (m: S['ModuleOutline']) => (prompt.value = {
   title: t('editor.rename'), fields: [titleField()], initial: { title: m.title },
   submit: v => call('PATCH', `modules/${m.id}`, { title: v.title }, t('editor.saved'))
 })
 const offsetModule = (m: S['ModuleOutline']) => (prompt.value = {
-  title: t('editor.editOffset'), fields: [offsetField()], initial: { offset: m.release_offset_days },
-  submit: v => call('PATCH', `modules/${m.id}`, { release_offset_days: v.offset }, t('editor.saved'))
+  title: t('editor.editOffset'), fields: [offsetField()], initial: { offset: weekOf(m.release_offset_days) },
+  // Same week: keep the stored day, so an old value that isn't a whole week isn't rounded
+  submit: v => (Number(v.offset) === weekOf(m.release_offset_days) ? undefined : call('PATCH', `modules/${m.id}`, { release_offset_days: daysOf(Number(v.offset)) }, t('editor.saved')))
 })
 const addLesson = (m: S['ModuleOutline']) => (prompt.value = {
   title: t('editor.addLesson'), fields: [titleField()],
@@ -140,7 +145,7 @@ const lessonMenu = (l: S['LessonOutline']) => [[
         <div class="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-default px-4 py-3">
           <div class="min-w-0 flex-1 basis-48">
             <p class="truncate text-sm font-semibold text-highlighted">{{ m.title }}</p>
-            <p class="num text-xs text-muted">{{ t('editor.opensOnDay', { n: m.release_offset_days }) }}</p>
+            <p class="num text-xs text-muted">{{ opensLabel(m.release_offset_days) }}</p>
           </div>
           <span v-if="structure" class="flex items-center gap-0.5">
             <UButton :id="`mv-mod-${m.id}--1`" icon="i-lucide-arrow-up" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.moveUp', { title: m.title })" :disabled="mi === 0" @click="moveModule(mi, -1)" />
@@ -183,6 +188,10 @@ const lessonMenu = (l: S['LessonOutline']) => [[
             </div>
           </li>
         </ul>
+        <div v-if="!structure && !m.lessons.length" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
+          <p class="min-w-0 flex-1 basis-48 text-sm text-muted">{{ t('editor.noLessonsHint') }}</p>
+          <UButton :label="t('editor.addLesson')" icon="i-lucide-plus" color="neutral" variant="outline" size="xs" @click="addLesson(m)" />
+        </div>
         <div v-if="structure" class="px-4 py-2">
           <UButton :label="t('editor.addLesson')" icon="i-lucide-plus" color="neutral" variant="ghost" size="xs" @click="addLesson(m)" />
         </div>

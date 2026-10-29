@@ -189,7 +189,7 @@ const beforeUnload = (e: BeforeUnloadEvent) => {
 }
 onMounted(() => window.addEventListener('beforeunload', beforeUnload))
 onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
-const back = computed(() => `/editor/${courseId}${m.value?.lesson_id ? `#lesson-${m.value.lesson_id}` : ''}`)
+const back = computed(() => wizardBack(route.query.back) ?? `/editor/${courseId}${m.value?.lesson_id ? `#lesson-${m.value.lesson_id}` : ''}`)
 </script>
 
 <template>
