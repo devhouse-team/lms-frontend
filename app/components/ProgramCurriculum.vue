@@ -55,17 +55,17 @@ function move(i: number, dir: -1 | 1) {
 // ---- change start (one popover open at a time) ---------------------------------
 const editing = ref<string>()
 const week = ref(1)
-const day = ref(1)
 function openStart(c: ProgramCourse, open: boolean) {
   editing.value = open ? c.courseId : undefined
-  if (open) ({ w: week.value, d: day.value } = split(c.startOffsetDays))
+  if (open) week.value = split(c.startOffsetDays).w
 }
-const validStart = computed(() => Number.isInteger(week.value) && week.value >= 1 && week.value <= 104 && Number.isInteger(day.value) && day.value >= 1 && day.value <= 7)
+const validStart = computed(() => Number.isInteger(week.value) && week.value >= 1 && week.value <= 104)
 function saveStart(c: ProgramCourse) {
   if (!validStart.value) return
   editing.value = undefined
-  const offset = (week.value - 1) * 7 + (day.value - 1)
-  if (offset === c.startOffsetDays) return
+  // Same week: keep the stored day, so an old start that isn't a Monday isn't moved
+  if (week.value === split(c.startOffsetDays).w) return
+  const offset = (week.value - 1) * 7
   run(() => $fetch(`/api/programs/${props.programId}/courses/${c.courseId}`, { method: 'PUT', body: { startOffsetDays: offset } }), t('programs.curriculum.startSaved'))
 }
 
@@ -129,9 +129,6 @@ const length = computed(() => {
               <form class="flex items-end gap-3 p-3" @submit.prevent="saveStart(c)">
                 <UFormField :label="t('programs.curriculum.startWeek')">
                   <UInputNumber v-model="week" :min="1" :max="104" class="w-24" autofocus />
-                </UFormField>
-                <UFormField :label="t('programs.curriculum.startDay')">
-                  <UInputNumber v-model="day" :min="1" :max="7" class="w-20" />
                 </UFormField>
                 <UButton type="submit" :label="t('common.save')" size="sm" :disabled="!validStart" />
               </form>

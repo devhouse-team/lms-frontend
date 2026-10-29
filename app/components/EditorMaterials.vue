@@ -5,7 +5,7 @@ import type { MaterialKind } from '~~/shared/types'
 /** Materials of a lesson, or the course pages (`lessonId` unset): publish, reorder, edit, delete, add by kind */
 const props = defineProps<{ materials: components['schemas']['MaterialSummary'][], lessonId?: number }>()
 const { t } = useI18n()
-const { courseId, call } = useCourseEditor()
+const { courseId, call, link } = useCourseEditor()
 
 const sorted = computed(() => [...props.materials].sort((a, b) => a.position - b.position))
 const orderPath = computed(() => (props.lessonId ? `lessons/${props.lessonId}/materials/order` : `courses/${courseId}/pages/order`))
@@ -38,7 +38,7 @@ const kinds = computed(() => (['markdown', 'pdf', 'video', 'file', 'link', 'imag
     <ul v-if="sorted.length" class="divide-y divide-default rounded-md ring-1 ring-inset ring-default">
       <li v-for="(m, i) in sorted" :key="m.id" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
         <UIcon :name="KIND_ICON[m.kind]" class="size-4 shrink-0 text-muted" :aria-label="t(`material.kind.${m.kind}`)" />
-        <NuxtLink :to="`/editor/${courseId}/materials/${m.id}`" class="min-w-0 flex-1 basis-40 truncate text-sm text-highlighted underline-offset-4 hover:underline">{{ m.title }}</NuxtLink>
+        <NuxtLink :to="link(`materials/${m.id}`)" class="min-w-0 flex-1 basis-40 truncate text-sm text-highlighted underline-offset-4 hover:underline">{{ m.title }}</NuxtLink>
         <span class="flex flex-wrap gap-1">
           <UBadge v-for="tag in m.tags" :key="tag" :label="t(`material.tag.${tag}`)" color="neutral" variant="subtle" size="sm" />
         </span>
@@ -46,7 +46,7 @@ const kinds = computed(() => (['markdown', 'pdf', 'video', 'file', 'link', 'imag
         <span class="flex items-center gap-0.5">
           <UButton :id="`mv-m-${m.id}--1`" icon="i-lucide-arrow-up" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.moveUp', { title: m.title })" :disabled="i === 0" @click="move(i, -1)" />
           <UButton :id="`mv-m-${m.id}-1`" icon="i-lucide-arrow-down" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.moveDown', { title: m.title })" :disabled="i === sorted.length - 1" @click="move(i, 1)" />
-          <UButton :to="`/editor/${courseId}/materials/${m.id}`" icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.editItem', { title: m.title })" />
+          <UButton :to="link(`materials/${m.id}`)" icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.editItem', { title: m.title })" />
           <UButton icon="i-lucide-trash-2" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.deleteItem', { title: m.title })" @click="deleting = m" />
         </span>
       </li>

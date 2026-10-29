@@ -29,6 +29,7 @@ const navByRole: Record<Role, { key: string, icon: string, to: string, all?: boo
   ],
   head: [
     { key: 'home', icon: 'i-lucide-layout-dashboard', to: '/' },
+    { key: 'create', icon: 'i-lucide-wand-sparkles', to: '/create' },
     { key: 'cohorts', icon: 'i-lucide-users', to: '/cohorts' },
     { key: 'people', icon: 'i-lucide-contact', to: '/people', all: true },
     { key: 'programs', icon: 'i-lucide-library', to: '/programs' },

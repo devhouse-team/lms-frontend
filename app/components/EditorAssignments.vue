@@ -4,11 +4,14 @@ import type { AssignmentMode } from '~~/shared/types'
 
 type S = components['schemas']
 
-/** A lesson's assignments (up to 10): mode, timing, publish, order, edit, delete; "Add assignment" creates and opens one */
-const props = defineProps<{ lessonId: number, assignments: S['AssignmentSummary'][] }>()
+/**
+ * A lesson's assignments (up to 10): mode, timing, publish, order, edit, delete; "Add assignment" creates and opens one
+ * (`stay`: creates it and stays, for the course wizard). Templates fill in the mode and timing.
+ */
+const props = defineProps<{ lessonId: number, assignments: S['AssignmentSummary'][], stay?: boolean }>()
 const { t } = useI18n()
 const toast = useToast()
-const { courseId, call } = useCourseEditor()
+const { call, link } = useCourseEditor()
 
 const sorted = computed(() => [...props.assignments].sort((a, b) => a.position - b.position))
 const summary = (a: S['AssignmentSummary']) => a.mode === 'exam'
@@ -41,22 +44,30 @@ async function remove() {
 const adding = ref(false)
 const title = ref('')
 const mode = ref<AssignmentMode>('homework')
+const template = ref<AssignmentTemplate>()
 const modes = computed(() => (['homework', 'exam', 'practice'] as AssignmentMode[]).map(m => ({ value: m, label: t(`lesson.mode.${m}`) })))
 function openAdd() {
   title.value = ''
   mode.value = 'homework'
+  template.value = undefined
   adding.value = true
 }
 async function create() {
   if (title.value.trim().length < 2) return
-  const timing = mode.value === 'homework' ? { due_offset_days: 7 }
+  const tpl = template.value && ASSIGNMENT_TEMPLATES[template.value]
+  const timing = tpl ? tpl.timing : mode.value === 'homework' ? { due_offset_days: 7 }
     : mode.value === 'exam' ? { opens_offset_days: 0, opens_time: '10:00', duration_minutes: 120, trial_enabled: false } : {}
   const a = await call<S['AssignmentRead']>('POST', `lessons/${props.lessonId}/assignments`, {
     title: title.value.trim(), mode: mode.value, statement: '', file_ids: [], is_published: false,
-    accepts_text: true, accepts_links: true, accepts_files: true, max_files: 10, file_types: [], trial_enabled: false, ...timing
+    accepts_text: true, accepts_links: true, accepts_files: true, max_files: tpl?.max_files ?? 10, file_types: [], trial_enabled: false, ...timing
   }, t('editor.added'))
   adding.value = false
-  if (a) await navigateTo(`/editor/${courseId}/assignments/${a.id}`)
+  if (a && !props.stay) await navigateTo(link(`assignments/${a.id}`))
+}
+function useTemplate(k: AssignmentTemplate) {
+  template.value = k
+  mode.value = ASSIGNMENT_TEMPLATES[k].mode
+  if (!title.value.trim()) title.value = t(`editor.template.${k}`)
 }
 const MODE_ICON = { homework: 'i-lucide-notebook-pen', exam: 'i-lucide-timer', practice: 'i-lucide-dumbbell' } as const
 </script>
@@ -66,7 +77,7 @@ const MODE_ICON = { homework: 'i-lucide-notebook-pen', exam: 'i-lucide-timer', p
     <ul v-if="sorted.length" class="divide-y divide-default rounded-md ring-1 ring-inset ring-default">
       <li v-for="(a, i) in sorted" :key="a.id" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
         <UIcon :name="MODE_ICON[a.mode]" class="size-4 shrink-0 text-muted" :aria-label="t(`lesson.mode.${a.mode}`)" />
-        <NuxtLink :to="`/editor/${courseId}/assignments/${a.id}`" class="min-w-0 flex-1 basis-40">
+        <NuxtLink :to="link(`assignments/${a.id}`)" class="min-w-0 flex-1 basis-40">
           <span class="block truncate text-sm text-highlighted underline-offset-4 hover:underline">{{ a.title }}</span>
           <span class="num block truncate text-xs text-muted">{{ t(`lesson.mode.${a.mode}`) }} · {{ summary(a) }} · {{ t('editor.submissions', a.submission_count) }}</span>
         </NuxtLink>
@@ -74,7 +85,7 @@ const MODE_ICON = { homework: 'i-lucide-notebook-pen', exam: 'i-lucide-timer', p
         <span class="flex items-center gap-0.5">
           <UButton :id="`mv-a-${a.id}--1`" icon="i-lucide-arrow-up" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.moveUp', { title: a.title })" :disabled="i === 0" @click="move(i, -1)" />
           <UButton :id="`mv-a-${a.id}-1`" icon="i-lucide-arrow-down" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.moveDown', { title: a.title })" :disabled="i === sorted.length - 1" @click="move(i, 1)" />
-          <UButton :to="`/editor/${courseId}/assignments/${a.id}`" icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.editItem', { title: a.title })" />
+          <UButton :to="link(`assignments/${a.id}`)" icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.editItem', { title: a.title })" />
           <UButton icon="i-lucide-trash-2" color="neutral" variant="ghost" size="xs" :aria-label="t('editor.deleteItem', { title: a.title })" @click="deleting = a" />
         </span>
       </li>
@@ -87,8 +98,12 @@ const MODE_ICON = { homework: 'i-lucide-notebook-pen', exam: 'i-lucide-timer', p
           <UFormField :label="t('editor.title')">
             <UInput v-model="title" maxlength="200" autocomplete="off" class="w-full" autofocus />
           </UFormField>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs text-muted">{{ t('editor.template.label') }}</span>
+            <UButton v-for="k in (['weekly', 'exam', 'practice'] as const)" :key="k" :label="t(`editor.template.${k}`)" size="xs" color="neutral" :variant="template === k ? 'solid' : 'outline'" @click="useTemplate(k)" />
+          </div>
           <UFormField :label="t('editor.mode')" :help="t(`editor.modeHelp.${mode}`)">
-            <UTabs v-model="mode" :items="modes" :content="false" size="sm" color="neutral" />
+            <UTabs v-model="mode" :items="modes" :content="false" size="sm" color="neutral" @update:model-value="template = undefined" />
           </UFormField>
         </form>
       </template>

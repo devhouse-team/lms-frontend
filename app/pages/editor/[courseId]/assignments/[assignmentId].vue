@@ -200,7 +200,7 @@ async function addSolution() {
       body: { title: t('editor.solutionTitle', { title: x.title }), kind: 'markdown', tags: ['solution'], body: t('editor.starterBody'), url: null, file_ids: [], is_published: false, solution_of_id: x.id }
     })
     invalidateContent()
-    await navigateTo(`/editor/${courseId}/materials/${m.id}`)
+    await navigateTo({ path: `/editor/${courseId}/materials/${m.id}`, query: { back: wizardBack(route.query.back) } })
   } catch (e) {
     toastError(e)
   }
@@ -215,7 +215,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
 </script>
 
 <template>
-  <AppPage :title="t('editor.assignmentTitle_')" :back="`/editor/${courseId}${a ? `#lesson-${a.lesson_id}` : ''}`">
+  <AppPage :title="t('editor.assignmentTitle_')" :back="wizardBack(route.query.back) ?? `/editor/${courseId}${a ? `#lesson-${a.lesson_id}` : ''}`">
     <template #right>
       <span v-if="dirty" class="inline-flex items-center gap-1.5 text-xs text-muted"><span class="size-1.5 rounded-full bg-primary" aria-hidden="true" />{{ t('editor.unsaved') }}</span>
       <UButton v-if="a" :label="t('common.save')" color="primary" size="sm" :loading="saving" :disabled="!dirty || !!Object.keys(errors).length" aria-keyshortcuts="Meta+S" @click="save" />
@@ -309,7 +309,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', beforeUnload))
           <p v-if="!a.solutions.length" class="text-sm text-muted">{{ t('editor.noSolutions') }}</p>
           <ul v-else class="divide-y divide-default rounded-md ring-1 ring-inset ring-default">
             <li v-for="m in a.solutions" :key="m.id" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
-              <NuxtLink :to="`/editor/${courseId}/materials/${m.id}`" class="min-w-0 flex-1 truncate text-sm text-highlighted underline-offset-4 hover:underline">{{ m.title }}</NuxtLink>
+              <NuxtLink :to="{ path: `/editor/${courseId}/materials/${m.id}`, query: { back: wizardBack(route.query.back) } }" class="min-w-0 flex-1 truncate text-sm text-highlighted underline-offset-4 hover:underline">{{ m.title }}</NuxtLink>
               <UBadge :label="t(`release.${m.release}`)" color="neutral" variant="subtle" size="sm" />
               <UBadge v-if="!m.is_published" :label="t('editor.draft')" color="neutral" variant="outline" size="sm" />
             </li>

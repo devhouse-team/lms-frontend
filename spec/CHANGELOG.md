@@ -2,6 +2,67 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-10-29: empty modules and an empty cohort plan
+
+- Course wizard, materials and assignments steps: a module without lessons shows a hint and "Add lesson" (it had no
+  control there, so materials could only go into modules that already had a lesson).
+- Cohort wizard, plan step: when the plan is empty or partial it lists why (no courses, course not published, no
+  published lesson) with a link to the fix. New `GET /api/cohorts/{id}/courses`.
+
+## 2026-10-29: weeks for module release and the program schedule
+
+- Course editor and course wizard: a module opens in a **week** ("Opens in week 2"), not on a day. Stored as days
+  ((week - 1) × 7); an old value that is not a whole week shows as "week W, day D" and is kept until edited.
+- `/create/program`, schedule step: one list instead of timeline plus table. Each course has an editable start week, up /
+  down and a bar that runs to the week its last module opens (it was one week per module). The longer / shorter warning
+  sits under it. "Place one after another" uses the same lengths. The program page's start popover is week-only.
+- Backend ask: [program-course-weeks-api](features/program-course-weeks-api.md) ([O33](open-items.md)).
+
+## 2026-10-28: wizard fixes
+
+- `/create/program`, `/create/cohort`: after step 1 (program) or 2 (cohort) the wizard showed "not found" instead of the
+  next step. The new page reused the fetch of the id-less one (static key); keys now carry the id.
+- `/create/course`, steps 2-4: material and assignment editors opened from the wizard return to the wizard step
+  (`?back=`), not to the course editor.
+
+## 2026-10-28: course plan import (frontend)
+
+- `/create/course`, structure step: "Import from file" tab. Markdown, CSV or JSON is parsed in the browser, checked,
+  previewed with its issues and applied (append or replace). Needs `POST /courses/{id}/import`; the API contract for the
+  backend is [plan-import-api](features/plan-import-api.md) ([O32](open-items.md)). Until then Apply is off.
+
+## 2026-10-28: create hub checklist
+
+- Head, `/create`: the recommendation now follows the whole chain (program, courses, activation, cohort, students) and
+  an "All at once" checklist shows each step's state. "Create" is in the head's navigation.
+
+## 2026-10-28: course wizard
+
+- `/create/course`: basics, structure, materials, assignments, review and publish. The course is created as a draft
+  after step 1; steps 2-4 are the editor's outline one part at a time (`EditorOutline focus=`), so they use the same
+  calls and permissions. New assignments can start from a template (weekly homework, exam, practice). The last step
+  has a checklist (`app/utils/courseReview.ts`), a sample lesson as a student sees it, editors and draft/publish.
+  With `?return=/create/program/:id` the finished course is added to that program. "Create course" on `/courses` and
+  the program wizard now lead here; `CourseCreateModal` is gone. Plan import is still waiting for
+  [O32](open-items.md).
+
+## 2026-10-28: cohort wizard
+
+- Head, `/create/cohort`: program, dates, plan, team and students steps. The cohort is created after the dates step
+  (the API copies the program's curriculum); the plan step shows it on the calendar with exam-window overrides; the
+  team step needs a mentor; the students step adds people, emails or a CSV and can assign mentors automatically.
+  "Create cohort" on `/cohorts` and on a program page now opens the wizard (`?program=` preselects); the modal stays
+  for editing. `AddStudentsModal` now wraps the new `AddStudentsPanel`. Spec: [setup-flow](features/setup-flow.md).
+
+## 2026-10-27: create wizards, program first
+
+- Head, `/create` and `/create/program`: a hub ("what to create") and a four-step program wizard (basics, courses,
+  schedule, activation). The program is saved as a draft after step 1; later steps use the same calls as the program
+  page. "Create program" on `/programs` now opens the wizard; the modal stays for editing. Spec:
+  [setup-flow](features/setup-flow.md). Cohort and course wizards follow; plan import waits for the backend
+  ([O32](open-items.md)).
+- `api:types` reads `../lms-backend/openapi.json`.
+
 ## 2026-10-24: contests page on the API
 
 - Head (admins), `/contests`: saved contests from API `/contest` (latest first) with delete; results of the selected one
