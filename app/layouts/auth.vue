@@ -5,7 +5,8 @@ const { locale, setLocale } = useI18n()
 <template>
   <div class="flex min-h-dvh flex-col bg-default">
     <header class="flex items-center justify-between px-5 py-4 sm:px-8">
-      <img src="/brand/devhouse-logo.png" alt="dev.house" class="h-6 w-auto" width="124" height="24">
+      <img src="/brand/devhouse-logo-dark.png" alt="dev.house" class="h-6 w-auto dark:hidden" width="124" height="24">
+      <img src="/brand/devhouse-logo.png" alt="dev.house" class="hidden h-6 w-auto dark:block" width="124" height="24">
       <div class="flex gap-1" role="group" aria-label="Language">
         <UButton
           v-for="l in (['ru', 'en'] as const)"
