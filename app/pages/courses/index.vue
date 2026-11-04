@@ -19,15 +19,12 @@ const heading = (g: CourseGroup) => g.cohort.status === 'active'
   ? t('courses.groupActive', { cohort: g.cohort.name, week: g.cohort.week, total: g.cohort.totalWeeks })
   : g.cohort.status === 'planned' ? t('courses.groupPlanned', { cohort: g.cohort.name, date: short(g.cohort.startsOn) }) : t('courses.groupArchive', { cohort: g.cohort.name })
 const soon = (day: string) => Date.parse(`${day}T23:59:59Z`) - Date.now() < 86_400_000
-const creating = ref(false)
 </script>
 
 <template>
   <AppPage :title="t('nav.courses')">
     <HomeState :status="status" :has-data="!!data" @retry="refresh()">
       <div v-if="data" class="mx-auto w-full max-w-4xl space-y-10">
-        <CourseCreateModal v-if="data.canCreate" v-model:open="creating" />
-
         <template v-if="role !== 'head'">
           <UEmpty v-if="!groups.length" icon="i-lucide-book-open" :description="role === 'mentee' ? t('courses.emptyStudent') : t('courses.emptyStaff')" />
           <section v-for="g in current" :key="g.cohort.id" :aria-labelledby="`g-${g.cohort.id}`" class="space-y-3">
@@ -50,7 +47,7 @@ const creating = ref(false)
         <section v-if="data.editing.length || data.canCreate" aria-labelledby="editing-title" class="space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <h2 id="editing-title" class="text-sm font-semibold text-highlighted">{{ t('courses.editing') }}</h2>
-            <UButton v-if="data.canCreate" :label="t('editor.createCourse')" icon="i-lucide-plus" color="neutral" variant="outline" size="sm" @click="creating = true" />
+            <UButton v-if="data.canCreate" :label="t('editor.createCourse')" icon="i-lucide-plus" color="neutral" variant="outline" size="sm" to="/create/course" />
           </div>
           <ul v-if="data.editing.length" class="divide-y divide-default rounded-lg ring-1 ring-inset ring-default">
             <li v-for="c in data.editing" :key="c.id">

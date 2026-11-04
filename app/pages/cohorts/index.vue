@@ -25,7 +25,6 @@ function toggle(s: CohortStatus) {
 
 const key = computed(() => `cohorts:${[...selected.value].sort().join(',')}`)
 const { data, status, refresh } = await useFetch('/api/cohorts', { key, query: { status: selected } })
-const creating = ref(false)
 
 /** "No finished cohorts" / "No active or planned cohorts" */
 const emptyText = computed(() => t('cohorts.emptyFiltered', {
@@ -36,9 +35,8 @@ const emptyText = computed(() => t('cohorts.emptyFiltered', {
 <template>
   <AppPage :title="t('nav.cohorts')">
     <template #right>
-      <UButton :label="t('cohorts.create')" icon="i-lucide-plus" color="primary" size="sm" @click="creating = true" />
+      <UButton :label="t('cohorts.create')" icon="i-lucide-plus" color="primary" size="sm" to="/create/cohort" />
     </template>
-    <CohortFormModal v-model:open="creating" @saved="id => navigateTo(`/cohorts/${id}`)" />
     <div class="mx-auto w-full max-w-6xl space-y-4">
       <header class="flex flex-wrap items-end justify-between gap-3">
         <div>

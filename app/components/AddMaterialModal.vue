@@ -9,7 +9,7 @@ import type { MaterialKind } from '~~/shared/types'
 const props = defineProps<{ kind?: MaterialKind, lessonId?: number }>()
 const open = defineModel<boolean>('open', { default: false })
 const { t } = useI18n()
-const { courseId, call } = useCourseEditor()
+const { courseId, call, link } = useCourseEditor()
 const { upload, uploading } = useStorageUpload()
 
 const title = ref('')
@@ -82,7 +82,7 @@ async function create() {
   saving.value = false
   if (!m) return
   open.value = false
-  if (props.kind === 'markdown') await navigateTo(`/editor/${courseId}/materials/${m.id}`)
+  if (props.kind === 'markdown') await navigateTo(link(`materials/${m.id}`))
 }
 </script>
 

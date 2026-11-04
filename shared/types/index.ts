@@ -347,6 +347,14 @@ export type EnrollmentStatus = 'active' | 'paused' | 'completed' | 'dropped'
 export const ENROLLMENT_STATUSES: EnrollmentStatus[] = ['active', 'paused', 'completed', 'dropped']
 
 /** One student of a cohort (`id` is the user id), from GET /cohorts/{c}/roster */
+/** A course of a cohort; `lessons` counts the published ones, a module opens in the calendar only with one */
+export interface CohortCourseRow {
+  courseId: string
+  title: string
+  published: boolean
+  lessons: number
+}
+
 export interface CohortRosterRow extends Person {
   enrollmentId: string
   username: string

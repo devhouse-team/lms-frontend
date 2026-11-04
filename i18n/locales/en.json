@@ -1,6 +1,7 @@
 {
   "nav": {
     "home": "Home",
+    "create": "Create",
     "courses": "Courses",
     "assignments": "Assignments",
     "contest": "Contest",
@@ -970,7 +971,8 @@
         "files": "This assignment doesn't accept files.",
         "max_files": "Too many files for this assignment.",
         "file_type": "This file type isn't allowed here."
-      }
+      },
+      "import_replace_blocked": "Replacing is not possible: a cohort is studying this course, or students have submitted work in it."
     }
   },
   "course": {
@@ -1105,10 +1107,12 @@
     "materialAdded": "Material added",
     "starterBody": "Write the notes here.",
     "rename": "Rename",
-    "editOffset": "Release day",
-    "offset": "Opens on day",
-    "offsetHelp": "Days after the cohort starts (0 = the first day).",
-    "opensOnDay": "opens on day {n}",
+    "editOffset": "Release week",
+    "offset": "Opens in week",
+    "offsetHelp": "Week of the cohort (1 = the first week).",
+    "noLessonsHint": "No lessons in this module yet. Materials and assignments belong to a lesson.",
+    "opensInWeek": "opens in week {n}",
+    "opensInWeekDay": "opens in week {w}, day {d}",
     "moveToModule": "Move to module…",
     "move": "Move",
     "movedTo": "Moved to {module}",
@@ -1215,7 +1219,13 @@
     "addSolution": "Add solution",
     "noSolutions": "No solution yet.",
     "solutionTitle": "{title} · solution",
-    "examSummary": "day {day}, {time}, {min} min"
+    "examSummary": "day {day}, {time}, {min} min",
+    "template": {
+      "label": "Template",
+      "weekly": "Weekly homework",
+      "exam": "Exam",
+      "practice": "Practice"
+    }
   },
   "exam": {
     "opensIn": "Opens in",
@@ -1520,5 +1530,325 @@
     "toCourses": "Go to courses",
     "scoreOf": "{score} of {max} points",
     "assignmentsCount": "{n} assignment | {n} assignments"
+  },
+  "wizard": {
+    "stepOf": "Step {n} of {total}",
+    "next": "Next",
+    "back": "Back",
+    "cancel": "Cancel",
+    "hub": {
+      "title": "What do you want to create?",
+      "lead": "Pick what you need now. The wizard walks you through the steps and points out what is missing.",
+      "recommended": "Recommended",
+      "program": {
+        "title": "Program",
+        "text": "A set of courses laid out by week.",
+        "cta": "Create a program"
+      },
+      "course": {
+        "title": "Course",
+        "text": "Modules and lessons, materials, assignments.",
+        "cta": "Create a course"
+      },
+      "cohort": {
+        "title": "Cohort",
+        "text": "A group of students with mentors on a program.",
+        "cta": "Create a cohort"
+      },
+      "rec": {
+        "program": {
+          "title": "Create a program",
+          "text": "A program is the learning route. A cohort cannot start without an active program, so begin with one.",
+          "cta": "Create a program"
+        },
+        "courses": {
+          "title": "Add courses to the program",
+          "text": "The program has no courses yet. Pick existing ones or create a course step by step.",
+          "cta": "Add courses"
+        },
+        "activate": {
+          "title": "Activate the program",
+          "text": "Cohorts start only from active programs. Open the last step of the program wizard.",
+          "cta": "Finish the program"
+        },
+        "cohort": {
+          "title": "Start the first cohort",
+          "text": "The program and its courses are ready. Choose a start date and the weeks of the plan become real dates.",
+          "cta": "Create a cohort"
+        },
+        "people": {
+          "title": "Add mentors and students",
+          "text": "A cohort exists, but nobody studies in it yet. Open it to add the team and students.",
+          "cta": "Open cohorts"
+        }
+      },
+      "allSet": "Everything is set up: a program, courses and a cohort with students. You can create more.",
+      "chain": {
+        "title": "All at once",
+        "lead": "The usual order: program, courses, cohort, people. Each item opens the right wizard.",
+        "program": "Program",
+        "courses": "Courses",
+        "cohort": "Cohort",
+        "people": "People",
+        "locked": {
+          "program": "Create a program first.",
+          "cohort": "Needs an active program.",
+          "people": "Needs a cohort."
+        },
+        "state": {
+          "program": "{n} programs, {active} active",
+          "courses": "{n} courses in programs",
+          "cohort": "{n} cohorts",
+          "people": "{n} active students",
+          "none": "Not yet"
+        },
+        "done": "Done",
+        "open": "Open"
+      }
+    },
+    "program": {
+      "title": "New program",
+      "draftNote": "The program is saved as a draft after the first step. You can come back any time: Programs → Drafts.",
+      "step": {
+        "basics": "Basics",
+        "courses": "Courses",
+        "schedule": "Schedule",
+        "activation": "Activation"
+      },
+      "basics": {
+        "title": "Basics",
+        "lead": "Title, length and description. Add the cover and the lead later on the program page."
+      },
+      "courses": {
+        "title": "Courses",
+        "lead": "Tick the courses students take. You set order and weeks next.",
+        "search": "Find a course",
+        "empty": "There are no courses yet. Create the first one on the courses page and come back.",
+        "create": "Create a course",
+        "noMatch": "Nothing found.",
+        "selected": "Selected: {n}"
+      },
+      "schedule": {
+        "title": "Schedule",
+        "lead": "Set the week each course starts. A bar shows the weeks its modules open. Give courses the same start week to run them in parallel.",
+        "pack": "Place one after another",
+        "packed": "Courses placed one after another",
+        "week": "Week",
+        "course": "Course",
+        "startsIn": "Starts in week",
+        "empty": "Add courses on the previous step first."
+      },
+      "activation": {
+        "title": "Activation",
+        "lead": "Cohorts are only created from active programs. Check the plan and activate.",
+        "noCourses": "The program has no courses: cohorts will get an empty plan.",
+        "draftCourse": "\"{course}\" is not published: students will not see it.",
+        "noModules": "The course \"{course}\" has no modules.",
+        "ok": "Nothing to fix.",
+        "activate": "Activate",
+        "keepDraft": "Keep as a draft"
+      },
+      "done": {
+        "title": "The program is active",
+        "text": "You can now create cohorts from it.",
+        "open": "Open the program",
+        "another": "Create something else"
+      }
+    },
+    "cohort": {
+      "title": "New cohort",
+      "step": {
+        "program": "Program",
+        "dates": "Dates",
+        "plan": "Plan",
+        "team": "Team",
+        "students": "Students"
+      },
+      "program": {
+        "title": "Program",
+        "lead": "A cohort studies a program: it sets the length and the courses.",
+        "noActive": "There are no active programs. Cohorts start only from active ones: activate a draft in the program wizard.",
+        "none": "There are no programs yet. Create one and come back.",
+        "createProgram": "Create a program",
+        "draft": "Draft",
+        "meta": "{weeks} weeks"
+      },
+      "dates": {
+        "title": "Name and dates",
+        "lead": "The end date is calculated from the program length.",
+        "defaultName": "{program} · {start}",
+        "monday": "Monday: a good start",
+        "notMonday": "Cohorts usually start on a Monday",
+        "draftNote": "The cohort is created after this step and copies the program's curriculum. Later steps edit it."
+      },
+      "plan": {
+        "title": "Plan by dates",
+        "lead": "How the program's curriculum lands on the calendar. Exam times can be moved for this cohort only.",
+        "snapshot": "The cohort has its own copy of the plan: later changes to the program or courses do not affect it.",
+        "empty": "The cohort has no scheduled items.",
+        "emptyWhy": "Nothing is scheduled yet. See below why.",
+        "why": {
+          "title": "Left out of the plan",
+          "none": "This cohort has no courses: its program had none when the cohort was created.",
+          "unpublished": "\"{course}\" is not published, so the calendar skips it.",
+          "noLessons": "\"{course}\" has no published lesson: a module opens only once it has one.",
+          "program": "Open the program",
+          "publish": "Publish the course"
+        },
+        "unpublished": "Unpublished courses are left out of the calendar.",
+        "week": "Week {n}",
+        "opens": "Opens",
+        "due": "Deadline",
+        "exam": "Exam",
+        "stat": {
+          "start": "Start",
+          "end": "End",
+          "items": "Items",
+          "exams": "Exams"
+        }
+      },
+      "team": {
+        "title": "Team",
+        "lead": "Mentors review students' work. At least one is needed to continue.",
+        "need": "Add at least one mentor"
+      },
+      "students": {
+        "title": "Students",
+        "lead": "Add people, paste emails or upload a CSV. Accounts are enrolled at once, other addresses get an invite.",
+        "auto": "Assign students to mentors automatically",
+        "autoHelp": "Splits students evenly between mentors when you finish.",
+        "finish": "Finish",
+        "skipHint": "You can skip this and add students later from the cohort page."
+      },
+      "done": {
+        "title": "The cohort is ready",
+        "text": "The weeks of the plan open on schedule.",
+        "assigned": "Students assigned to mentors: {n}",
+        "open": "Open the cohort",
+        "another": "Create something else"
+      }
+    },
+    "course": {
+      "title": "New course",
+      "step": {
+        "basics": "Basics",
+        "structure": "Structure",
+        "materials": "Materials",
+        "assignments": "Assignments",
+        "publish": "Publish"
+      },
+      "basics": {
+        "title": "Course basics",
+        "lead": "Title, address and description. Structure, materials and assignments come next.",
+        "draftNote": "The course is saved as a draft after this step. Come back any time: Courses → Courses I edit."
+      },
+      "structure": {
+        "title": "Structure",
+        "lead": "Modules open by day, lessons live inside them. Course pages (syllabus, about, grading) sit above the modules.",
+        "need": "Add a module with at least one lesson",
+        "manual": "By hand",
+        "import": "Import from file"
+      },
+      "materials": {
+        "title": "Materials",
+        "lead": "Add materials to each lesson in the order students study them: text, video, PDF, links.",
+        "needLessons": "Add lessons on the structure step first."
+      },
+      "assignments": {
+        "title": "Assignments",
+        "lead": "Homework, exams and practice belong to lessons. Start from a template and fine-tune it in the assignment editor.",
+        "needLessons": "Add lessons on the structure step first."
+      },
+      "review": {
+        "title": "Review and publish",
+        "lead": "See what is missing and how a student will see the course. You can fix gaps later.",
+        "stat": {
+          "modules": "Modules",
+          "lessons": "Lessons",
+          "materials": "Materials",
+          "assignments": "Assignments"
+        },
+        "checklist": "Checklist",
+        "allGood": "Nothing is missing.",
+        "fix": "Fix",
+        "severity": {
+          "error": "Error",
+          "warn": "Attention",
+          "info": "Note"
+        },
+        "issue": {
+          "noModules": "The course has no modules.",
+          "emptyModule": "Module \"{title}\" has no lessons.",
+          "unpublishedLessons": "{n} lessons are not published: {names}. Students will not see them.",
+          "lessonsNoMaterials": "{n} lessons have no materials: {names}.",
+          "unpublishedMaterials": "{n} materials are not published, students will not see them.",
+          "noAssignments": "The course has no assignments.",
+          "lessonsNoAssignments": "{n} lessons have no assignments.",
+          "unpublishedAssignments": "{n} assignments are not published."
+        },
+        "publishAll": "Publish all lessons, materials and assignments",
+        "publishedAll": "Everything is published",
+        "preview": "How a student sees a lesson",
+        "previewEmpty": "No published materials or assignments yet.",
+        "status": "Status",
+        "draft": "Draft",
+        "draftHelp": "Only editors see it. You can add it to a program, but students will not see it.",
+        "publish": "Publish",
+        "publishHelp": "The course is available to cohorts that study it.",
+        "editors": "Editors",
+        "save": "Save course",
+        "publishNow": "Publish course"
+      },
+      "done": {
+        "title": "The course is ready",
+        "draft": "Saved as a draft.",
+        "published": "Published.",
+        "toProgram": "Add to the program and go back",
+        "added": "Course added to the program",
+        "open": "Open the editor",
+        "program": "Build a program",
+        "another": "Create another course"
+      },
+      "import": {
+        "text": "Course plan",
+        "placeholder": "Paste the plan or upload a file",
+        "format": "Format",
+        "sample": "Insert a sample",
+        "upload": "Upload a file",
+        "parse": "Check",
+        "preview": "What will be created",
+        "noIssues": "No problems found.",
+        "append": "Add to the end",
+        "appendHelp": "Modules already in the course stay.",
+        "replace": "Replace the structure",
+        "replaceHelp": "Existing modules and lessons are deleted first. Not possible while a cohort is studying the course.",
+        "apply": "Apply to the course",
+        "fixFirst": "Fix the errors in the text and check again.",
+        "done": "Imported: {m} modules, {l} lessons. They are unpublished.",
+        "line": "line {n}",
+        "item": "item {n}",
+        "untitled": "(untitled)",
+        "err": {
+          "json_invalid": "This is not valid JSON.",
+          "json_shape": "Expected an object with a \"modules\" array.",
+          "nothing": "No modules found. Check the format.",
+          "unavailable": "The server cannot check or import plans yet."
+        },
+        "issue": {
+          "stray_line": "This line does not belong to a lesson and is skipped.",
+          "unknown_type": "Unknown type. Use video, pdf, link or task.",
+          "title_required": "A title is required.",
+          "title_too_long": "The title is longer than 200 characters.",
+          "bad_url": "The link must start with http:// or https://.",
+          "video_host_not_allowed": "This video host is not supported.",
+          "too_many_materials": "A lesson holds at most 50 materials.",
+          "too_many_assignments": "A lesson holds at most 10 assignments.",
+          "empty_module": "The module has no lessons and is skipped.",
+          "empty_lesson": "The lesson has no materials or assignments.",
+          "pdf_as_link": "A PDF by address is imported as a link.",
+          "title_from_url": "No title: the address is used."
+        }
+      }
+    }
   }
 }

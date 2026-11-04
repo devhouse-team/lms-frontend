@@ -39,7 +39,6 @@ const updated = computed(() => {
 })
 
 const editing = ref(false)
-const creatingCohort = ref(false)
 
 // ---- status actions and delete (head only) --------------------------------------
 type Kind = 'activate' | 'archive' | 'restore' | 'draft' | 'delete'
@@ -109,13 +108,6 @@ const onSaved = () => refresh()
     <HomeState v-else :status="status" :has-data="!!data" @retry="refresh()">
       <div v-if="data" class="mx-auto w-full max-w-5xl space-y-10">
         <ProgramFormModal v-if="data.can.edit" v-model:open="editing" :program="data" :can-manage="data.can.manage" @saved="onSaved" />
-        <CohortFormModal
-          v-if="data.can.edit"
-          v-model:open="creatingCohort"
-          :program="{ id: data.id, title: data.title, durationWeeks: data.durationWeeks }"
-          @saved="cid => navigateTo(`/cohorts/${cid}`)"
-          @stale="refresh()"
-        />
 
         <header class="space-y-4">
           <ProgramCover :src="data.coverUrl" :title="data.title" class="aspect-video max-h-56 w-full rounded-lg" />
@@ -183,7 +175,7 @@ const onSaved = () => refresh()
             <h2 id="cohorts-title" class="text-base font-semibold text-highlighted">
               {{ t('programs.cohorts.title') }} <span class="num font-normal text-muted">{{ data.cohorts.length }}</span>
             </h2>
-            <UButton v-if="data.can.createCohort" :label="t('programs.cohorts.create')" icon="i-lucide-plus" color="neutral" variant="outline" size="sm" @click="creatingCohort = true" />
+            <UButton v-if="data.can.createCohort" :label="t('programs.cohorts.create')" icon="i-lucide-plus" color="neutral" variant="outline" size="sm" :to="`/create/cohort?program=${data.id}`" />
           </div>
           <p v-if="data.status !== 'active'" class="text-sm text-muted">{{ t(data.status === 'draft' ? 'programs.cohorts.noteDraft' : 'programs.cohorts.noteArchived') }}</p>
           <ProgramCohorts v-if="data.cohorts.length" :cohorts="data.cohorts" />

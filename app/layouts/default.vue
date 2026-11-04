@@ -29,6 +29,7 @@ const navByRole: Record<Role, { key: string, icon: string, to: string, all?: boo
   ],
   head: [
     { key: 'home', icon: 'i-lucide-layout-dashboard', to: '/' },
+    { key: 'create', icon: 'i-lucide-wand-sparkles', to: '/create' },
     { key: 'cohorts', icon: 'i-lucide-users', to: '/cohorts' },
     { key: 'people', icon: 'i-lucide-contact', to: '/people', all: true },
     { key: 'programs', icon: 'i-lucide-library', to: '/programs' },
@@ -121,9 +122,12 @@ const userMenu = computed<DropdownMenuItem[][]>(() => [
       :ui="{ footer: 'border-t border-default' }"
     >
       <template #header="{ collapsed }">
-        <NuxtLink to="/" class="flex items-center px-1.5 py-1" :class="collapsed && 'justify-center'" aria-label="dev.house">
+        <NuxtLink to="/" class="flex items-center px-1 py-1" :class="collapsed && 'justify-center'" aria-label="dev.house">
           <img v-if="collapsed" src="/brand/devhouse-star.png" alt="" class="size-6" width="24" height="24">
-          <img v-else src="/brand/devhouse-logo.png" alt="dev.house" class="h-6 w-auto" width="124" height="24">
+          <template v-else>
+            <img src="/brand/devhouse-logo-dark.png" alt="dev.house" class="h-6 w-auto dark:hidden" width="124" height="24">
+            <img src="/brand/devhouse-logo.png" alt="dev.house" class="hidden h-6 w-auto dark:block" width="124" height="24">
+          </template>
         </NuxtLink>
       </template>
 
