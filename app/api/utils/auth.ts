@@ -1,6 +1,7 @@
 import type { ApiEvent as H3Event } from './h3'
 import type { components } from '~~/shared/types/api'
 import type { Role } from '~~/shared/types'
+import { myBilling } from './billing'
 
 type Schemas = components['schemas']
 
@@ -32,10 +33,13 @@ export async function loadUser(event?: H3Event) {
   // The view chosen last time sticks while the account still has it
   const saved = savedRole() as Role | null
   const role = saved && roles.includes(saved) ? saved : roles[0]!
+  // Payments only apply to the student view; no billing in the API yet reads as "not billed"
+  const billing = roles.includes('mentee') ? await myBilling(event) : undefined
   await setUserSession(event, {
     user: {
       id: String(me.id), name: me.name, email: me.email, username: me.username, avatar: avatarUrl(me.profile_image_url), roles, role,
-      headScope: roles.includes('head') ? (isAdmin(access) ? 'all' : 'programs') : undefined
+      headScope: roles.includes('head') ? (isAdmin(access) ? 'all' : 'programs') : undefined,
+      billing
     }
   })
   return { role }
