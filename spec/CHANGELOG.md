@@ -2,6 +2,17 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-11-08: payments
+
+- New `/payments` for heads: per-student monthly billing (own billing day, next due date), mark paid, edit, history.
+- Students: a reminder dialog when the due date is within 7 days (once per LMS open); an unpaid student past the due
+  date sees only `/payment-required` and can log out. Frontend-only enforcement.
+- Student Home: a Payment card (status, due date, days left, billing day) for billed students.
+- Student profile (`/people/{id}`): a Payments section with the billing state and the full payment history, notes included.
+  Mark paid and Edit work from there too. Adds `GET /billing/students/{user_id}` to the backend ask.
+- Backend ask: [payments-api](features/payments-api.md) ([O34](open-items.md)). Until it ships, a failing
+  `/me/billing` (404 included) means "not billed". Spec: [payments](features/payments.md).
+
 ## 2026-10-29: empty modules and an empty cohort plan
 
 - Course wizard, materials and assignments steps: a module without lessons shows a hint and "Add lesson" (it had no

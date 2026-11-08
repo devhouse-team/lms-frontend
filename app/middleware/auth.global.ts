@@ -21,6 +21,10 @@ export default defineNuxtRouteMiddleware((to) => {
   if (!loggedIn.value) {
     return navigateTo({ path: '/login', query: to.fullPath !== '/' ? { next: to.fullPath } : undefined })
   }
+  // Unpaid student (spec payments.md): nothing but the payment page. Other views of the same account are not blocked.
+  const blocked = user.value?.role === 'mentee' && user.value.billing?.status === 'overdue'
+  if (to.path === '/payment-required') return blocked ? undefined : navigateTo('/')
+  if (blocked) return navigateTo('/payment-required')
   if (to.meta.roles && user.value && !to.meta.roles.includes(user.value.role)) {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden', fatal: true })
   }

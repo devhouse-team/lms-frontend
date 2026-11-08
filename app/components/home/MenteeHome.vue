@@ -10,6 +10,11 @@ const currentCourses = computed(() => courses.value?.cohorts.find(g => g.cohort.
 const { left } = useCountdown()
 const { short } = useCohortFormat()
 
+/** Own payment state (spec payments.md); nothing when the student is not billed */
+const { user } = useAuth()
+const { date: payDate, left: payLeft, badge: payBadge } = usePaymentFormat()
+const billing = computed(() => (user.value?.billing?.enabled && user.value.billing.status !== 'exempt' ? user.value.billing : undefined))
+
 /** Active: "Week 3 of 26 · cohort X"; planned: "Starts 12 Jan · cohort X"; none: the not-in-a-cohort line */
 const summary = computed(() => {
   const c = data.value?.cohort
@@ -74,6 +79,24 @@ async function onContest() {
       </div>
 
       <HomeRail>
+        <section v-if="billing" class="p-4" aria-labelledby="payment-title">
+          <h2 id="payment-title" class="text-sm font-semibold text-highlighted">{{ t('payment.title') }}</h2>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <UBadge v-bind="payBadge(billing.status)" />
+            <span v-if="billing.status !== 'paid'" class="num text-xs text-muted">{{ payLeft(billing.daysLeft) }}</span>
+          </div>
+          <dl v-if="billing.nextDueOn" class="mt-3 space-y-2 text-sm">
+            <div class="flex justify-between gap-3">
+              <dt class="text-muted">{{ t('payment.col.due') }}</dt>
+              <dd class="num text-right text-highlighted">{{ payDate(billing.nextDueOn) }}</dd>
+            </div>
+            <div v-if="billing.billingDay" class="flex justify-between gap-3">
+              <dt class="text-muted">{{ t('payment.col.day') }}</dt>
+              <dd class="num text-right text-highlighted">{{ t('payment.dayOf', { n: billing.billingDay }) }}</dd>
+            </div>
+          </dl>
+        </section>
+
         <section class="p-4" aria-labelledby="mentor-title">
           <h2 id="mentor-title" class="text-sm font-semibold text-highlighted">{{ t('home.mentor') }}</h2>
           <template v-if="data.mentor">

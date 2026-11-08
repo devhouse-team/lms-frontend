@@ -949,6 +949,39 @@ export interface SessionUser {
   email: string
   username: string
   avatar?: string
+  /** Own payment state (students only); absent when billing is off or the API has none */
+  billing?: MyBilling
+}
+
+/** Payment state of one student (spec payments.md). `exempt`: billing off. */
+export type BillingStatus = 'exempt' | 'paid' | 'due_soon' | 'overdue'
+
+export interface MyBilling {
+  enabled: boolean
+  billingDay: number | null
+  /** `YYYY-MM-DD` */
+  nextDueOn: string | null
+  status: BillingStatus
+  /** Negative when overdue */
+  daysLeft: number | null
+}
+
+export interface BillingRow extends MyBilling {
+  userId: string
+  name: string
+  email: string
+  username: string
+  avatar?: string
+  cohorts: { cohortId: string, cohortName: string }[]
+  lastPaidAt: string | null
+}
+
+export interface BillingPayment {
+  id: string
+  dueOn: string
+  paidAt: string
+  recordedBy: string
+  note: string | null
 }
 
 /** Contest and career data that still comes from Nitro's mock store (`/api/mock/overview`) */

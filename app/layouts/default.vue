@@ -33,6 +33,7 @@ const navByRole: Record<Role, { key: string, icon: string, to: string, all?: boo
     { key: 'cohorts', icon: 'i-lucide-users', to: '/cohorts' },
     { key: 'people', icon: 'i-lucide-contact', to: '/people', all: true },
     { key: 'programs', icon: 'i-lucide-library', to: '/programs' },
+    { key: 'payments', icon: 'i-lucide-wallet', to: '/payments' },
     { key: 'courses', icon: 'i-lucide-book-open', to: '/courses' },
     { key: 'contests', icon: 'i-lucide-trophy', to: '/contests', all: true }
   ]
@@ -151,6 +152,8 @@ const userMenu = computed<DropdownMenuItem[][]>(() => [
     </UDashboardSidebar>
 
     <UDashboardSearch v-model:search-term="searchTerm" :groups="groups" :loading="searching" :placeholder="course ? t('search.course') : t('nav.search')" />
+
+    <PaymentReminderModal v-if="user?.role === 'mentee'" />
 
     <slot />
   </UDashboardGroup>
