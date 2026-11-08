@@ -27,6 +27,7 @@ contract is `../backend/openapi.json` (types in `shared/types/api.d.ts`).
 | [Assignments](features/assignments.md) | head, mentor, student | API |
 | [Reviews](features/reviews.md) | mentor, student | API |
 | [Course content](features/course-content.md) (spec, not built): course and lesson pages, materials, markdown with math and code, course editor, assignment modes, exams, solutions | everyone; course editors author | API |
+| [Payments](features/payments.md): monthly billing per student, reminder 7 days before, block when overdue | head manages; student | API (backend pending) |
 | [Home dashboards](features/dashboards.md) | everyone | API + mock widgets |
 | [Mock features](features/mock-features.md): contests, external courses (removed by course content Phase 1), career, sessions | everyone | in-memory mock |
 
