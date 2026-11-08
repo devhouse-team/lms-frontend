@@ -8,6 +8,12 @@ const route = useRoute()
 const { data, status, error, refresh } = await useFetch<PersonDetail>(() => `/api/people/${route.params.id}`, { key: `person-${route.params.id}` })
 useHead({ title: () => `${data.value?.name ?? t('nav.people')} · dev.house` })
 
+/** Opened from /payments (`?back=`): back goes there, not to the people list. Same-site paths only. */
+const back = computed(() => {
+  const b = route.query.back
+  return typeof b === 'string' && b.startsWith('/') && !b.startsWith('//') ? b : '/people'
+})
+
 const notFound = computed(() => error.value?.statusCode === 404)
 const date = (iso: string) => new Date(iso).toLocaleDateString(locale.value, { dateStyle: 'medium' })
 
@@ -17,7 +23,7 @@ const statusColor: Record<EnrollmentStatus, 'primary' | 'neutral' | 'success' | 
 </script>
 
 <template>
-  <AppPage :title="data?.name ?? t('nav.people')" back="/people">
+  <AppPage :title="data?.name ?? t('nav.people')" :back="back">
     <UEmpty v-if="notFound" icon="i-lucide-user-x" :title="t('person.notFound')" :description="t('person.notFoundText')" :actions="[{ label: t('person.back'), to: '/people', color: 'neutral', variant: 'outline' }]" />
     <HomeState v-else :status="status" :has-data="!!data" @retry="refresh()">
       <div v-if="data" class="mx-auto w-full max-w-3xl space-y-8">
@@ -67,6 +73,8 @@ const statusColor: Record<EnrollmentStatus, 'primary' | 'neutral' | 'success' | 
           </div>
           <p v-else class="text-sm text-muted">{{ t('person.noEnrollments') }}</p>
         </section>
+
+        <PersonPayments v-if="data.enrollments.length" :user-id="data.id" />
 
         <section aria-labelledby="staff-title">
           <h3 id="staff-title" class="mb-3 text-sm font-semibold text-highlighted">{{ t('person.asStaff') }}</h3>
