@@ -1,17 +1,17 @@
-import type { HeadDashboard, MentorLoad, MockOverview } from '~~/shared/types'
+import type { HeadDashboard, MentorLoad } from '~~/shared/types'
 import { defineEventHandler } from '~/api/utils/h3'
 
 /**
  * No admin dashboard in the API yet (Phase 5): assembled from planned and active cohorts (same rows as /cohorts'
- * default filter) and their rosters. Contest stays mock.
+ * default filter) and their rosters. The contest is the next saved one.
  */
 export default defineEventHandler(async (event): Promise<HeadDashboard> => {
   const head = await requireRole(event, 'head')
-  const [stats, invites, mock] = await Promise.all([
+  const [stats, invites, contest] = await Promise.all([
     listCohorts(event, { status: ['planned', 'active'] }).then(list => Promise.all(list.map(c => cohortStats(event, c)))),
     // A program lead without admin rights doesn't manage invites
     head.headScope === 'programs' ? [] : pendingInvites(event),
-    $fetch<MockOverview>('/api/mock/overview')
+    dashboardContest(event)
   ])
 
   // Per mentor across cohorts: waiting work of the students assigned to them; unassigned students' work under "none"
@@ -32,6 +32,6 @@ export default defineEventHandler(async (event): Promise<HeadDashboard> => {
     cohorts: stats.map(s => s.row),
     invites,
     mentorLoad: [...load.values()].sort((a, b) => b.overdue - a.overdue || b.waiting - a.waiting || a.name.localeCompare(b.name, 'ru')),
-    contest: { title: mock.contest.title, at: mock.contest.at, registered: mock.contest.registrations }
+    contest: contest && { slug: contest.slug, title: contest.title, at: contest.at, registered: contest.registrations }
   }
 })

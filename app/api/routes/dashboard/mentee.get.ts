@@ -5,17 +5,18 @@ import { defineEventHandler } from '~/api/utils/h3'
 type S = components['schemas']
 
 /**
- * Cohort, mentor and deadlines come from the API; contest and career stay on the mock.
+ * Cohort, mentor, deadlines and the next contest come from the API; career stays on the mock.
  * The current cohort is the active one, else a planned one (the API lists active enrollments in either);
  * finished cohorts the student completed are the archive.
  */
 export default defineEventHandler(async (event): Promise<StudentDashboard> => {
   const user = await requireRole(event, 'mentee')
-  const [cohorts, listed, completed, mock] = await Promise.all([
+  const [cohorts, listed, completed, mock, contest] = await Promise.all([
     apiFetch<S['StudentCohort'][]>(event, '/dashboard/student'),
     listCohorts(event),
     completedStudentCohorts(event),
-    $fetch<MockOverview>('/api/mock/overview')
+    $fetch<MockOverview>('/api/mock/overview'),
+    dashboardContest(event)
   ])
   const statusOf = (id: number) => listed.find(x => x.id === id)?.status
   const c = cohorts.find(x => statusOf(x.cohort_id) === 'active') ?? cohorts.find(x => statusOf(x.cohort_id) === 'planned')
@@ -49,7 +50,7 @@ export default defineEventHandler(async (event): Promise<StudentDashboard> => {
       ...rest.slice(0, 3),
       ...(feedback ? [{ id: 'feedback', kind: 'feedback' as const, title: '', titleKey: 'queue.feedback', count: feedback, to: '/assignments' }] : [])
     ],
-    contest: { title: mock.contest.title, at: mock.contest.at, registered: mock.contest.registered },
+    contest: contest && { slug: contest.slug, title: contest.title, at: contest.at, registered: contest.registered },
     career: mock.career
   }
 })

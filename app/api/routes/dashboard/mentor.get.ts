@@ -1,19 +1,19 @@
 import type { components } from '~~/shared/types/api'
-import type { EnrollmentStatus, MentorDashboard, MockOverview, SessionItem } from '~~/shared/types'
+import type { EnrollmentStatus, MentorDashboard, SessionItem } from '~~/shared/types'
 import { defineEventHandler } from '~/api/utils/h3'
 
 /**
  * Planned and active cohorts only (finished ones are archives), current students only. The waiting queue still
- * includes finished cohorts: mentors close the backlog after the end. Sessions and contest stay mock.
+ * includes finished cohorts: mentors close the backlog after the end. Sessions stay mock.
  */
 export default defineEventHandler(async (event): Promise<MentorDashboard> => {
   const user = await requireRole(event, 'mentor')
   const now = Date.now()
-  const [cohorts, listed, waiting, mock, sessions] = await Promise.all([
+  const [cohorts, listed, waiting, contest, sessions] = await Promise.all([
     apiFetch<components['schemas']['MentorCohort'][]>(event, '/dashboard/mentor'),
     listCohorts(event),
     myReviewItems(event, 'submitted'),
-    $fetch<MockOverview>('/api/mock/overview'),
+    dashboardContest(event),
     $fetch<SessionItem[]>('/api/sessions')
   ])
   return {
@@ -39,6 +39,6 @@ export default defineEventHandler(async (event): Promise<MentorDashboard> => {
           }))
       }]
     }),
-    contest: { title: mock.contest.title, at: mock.contest.at }
+    contest: contest && { slug: contest.slug, title: contest.title, at: contest.at }
   }
 })

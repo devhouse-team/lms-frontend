@@ -1,6 +1,6 @@
 import type { H3Event } from '~/api/utils/h3'
 import type { components } from '~~/shared/types/api'
-import type { CohortAssignment, CohortDetail, CohortRosterRow, CohortRow, CohortStatus, CohortTiming, EnrollmentStatus, Person, ReviewListItem, StaffMember, SubmissionStatus, SubmissionView } from '~~/shared/types'
+import type { CohortAssignment, CohortDetail, Contest, CohortRosterRow, CohortRow, CohortStatus, CohortTiming, EnrollmentStatus, Person, ReviewListItem, StaffMember, SubmissionStatus, SubmissionView } from '~~/shared/types'
 
 /** Mapping between the LMS API and the UI's view models */
 
@@ -219,3 +219,13 @@ export async function studentMentor(event: H3Event, cohortId: number, userId: st
 
 /** The API fills profile_image_url with a placeholder domain when there is no photo */
 export const avatarUrl = (url: string | null | undefined) => (url && !/^https?:\/\/(www\.)?profileimageurl\.com/.test(url) ? url : undefined)
+
+/** The contest the dashboard rails show (running, else soonest upcoming); a failing API reads as "none" so Home still loads */
+export async function dashboardContest(event: H3Event | undefined): Promise<(Contest & { registrations: number }) | null> {
+  try {
+    const c = nextContest((await apiFetch<ApiSavedContest[]>(event, '/contest/')).map(toSavedContest))
+    return c ? { slug: c.slug, title: c.title, at: c.startsAt, registered: c.registered, registrations: c.registrations } : null
+  } catch {
+    return null
+  }
+}
