@@ -10,7 +10,7 @@ const query = z.object({
 
 /** LeetCode's contest list, to pick one to save; paging applies to past contests only */
 export default defineEventHandler(async (event): Promise<LeetcodeContest[]> => {
-  await requireRole(event, 'head', 'all')
+  await requireContestManager(event)
   const { kind } = await getValidatedRouterParams(event, params.parse)
   const list = kind === 'past'
     ? await apiFetch<ApiLeetcodeContest[]>(event, '/contest/fetch_past', { query: await getValidatedQuery(event, query.parse) })

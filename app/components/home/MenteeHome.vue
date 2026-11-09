@@ -2,12 +2,14 @@
 import type { CoursesResponse } from '~~/shared/types'
 
 const { t, locale } = useI18n()
-const toast = useToast()
+const { toastError } = useContestErrors()
 const { data, status, refresh, toggleContest } = useStudentDashboard()
 const { data: courses, status: coursesStatus } = useLazyFetch<CoursesResponse>('/api/courses', { key: 'my-courses' })
 /** The active cohort's courses, else the planned one's */
 const currentCourses = computed(() => courses.value?.cohorts.find(g => g.cohort.status === 'active') ?? courses.value?.cohorts.find(g => g.cohort.status === 'planned'))
 const { left } = useCountdown()
+const now = useNow()
+const contestStarted = computed(() => !!data.value?.contest && new Date(data.value.contest.at).getTime() <= now.value)
 const { short } = useCohortFormat()
 
 /** Own payment state (spec payments.md); nothing when the student is not billed */
@@ -31,8 +33,8 @@ const fmtDate = (iso: string, opts: Intl.DateTimeFormatOptions) => new Intl.Date
 async function onContest() {
   try {
     await toggleContest()
-  } catch {
-    toast.add({ title: t('common.saveError'), color: 'error', icon: 'i-lucide-circle-alert' })
+  } catch (e) {
+    toastError(e)
   }
 }
 </script>
@@ -129,18 +131,22 @@ async function onContest() {
               {{ fmtDate(data.contest.at, { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) }}
               · {{ t('home.contestIn') }} {{ left(data.contest.at) }}
             </p>
-            <UButton
-              class="mt-4"
-              block
-              :color="data.contest.registered ? 'neutral' : 'primary'"
-              :variant="data.contest.registered ? 'outline' : 'soft'"
-              :icon="data.contest.registered ? 'i-lucide-check' : undefined"
-              :label="data.contest.registered ? t('home.registered') : t('home.register')"
-              @click="onContest"
-            />
-            <button v-if="data.contest.registered" type="button" class="mt-2 w-full cursor-pointer text-center text-xs text-muted underline-offset-4 hover:text-highlighted hover:underline" @click="onContest">
-              {{ t('home.unregister') }}
-            </button>
+            <!-- Registration closes at the start (the API answers 409 contest_started) -->
+            <NuxtLink v-if="contestStarted" to="/contest" class="mt-4 block text-sm font-medium text-primary underline-offset-4 hover:underline">{{ t('contest.live') }}</NuxtLink>
+            <template v-else>
+              <UButton
+                class="mt-4"
+                block
+                :color="data.contest.registered ? 'neutral' : 'primary'"
+                :variant="data.contest.registered ? 'outline' : 'soft'"
+                :icon="data.contest.registered ? 'i-lucide-check' : undefined"
+                :label="data.contest.registered ? t('home.registered') : t('home.register')"
+                @click="onContest"
+              />
+              <button v-if="data.contest.registered" type="button" class="mt-2 w-full cursor-pointer text-center text-xs text-muted underline-offset-4 hover:text-highlighted hover:underline" @click="onContest">
+                {{ t('home.unregister') }}
+              </button>
+            </template>
           </template>
           <p v-else class="mt-3 text-sm text-muted">{{ t('home.contestNone') }}</p>
         </section>

@@ -76,6 +76,11 @@ const statusColor: Record<EnrollmentStatus, 'primary' | 'neutral' | 'success' | 
 
         <PersonPayments v-if="data.enrollments.length" :user-id="data.id" />
 
+        <section aria-labelledby="lc-title">
+          <h3 id="lc-title" class="mb-3 text-sm font-semibold text-highlighted">{{ t('contest.historyTitle') }}</h3>
+          <ContestProgress :username="data.username" />
+        </section>
+
         <section aria-labelledby="staff-title">
           <h3 id="staff-title" class="mb-3 text-sm font-semibold text-highlighted">{{ t('person.asStaff') }}</h3>
           <ul v-if="data.staffIn.length" class="divide-y divide-default overflow-hidden rounded-lg ring-1 ring-inset ring-default">

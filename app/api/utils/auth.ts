@@ -12,6 +12,20 @@ export async function requireRole(event: H3Event | undefined, role: Role, scope?
   return user
 }
 
+/** Backend superuser only (contest management); admins and program leads fail */
+export async function requireSuperuser(event: H3Event | undefined) {
+  const { user } = await requireUserSession(event)
+  if (!user.isSuperuser) throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+  return user
+}
+
+/** Superuser or LeetCode mentor (`contest_manager`): fetch, add, remove, sync, register others, excuse */
+export async function requireContestManager(event: H3Event | undefined) {
+  const { user } = await requireUserSession(event)
+  if (!user.canManageContests) throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+  return user
+}
+
 const isAdmin = (a: Schemas['MyAccess']) => a.is_superuser || a.roles.includes('admin')
 
 /** UI views from backend access (frontend.md "Roles in the UI"); most privileged first. A program lead gets the head view. */
@@ -39,7 +53,10 @@ export async function loadUser(event?: H3Event) {
     user: {
       id: String(me.id), name: me.name, email: me.email, username: me.username, avatar: avatarUrl(me.profile_image_url), roles, role,
       headScope: roles.includes('head') ? (isAdmin(access) ? 'all' : 'programs') : undefined,
-      billing
+      billing,
+      isSuperuser: access.is_superuser,
+      // `contest_manager` is new in /me/access (spec leetcode-api.md); older builds omit it
+      canManageContests: access.is_superuser || (access as { contest_manager?: boolean }).contest_manager === true
     }
   })
   return { role }

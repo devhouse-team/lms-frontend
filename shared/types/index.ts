@@ -63,6 +63,7 @@ export interface QueueItem {
 }
 
 export interface Contest {
+  slug: string
   title: string
   at: string
   registered: boolean
@@ -782,28 +783,7 @@ export interface FileTicket {
   headers: Record<string, string>
 }
 
-export interface ContestResultRow {
-  place: number
-  mentee: Person
-  cohortName: string
-  solved: number
-}
 
-export interface ContestView {
-  id: string
-  title: string
-  at: string
-  problems: number
-  registrations: number
-  /** Mentee only */
-  registered?: boolean
-  results?: ContestResultRow[]
-}
-
-export interface ContestsResponse {
-  current: ContestView | null
-  past: ContestView[]
-}
 
 /** A LeetCode contest; `startsAt` is ISO */
 export interface LeetcodeContest {
@@ -813,19 +793,94 @@ export interface LeetcodeContest {
   durationSec: number
 }
 
-/** A contest the academy saved to track results for */
+/** Where a saved contest is in time (derived from `startsAt` and `durationSec`, never stored) */
+export type ContestStatus = 'upcoming' | 'live' | 'finished'
+
+/** A contest the academy saved; `registered` is the signed-in user's own sign-up (spec contests.md) */
 export interface SavedContest extends LeetcodeContest {
   id: string
+  registered: boolean
+  registrations: number
+  /** When the API last stored LeetCode's results; null before the first sync */
+  syncedAt: string | null
+}
+
+/**
+ * Registered in the LMS vs. took part on LeetCode:
+ * `attended` both · `no_show` registered only · `walk_in` took part without registering · `absent` neither ·
+ * `excused` a manager excused the missing result (spec leetcode-api.md)
+ */
+export type Attendance = 'attended' | 'no_show' | 'walk_in' | 'absent' | 'excused'
+
+/** A manager's correction of one user's result in one contest */
+export interface AttendanceOverride {
+  status: 'excused' | 'attended'
+  note: string | null
 }
 
 /** One active user with a LeetCode id; `solved` and `place` are null when they didn't take part */
 export interface ContestStanding {
   place: number | null
+  /** API user id: managers register and excuse by it */
+  userId: string
   name: string
   username: string
   email: string
   leetcodeId: string
   solved: number | null
+  registered: boolean
+  attended: boolean
+  override: AttendanceOverride | null
+  attendance: Attendance
+}
+
+/** A user the superuser made a LeetCode mentor (manager of contests) */
+export interface ContestManager {
+  id: string
+  name: string
+  username: string
+  email: string
+}
+
+/** One line of the LMS leaderboard */
+export interface RatingRow {
+  place: number
+  name: string
+  username: string
+  leetcodeId: string
+  rating: number
+  attended: number
+  solved: number
+  lastDelta: number
+}
+
+/** One contest in a person's profile; the rank and rating fields are null when they did not take part */
+export interface ContestProfileRow {
+  slug: string
+  title: string
+  startsAt: string
+  registered: boolean
+  attended: boolean
+  attendance: Attendance
+  override: AttendanceOverride | null
+  solved: number | null
+  lmsRank: number | null
+  participants: number | null
+  ratingBefore: number | null
+  ratingAfter: number | null
+}
+
+/** `/leetcode/{username}`: LMS rating, totals and every contest with stored results, newest first */
+export interface ContestProfile {
+  name: string
+  username: string
+  email: string
+  leetcodeId: string
+  /** null before the first rated contest */
+  rating: number | null
+  place: number | null
+  totals: { registered: number, attended: number, noShow: number, excused: number, solved: number }
+  history: ContestProfileRow[]
 }
 
 export interface MentorProfile {
@@ -867,9 +922,7 @@ export interface InviteAcceptInput {
   password: string
 }
 
-export interface ContestRegistration {
-  registered: boolean
-}
+
 
 /* ---------- notifications (spec notifications.md) ---------- */
 
@@ -951,6 +1004,10 @@ export interface SessionUser {
   avatar?: string
   /** Own payment state (students only); absent when billing is off or the API has none */
   billing?: MyBilling
+  /** Backend `is_superuser`: assigns LeetCode mentors, manages contests */
+  isSuperuser: boolean
+  /** Superuser or LeetCode mentor (`contest_manager`): manages contests and attendance */
+  canManageContests: boolean
 }
 
 /** Payment state of one student (spec payments.md). `exempt`: billing off. */
@@ -984,8 +1041,7 @@ export interface BillingPayment {
   note: string | null
 }
 
-/** Contest and career data that still comes from Nitro's mock store (`/api/mock/overview`) */
+/** Career data that still comes from Nitro's mock store (`/api/mock/overview`) */
 export interface MockOverview {
-  contest: { title: string, at: string, registered: boolean, registrations: number }
   career: CareerStep[]
 }

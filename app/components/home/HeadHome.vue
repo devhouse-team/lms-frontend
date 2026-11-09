@@ -73,7 +73,7 @@ const totals = computed(() => {
               {{ fmtDate(data.contest.at, { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) }} · {{ t('home.contestIn') }} {{ left(data.contest.at) }}
             </p>
             <p class="num mt-3 text-sm text-highlighted">{{ t('head.contestRegistered', { n: data.contest.registered }) }}</p>
-            <UButton class="mt-3" block to="/contests" :label="t('head.enterResults')" color="neutral" variant="outline" />
+            <UButton class="mt-3" block :to="user?.canManageContests ? '/contests' : '/contest'" :label="t('head.enterResults')" color="neutral" variant="outline" />
           </template>
           <p v-else class="mt-3 text-sm text-muted">{{ t('home.contestNone') }}</p>
         </section>

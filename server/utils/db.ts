@@ -1,6 +1,6 @@
 /**
  * In-memory mock for features the LMS API doesn't have yet:
- * contests, career steps and mentoring sessions (see backend spec/open-items.md).
+ * career steps and mentoring sessions (see backend spec/open-items.md).
  * Keyed by the real user id; state resets on restart and isn't shared between
  * server instances. The rest talks to the API straight from the browser (app/api).
  */
@@ -50,7 +50,7 @@ const mentees: DbUser[] = Object.entries(menteeNames).flatMap(([cohortId, names]
 let seed = 7
 const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647)
 
-const contestRegistrations = new Set<string>(mentees.filter(() => rand() < 0.4).map(u => u.id).filter(id => id !== 's-c-fe7-0'))
+
 
 export const CAREER_STEPS = ['cv', 'github', 'linkedin', 'mock', 'apply'] as const
 export type CareerStepId = typeof CAREER_STEPS[number]
@@ -59,41 +59,11 @@ const career = new Map<string, Set<CareerStepId>>(
 )
 career.set('s-c-fe7-0', new Set(['cv', 'github']))
 
-interface DbContestResult {
-  menteeId: string
-  /** Problems solved, 0..problems */
-  solved: number
-}
 
-export interface DbContest {
-  id: string
-  title: string
-  at: number
-  problems: number
-  /** Present once the head has entered results */
-  results?: DbContestResult[]
-}
-
-const pastContest = (id: string, weeksAgo: number): DbContest => ({
-  id,
-  title: 'LeetCode Contest',
-  at: now - weeksAgo * WEEK,
-  problems: 4,
-  results: mentees.filter(() => rand() < 0.45).map(u => ({ menteeId: u.id, solved: Math.floor(rand() * 5) }))
-})
-
-const contests: DbContest[] = [
-  pastContest('lc-2026-09-26', 2),
-  pastContest('lc-2026-09-12', 4),
-  { id: 'lc-2026-10-24', title: 'LeetCode Contest', at: new Date('2026-10-24T18:00:00+05:00').getTime(), problems: 4 }
-]
 
 export const db = {
   users: mentees,
   cohorts,
-  contest: contests[contests.length - 1]!,
-  contests,
-  contestRegistrations,
   career
 }
 

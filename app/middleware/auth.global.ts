@@ -6,6 +6,10 @@ declare module '#app' {
     roles?: Role[]
     /** 'all': head pages a program lead without admin rights can't open (people, contests) */
     headScope?: 'all'
+    /** Backend superuser only (contest management) */
+    superuser?: true
+    /** Superuser or LeetCode mentor (contest management) */
+    contestManager?: true
     /** Page is reachable without a session (login, invite). */
     public?: boolean
   }
@@ -29,6 +33,12 @@ export default defineNuxtRouteMiddleware((to) => {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden', fatal: true })
   }
   if (to.meta.headScope === 'all' && user.value?.headScope === 'programs') {
+    throw createError({ statusCode: 403, statusMessage: 'Forbidden', fatal: true })
+  }
+  if (to.meta.superuser && !user.value?.isSuperuser) {
+    throw createError({ statusCode: 403, statusMessage: 'Forbidden', fatal: true })
+  }
+  if (to.meta.contestManager && !user.value?.canManageContests) {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden', fatal: true })
   }
 })
