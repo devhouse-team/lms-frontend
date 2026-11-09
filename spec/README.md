@@ -28,8 +28,9 @@ contract is `../backend/openapi.json` (types in `shared/types/api.d.ts`).
 | [Reviews](features/reviews.md) | mentor, student | API |
 | [Course content](features/course-content.md) (spec, not built): course and lesson pages, materials, markdown with math and code, course editor, assignment modes, exams, solutions | everyone; course editors author | API |
 | [Payments](features/payments.md): monthly billing per student, reminder 7 days before, block when overdue | head manages; student | API (backend pending) |
-| [Home dashboards](features/dashboards.md) | everyone | API + mock widgets |
-| [Mock features](features/mock-features.md): contests, external courses (removed by course content Phase 1), career, sessions | everyone | in-memory mock |
+| [LeetCode contests](features/contests.md): register, results, attendance, LMS rating, profiles; superuser and LeetCode mentors manage | everyone; superuser and mentors manage | API (registration, results, mentors, rating: backend pending, [contests-api](features/contests-api.md), [leetcode-api](features/leetcode-api.md)) |
+| [Home dashboards](features/dashboards.md) | everyone | API + mock widgets (career, sessions) |
+| [Mock features](features/mock-features.md): external courses (removed by course content Phase 1), career, sessions | everyone | in-memory mock |
 
 ## Spec-driven workflow
 

@@ -2,6 +2,35 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-11-09: LeetCode mentors, attendance management, LMS rating, profiles
+
+- The superuser names **LeetCode mentors** on `/contests` (any user). Mentors manage contests like the superuser
+  (add, remove, sync, results) and also register other people before the start and correct attendance after the end
+  (excused, took part, with a note). Nav entry "Manage contests" shows for managers in every role.
+- `/contest` Participants tab becomes **Rating**: the LMS leaderboard (rating computed by the API, 1500 at the start).
+  Names link to the new **`/leetcode/{username}`**: rating card with a trend arrow, a line chart (hover or ←/→ pick a
+  contest: date, title, LMS rank, solved), totals and contests. `/people/{id}` shows the same.
+- Session `canManageContests`, `requireContestManager`, page meta `contestManager`; `Attendance` gains `excused`.
+  Removed `/api/contests/history`, `useContestHistory`, `toParticipants`, `historyOf`. `scripts/mock-contests-api.mjs`
+  (stand-in backend on :8010) covers the new endpoints.
+- Backend ask: [leetcode-api](features/leetcode-api.md) ([O36](open-items.md)). Until it ships the new endpoints
+  answer 404 and the screens show error text.
+
+## 2026-11-08: LeetCode contests on the API
+
+- `/contest` (everyone) leaves the mock: running and upcoming contests with Register / Cancel, past contests with
+  results, an attendance mark per person (took part, no-show, took part unregistered) and a Participants tab. The
+  Home rail shows the next saved contest and registers from there until the start.
+- `/contests` is superuser-only (backend `is_superuser`; the `admin` role and program leads no longer manage). New
+  **Update results** per finished contest, with when it last ran. Nav entry renamed "Manage contests".
+- `SessionUser.isSuperuser`, `requireSuperuser`, page meta `superuser`.
+- Participants tab: click a name for that person's progress (totals, a chart of problems solved per contest, every
+  contest with attendance and LMS place). `/people/{id}` (head) shows the same. Built from the existing results
+  routes, so no extra backend endpoint.
+- Removed the Nitro mock: `/api/contests`, `/api/contest/registration`, `MockOverview.contest`, the contest data in `db.ts`.
+- Backend ask: [contests-api](features/contests-api.md) ([O35](open-items.md)). Until it ships, registration fails with
+  a toast and results show what the API returns today. Spec: [contests](features/contests.md), with checks you can run.
+
 ## 2026-11-08: payments
 
 - New `/payments` for heads: per-student monthly billing (own billing day, next due date), mark paid, edit, history.

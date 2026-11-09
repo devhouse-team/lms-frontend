@@ -1,6 +1,6 @@
 # Home dashboards
 
-**Roles:** everyone · **Data:** API, with mock widgets (contest, career, external courses, sessions)
+**Roles:** everyone · **Data:** API, with mock widgets (career, external courses, sessions)
 
 `/` shows one dashboard per active view. It keeps the "Demo data" badge while it has mock widgets.
 
@@ -14,7 +14,7 @@
 - **Next up**: the earliest assignment deadline in the next 14 days that needs the student (not submitted or sent
   back). **Queue**: the next three, plus "new feedback" when there is recent feedback.
 - Rail: the student's own mentor, or "Mentor not assigned yet" (no fallback to another mentor of the cohort);
-  cohort size; contest and career (mock).
+  cohort size; the next contest (API, [contests](contests.md)); career (mock).
 - External courses list (mock). Course content Phase 1 replaces it with "My courses" (real courses, lessons done / released, next lesson; [course content](course-content.md#mock-removal)).
 - **Program** (read-only, current cohort only): cover thumbnail (initials tile when there is none or it fails to
   load), program title, description as plain text clamped to 3 lines with "Show more". Shown the same whatever the
@@ -30,7 +30,7 @@ cohort's program (→ `cohort.program: {id, title, description, coverUrl}`).
 - Per staffed planned or active cohort (finished ones are left out): program, status, week from the API, active and
   paused students only with lessons completed / released, overdue reviews, at risk.
 - The waiting queue still includes finished cohorts: mentors close the backlog after the end.
-- Rail: sessions and contest (mock).
+- Rail: sessions (mock) and the next contest (API, [contests](contests.md)).
 - Program: the title in each cohort row as now. On `/cohort`, each cohort header adds a collapsed "About the program"
   disclosure with cover and description (read-only, [programs](programs.md#student-and-mentor-read-only)).
 
@@ -43,7 +43,7 @@ API: `GET /dashboard/mentor`, `GET /cohorts/`, review queues as in [reviews](rev
   with the same rows as `/cohorts`' default filter, pending [invites](invites.md).
 - Mentor load: per mentor across cohorts (a cohort can have several), waiting and overdue submissions of the
   students assigned to them, from the roster rows; waiting work of students without a mentor shows as "No mentor".
-- Contest (mock).
+- Next contest (API, [contests](contests.md)).
 
 - Program lead without admin rights (`headScope = 'programs'`): same widgets over the cohorts the API returns
   (their programs' cohorts); pending invites hidden ([programs](programs.md#lead-experience)).
