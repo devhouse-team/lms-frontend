@@ -6,8 +6,8 @@ const { t, locale, setLocale } = useI18n()
 const { user, role, logout, switchRole } = useAuth()
 const open = ref(false)
 
-/** `all`: hidden from a program lead without admin rights (headScope 'programs') */
-const navByRole: Record<Role, { key: string, icon: string, to: string, all?: boolean }[]> = {
+/** `all`: hidden from a program lead without admin rights (headScope 'programs'); `contests`: superuser or LeetCode mentor only */
+const navByRole: Record<Role, { key: string, icon: string, to: string, all?: boolean, manager?: boolean }[]> = {
   mentee: [
     { key: 'home', icon: 'i-lucide-layout-dashboard', to: '/' },
     { key: 'courses', icon: 'i-lucide-book-open', to: '/courses' },
@@ -16,7 +16,8 @@ const navByRole: Record<Role, { key: string, icon: string, to: string, all?: boo
     { key: 'calendar', icon: 'i-lucide-calendar-days', to: '/calendar' },
     { key: 'contest', icon: 'i-lucide-trophy', to: '/contest' },
     { key: 'career', icon: 'i-lucide-briefcase', to: '/career' },
-    { key: 'mentor', icon: 'i-lucide-messages-square', to: '/mentor' }
+    { key: 'mentor', icon: 'i-lucide-messages-square', to: '/mentor' },
+    { key: 'contests', icon: 'i-lucide-settings-2', to: '/contests', manager: true }
   ],
   mentor: [
     { key: 'home', icon: 'i-lucide-layout-dashboard', to: '/' },
@@ -25,7 +26,8 @@ const navByRole: Record<Role, { key: string, icon: string, to: string, all?: boo
     { key: 'cohort', icon: 'i-lucide-users', to: '/cohort' },
     { key: 'sessions', icon: 'i-lucide-calendar', to: '/sessions' },
     { key: 'calendar', icon: 'i-lucide-calendar-days', to: '/calendar' },
-    { key: 'contest', icon: 'i-lucide-trophy', to: '/contest' }
+    { key: 'contest', icon: 'i-lucide-trophy', to: '/contest' },
+    { key: 'contests', icon: 'i-lucide-settings-2', to: '/contests', manager: true }
   ],
   head: [
     { key: 'home', icon: 'i-lucide-layout-dashboard', to: '/' },
@@ -35,12 +37,13 @@ const navByRole: Record<Role, { key: string, icon: string, to: string, all?: boo
     { key: 'programs', icon: 'i-lucide-library', to: '/programs' },
     { key: 'payments', icon: 'i-lucide-wallet', to: '/payments' },
     { key: 'courses', icon: 'i-lucide-book-open', to: '/courses' },
-    { key: 'contests', icon: 'i-lucide-trophy', to: '/contests', all: true }
+    { key: 'contest', icon: 'i-lucide-trophy', to: '/contest' },
+    { key: 'contests', icon: 'i-lucide-settings-2', to: '/contests', manager: true }
   ]
 }
 
 const items = computed<NavigationMenuItem[]>(() =>
-  (role.value ? navByRole[role.value] : []).filter(i => !i.all || user.value?.headScope !== 'programs').map(i => ({
+  (role.value ? navByRole[role.value] : []).filter(i => (!i.all || user.value?.headScope !== 'programs') && (!i.manager || user.value?.canManageContests)).map(i => ({
     label: t(`nav.${i.key}`),
     icon: i.icon,
     to: i.to,
