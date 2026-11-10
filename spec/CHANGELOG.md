@@ -2,6 +2,15 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-11-10: backend contracts for career steps and mentoring sessions
+
+- Two new backend asks, docs only, so the in-memory mocks can go: [career-api](features/career-api.md)
+  ([O37](open-items.md)): five career steps per student, `GET /me/career`, `PUT /me/career/{step}`,
+  `GET /users/{id}/career` (optional) for mentors and heads. [sessions-api](features/sessions-api.md) ([O38](open-items.md)):
+  group and 1:1 mentoring sessions, `GET /me/sessions`, `POST /sessions`, `PATCH /sessions/{id}`,
+  `POST /sessions/{id}/cancel`.
+- Until the backend ships, a failing or 404 read means "not available yet".
+
 ## 2026-11-09: LeetCode mentors, attendance management, LMS rating, profiles
 
 - The superuser names **LeetCode mentors** on `/contests` (any user). Mentors manage contests like the superuser
