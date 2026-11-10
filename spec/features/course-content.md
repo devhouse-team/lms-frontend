@@ -156,8 +156,7 @@ back"; same as backend decision 19), practice is out of the review queue unless 
 
 ## Routes
 
-The nav item "Courses" (`nav.courses`) today opens the **mock** external-courses tracker. It is replaced by real
-courses for every role (Phase 1); the mock goes away (see [Mock removal](#mock-removal)).
+The nav item "Courses" (`nav.courses`) opens real courses for every role (Phase 1); the mock is gone (see [Mock removal](#mock-removal)).
 
 | Route | Who | What it shows / does | Phase |
 |---|---|---|---|

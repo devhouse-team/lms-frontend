@@ -1,6 +1,6 @@
 # Home dashboards
 
-**Roles:** everyone · **Data:** API, with mock widgets (career, external courses, sessions)
+**Roles:** everyone · **Data:** API, with mock widgets (career, sessions)
 
 `/` shows one dashboard per active view. It keeps the "Demo data" badge while it has mock widgets.
 
@@ -15,7 +15,7 @@
   back). **Queue**: the next three, plus "new feedback" when there is recent feedback.
 - Rail: the student's own mentor, or "Mentor not assigned yet" (no fallback to another mentor of the cohort);
   cohort size; the next contest (API, [contests](contests.md)); career (mock).
-- External courses list (mock). Course content Phase 1 replaces it with "My courses" (real courses, lessons done / released, next lesson; [course content](course-content.md#mock-removal)).
+- "My courses": the active (else planned) cohort's real courses, lessons done / released, next deadline ([course content](course-content.md#mock-removal)).
 - **Program** (read-only, current cohort only): cover thumbnail (initials tile when there is none or it fails to
   load), program title, description as plain text clamped to 3 lines with "Show more". Shown the same whatever the
   program's status ([programs](programs.md#student-and-mentor-read-only)). Hidden with no current cohort.

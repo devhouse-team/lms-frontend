@@ -74,13 +74,11 @@ manage routes; `requireSuperuser` (session `isSuperuser`) on the mentor routes. 
 
 ## Checks
 
-Run from the repo root. `scripts/mock-contests-api.mjs` stands in for the backend on :8010 until it ships the endpoints: `PORT=8010 node scripts/mock-contests-api.mjs`, and `curl -X POST localhost:8010/api/v1/__reset` before each check. Against a backend, use its URL and the same seed.
+Run from the repo root. The role and screen checks in Acceptance criteria are manual and need the backend ([O35](../open-items.md), [O36](../open-items.md)); no script yet.
 
 | What | Command |
 |---|---|
 | Mappers, status, next contest, attendance and overrides, ranking, profile series and trend | `node --experimental-strip-types scripts/contests.check.ts` |
-| Contract of the contest endpoints (guards, registration, sync, results, mentors, overrides, rating, profile) | `API_BASE=http://localhost:8010/api/v1 node scripts/contests-api.check.mjs` (needs the seed data listed in the script header) |
-| Screens as each role | with the mock running, `NUXT_PUBLIC_API_BASE=http://localhost:8010/api/v1 npx nuxi dev --port 3123`, then `API_BASE=http://localhost:8010/api/v1 FE_URL=http://localhost:3123 PLAYWRIGHT_CORE=<path to playwright-core> node scripts/contests.browser-check.mjs` (`SHOT=file.png` saves a profile screenshot) |
 | Types and build | `npm run typecheck`, `npm run build` |
 
 ## Acceptance criteria
@@ -88,15 +86,15 @@ Run from the repo root. `scripts/mock-contests-api.mjs` stands in for the backen
 - [x] Mappers read both today's and the new API shape; status, next contest, attendance, overrides and ties are right (`contests.check.ts`).
 - [x] The profile series (rated contests, oldest first) and the trend arrow are right (`contests.check.ts`).
 - [x] Typecheck and production build pass.
-- [ ] Only the superuser and mentors see "Manage contests"; only the superuser sees the mentor section; a student or an admin-role head gets 403 (browser check, needs the backend).
-- [ ] The superuser assigns a mentor, who then registers others and excuses a no-show; removing the mentor closes `/contests` (browser check).
-- [ ] A student registers and cancels on `/contest` and from Home; the count follows (browser check).
-- [ ] The Rating tab is ordered by rating; a name opens `/leetcode/{username}`; hover and arrow keys move the chart (browser check).
+- [ ] Only the superuser and mentors see "Manage contests"; only the superuser sees the mentor section; a student or an admin-role head gets 403 (manual, needs the backend).
+- [ ] The superuser assigns a mentor, who then registers others and excuses a no-show; removing the mentor closes `/contests` (manual, needs the backend).
+- [ ] A student registers and cancels on `/contest` and from Home; the count follows (manual, needs the backend).
+- [ ] The Rating tab is ordered by rating; a name opens `/leetcode/{username}`; hover and arrow keys move the chart (manual, needs the backend).
 - [ ] `/people/{id}` shows the same progress.
-- [ ] Against the real backend: both contract checks pass (waits for [O35](../open-items.md) and [O36](../open-items.md)).
+- [ ] Against the real backend: the manual checks above pass (waits for [O35](../open-items.md) and [O36](../open-items.md)).
 
 ## Known gaps
 
-- [O35](../open-items.md), [O36](../open-items.md): registration, stored results, mentors, overrides, rating and profiles are not in the API yet. The mock `scripts/mock-contests-api.mjs` runs the checks until they ship.
+- [O35](../open-items.md), [O36](../open-items.md): registration, stored results, mentors, overrides, rating and profiles are not in the API yet.
 - Mentor Home shows the next contest but offers no Register button (mentors register on `/contest`).
 - `/people/{id}` shows "not found" for a person without a LeetCode ID.
