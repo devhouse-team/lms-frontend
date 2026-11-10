@@ -1,8 +1,8 @@
 # Home dashboards
 
-**Roles:** everyone · **Data:** API, with a mock widget (sessions)
+**Roles:** everyone · **Data:** API
 
-`/` shows one dashboard per active view. It keeps the "Demo data" badge while it has mock widgets.
+`/` shows one dashboard per active view.
 
 ## Student
 
@@ -30,7 +30,7 @@ cohort's program (→ `cohort.program: {id, title, description, coverUrl}`).
 - Per staffed planned or active cohort (finished ones are left out): program, status, week from the API, active and
   paused students only with lessons completed / released, overdue reviews, at risk.
 - The waiting queue still includes finished cohorts: mentors close the backlog after the end.
-- Rail: sessions (mock) and the next contest (API, [contests](contests.md)).
+- Rail: the next sessions (API, [sessions](sessions.md); empty until the API has them) and the next contest (API, [contests](contests.md)).
 - Program: the title in each cohort row as now. On `/cohort`, each cohort header adds a collapsed "About the program"
   disclosure with cover and description (read-only, [programs](programs.md#student-and-mentor-read-only)).
 

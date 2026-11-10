@@ -31,9 +31,10 @@ contract is `../backend/openapi.json` (types in `shared/types/api.d.ts`).
 | [LeetCode contests](features/contests.md): register, results, attendance, LMS rating, profiles; superuser and LeetCode mentors manage | everyone; superuser and mentors manage | API (registration, results, mentors, rating: backend pending, [contests-api](features/contests-api.md), [leetcode-api](features/leetcode-api.md)) |
 | [Career steps](features/career.md): five-step job-readiness checklist on `/career` and the Home rail | student | API (backend pending, O37) |
 | [Career steps API](features/career-api.md): backend contract for career steps (O37) | backend team | API (backend pending) |
+| [Mentoring sessions](features/sessions.md): mentor schedules, edits and cancels group and 1:1 sessions; students see them | mentor; student | API (backend pending, O38) |
 | [Mentoring sessions API](features/sessions-api.md): backend contract for mentoring sessions (O38) | backend team | API (backend pending) |
-| [Home dashboards](features/dashboards.md) | everyone | API + mock widget (sessions) |
-| [Mock features](features/mock-features.md): sessions | everyone | in-memory mock |
+| [Home dashboards](features/dashboards.md) | everyone | API |
+| [Mock features](features/mock-features.md): none left | everyone | in-memory mock |
 
 ## Spec-driven workflow
 

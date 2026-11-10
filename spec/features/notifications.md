@@ -76,7 +76,7 @@ An unknown `type` (a newer API) gets `i-lucide-bell` and the label "Уведом
 
   | API link | Sent by | Rewritten to | Why |
   |---|---|---|---|
-  | `/mentor/submissions/{id}` | `submission_created` | `/reviews/{id}` | `/reviews/[id]` takes the submission id. `/mentor` alone stays the student's mock mentor page (the pattern needs `/submissions/`). |
+  | `/mentor/submissions/{id}` | `submission_created` | `/reviews/{id}` | `/reviews/[id]` takes the submission id. `/mentor` alone stays the student's mentor page (the pattern needs `/submissions/`). |
   | `/app/cohorts/{c}/courses/{course}` | `lesson_released` | `/courses/{c}/{course}` | |
   | `/app/cohorts/{c}/lessons/{l}` | `deadline_soon`; `review_completed` from before assignments v2 | `/assignments/{c}-{l}` | The existing resolver page sends it to the lesson's first assignment (or "not found"). Only old rows. |
   | `/assignments/{c}/{a}`, `/` | the rest | unchanged | exist |

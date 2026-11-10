@@ -2,6 +2,14 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-11-10: mentoring sessions on the API
+
+- `/sessions` (mentor), `/mentor` (student), the Home rails and the next session on the student's mentor card read
+  [sessions](features/sessions.md) from `GET /me/sessions` ([O38](open-items.md)). The mentor creates, edits and
+  cancels sessions from `/sessions`; cancelled ones stay in the list, struck through.
+- Until the backend ships, a failing or 404 read shows "Coming soon" on `/sessions` and empty lists elsewhere. No "Demo data" badge on `/sessions` or `/mentor`.
+- The in-memory sessions mock (`/api/sessions`, `server/utils/db.ts`) is gone. [Mock features](features/mock-features.md) has no rows left.
+
 ## 2026-11-10: career steps on the API
 
 - `/career` and the Home career rail read [career](features/career.md) from `GET /me/career` and tick steps with
