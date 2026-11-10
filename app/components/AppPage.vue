@@ -1,6 +1,6 @@
 <script setup lang="ts">
-/** Dashboard panel with navbar; optional back link. `mock` marks pages still on the in-memory mock. */
-defineProps<{ title: string, back?: string, mock?: boolean }>()
+/** Dashboard panel with navbar; optional back link. */
+defineProps<{ title: string, back?: string }>()
 const { t } = useI18n()
 </script>
 
@@ -15,7 +15,6 @@ const { t } = useI18n()
         <template #right>
           <NotificationBell />
           <slot name="right" />
-          <UBadge v-if="mock" :label="t('common.synthetic')" color="neutral" variant="outline" size="sm" />
         </template>
       </UDashboardNavbar>
     </template>

@@ -14,7 +14,7 @@ browser ──────────────Bearer────────
 - **The browser is the API's client** (SPA, `ssr: false`). `app/api/router.ts` replaces `globalThis.$fetch`: a
   `/api/…` URL that matches a file in `app/api/routes` runs that handler in the browser (same file naming as Nitro:
   `[id]`, `[...path]`, `.get/.post` suffix). Call sites (`useFetch('/api/cohorts')`) did not change. Anything else
-  goes to Nitro, tagged with `x-mock-user/role/scope` headers.
+  goes to Nitro (the `/api/files/*` redirects).
 - The API must allow this site's origin (CORS, with credentials). `https://lms.devhouse.kz` is allowed.
   There is no proxy, in dev either: for `http://localhost:3000` the backend must allow that origin and issue the refresh
   cookie with `SameSite=None; Secure`, or point `NUXT_PUBLIC_API_BASE` at a local backend.
@@ -50,11 +50,6 @@ API errors arrive as `{error: {code, message_key, message, details, support_id}}
 them as "already exists / already done": `submission_pending`, `enrollment_exists`, `user_exists`, `slug_taken`,
 `course_slug_taken`, `invalid_transition`, `not_reviewable`. Use `apiFind()` when 403/404 should mean "nothing here"
 rather than an error.
-
-## The remaining mock
-
-No feature runs on mock data any more: the in-memory store (`server/utils/db.ts`) is gone. Only the `x-mock-*` headers
-and `server/utils/auth.ts` remain, unused, until the router's `mockHeaders` is removed.
 
 ## Config
 

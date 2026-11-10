@@ -3,7 +3,7 @@ import type { ApiEvent } from './utils/h3'
 /**
  * The in-browser replacement for the Nitro BFF. `$fetch('/api/…')` and `useFetch('/api/…')` keep their call sites:
  * a URL that matches a file under `./routes` runs that handler here, which calls the LMS API directly. Anything
- * else (the mock features) still goes to Nitro, tagged with who is asking.
+ * else (the file redirects) still goes to Nitro.
  *
  * File names follow Nitro's: `[id]` is a param, `[...path]` a catch-all, a `.get`/`.post`/… suffix a method.
  */
@@ -80,18 +80,6 @@ function fetchError(e: unknown, method: string, url: string) {
   })
 }
 
-/** Mock routes in Nitro have no session: they trust who the browser says it is (mock data only) */
-function mockHeaders(headers: HeadersInit | undefined) {
-  const user = sessionUser.value
-  const out = new Headers(headers)
-  if (user) {
-    out.set('x-mock-user', user.id)
-    out.set('x-mock-role', user.role)
-    if (user.headScope) out.set('x-mock-scope', user.headScope)
-  }
-  return out
-}
-
 export function installApiRouter() {
   const router = useRouter()
   const real = globalThis.$fetch
@@ -102,7 +90,7 @@ export function installApiRouter() {
     const [pathname = '', search = ''] = request.slice('/api/'.length).split('?')
     const method = (options.method ?? 'GET').toUpperCase()
     const hit = match(method, pathname.split('/').filter(Boolean).map(decodeURIComponent))
-    if (!hit) return (real as (r: unknown, o?: unknown) => unknown)(request, { ...options, headers: mockHeaders(options.headers) })
+    if (!hit) return (real as (r: unknown, o?: unknown) => unknown)(request, options)
 
     const query: Record<string, unknown> = {}
     for (const [k, v] of new URLSearchParams(search)) query[k] = v

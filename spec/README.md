@@ -6,7 +6,7 @@ contract is `../backend/openapi.json` (types in `shared/types/api.d.ts`).
 
 | File | What it answers |
 |---|---|
-| [architecture.md](architecture.md) | How the app is built: Nitro as the API client (BFF), sessions, data mapping, the remaining mock, config. |
+| [architecture.md](architecture.md) | How the app is built: Nitro as the API client (BFF), sessions, data mapping, config. |
 | [features/](features/) | One file per feature: who uses it, screens, behavior, API calls, acceptance criteria. |
 | [open-items.md](open-items.md) | Known gaps and decisions still to make, with owners. |
 | [CHANGELOG.md](CHANGELOG.md) | What changed, when, and why. One entry per merged change. |
@@ -34,7 +34,6 @@ contract is `../backend/openapi.json` (types in `shared/types/api.d.ts`).
 | [Mentoring sessions](features/sessions.md): mentor schedules, edits and cancels group and 1:1 sessions; students see them | mentor; student | API (backend pending, O38) |
 | [Mentoring sessions API](features/sessions-api.md): backend contract for mentoring sessions (O38) | backend team | API (backend pending) |
 | [Home dashboards](features/dashboards.md) | everyone | API |
-| [Mock features](features/mock-features.md): none left | everyone | in-memory mock |
 
 ## Spec-driven workflow
 

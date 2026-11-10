@@ -1,6 +1,6 @@
 # Feature name
 
-**Roles:** who uses it · **Data:** API / mock
+**Roles:** who uses it · **Data:** API
 
 One paragraph: what it is for and what success looks like for the user.
 

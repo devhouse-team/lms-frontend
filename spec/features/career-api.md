@@ -5,9 +5,9 @@ For the backend team. Tracked as [O37](../open-items.md). UI: [career](career.md
 ## Why
 
 Students tick five career steps (CV, GitHub, LinkedIn, mock interview, applications) on `/career` and see progress on
-Home. Today the frontend keeps this in an in-memory mock that loses state. Mentors and heads want to see a student's
-progress. The backend lists it as not in MVP ([G9](../../../lms-backend/spec/open-items.md)); this asks for a plain
-checklist, nothing more.
+Home. Today it isn't stored; the frontend is built against this contract and reads it tolerantly. Mentors and heads want
+to see a student's progress. The backend lists it as not in MVP ([G9](../../../lms-backend/spec/open-items.md)); this
+asks for a plain checklist, nothing more.
 
 Step `mock` means "mock interview", a real product step. It has nothing to do with mock data.
 

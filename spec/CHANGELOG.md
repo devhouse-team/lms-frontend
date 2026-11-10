@@ -2,13 +2,18 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-11-10: mock plumbing removed
+
+- Nothing runs on mock data any more. Removed the `x-mock-*` headers (`mockHeaders` in `app/api/router.ts`), `server/utils/auth.ts`, the `AppPage` `mock` prop and the "Demo data" badge on Home (`common.synthetic`). Unmatched `/api/…` calls go straight to Nitro, which now serves only the `/api/files/*` redirects.
+- Deleted the Mock features spec; closed [O12](open-items.md).
+
 ## 2026-11-10: mentoring sessions on the API
 
 - `/sessions` (mentor), `/mentor` (student), the Home rails and the next session on the student's mentor card read
   [sessions](features/sessions.md) from `GET /me/sessions` ([O38](open-items.md)). The mentor creates, edits and
   cancels sessions from `/sessions`; cancelled ones stay in the list, struck through.
 - Until the backend ships, a failing or 404 read shows "Coming soon" on `/sessions` and empty lists elsewhere. No "Demo data" badge on `/sessions` or `/mentor`.
-- The in-memory sessions mock (`/api/sessions`, `server/utils/db.ts`) is gone. [Mock features](features/mock-features.md) has no rows left.
+- The in-memory sessions mock (`/api/sessions`, `server/utils/db.ts`) is gone. Mock features has no rows left.
 
 ## 2026-11-10: career steps on the API
 
@@ -242,7 +247,7 @@ Newest first. One entry per merged change: what changed, for whom, and anything 
 - PRODUCT.md and DESIGN.md: the LMS hosts course content (positioning, principle 3, operating context; contents rail
   + reading column layout, markdown body style, new signature components; Course Status Control retired).
 - [assignments](features/assignments.md), [reviews](features/reviews.md), [dashboards](features/dashboards.md),
-  [mock features](features/mock-features.md) point at the new model. Open items O21–O28 added; O7, O10, O11, O14,
+  mock features point at the new model. Open items O21–O28 added; O7, O10, O11, O14,
   O17, O19 mapped to phases.
 - Backend counterpart: `../backend/spec/content.md` (also spec only).
 

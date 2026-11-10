@@ -15,7 +15,7 @@ Known gaps and undecided questions. Backend items are mirrored in `../backend/sp
 | O9 | At-risk rule is a placeholder | PO | | Active, 3+ lessons opened, under half completed. |
 | O10 | No course authoring UI | FE + PO | Assignments | Courses, modules, lessons and attaching courses to cohorts are API-only for now. Specced: [course content](features/course-content.md) Phase 1 (course editor, editors per course). |
 | O11 | Staff can't see earlier submission attempts | BE | | Review detail shows no history. Course content Phase 2: `SubmissionDetail.versions[]` and `trials[]` (backend content.md). |
-| O12 | Mock features lose state on Vercel | FE | | See [mock features](features/mock-features.md). |
+| O12 | ~~Mock features lose state on Vercel~~ | FE | | Closed 2026-11-10: no feature runs on the mock any more; the mock routes, store and `x-mock-*` headers are gone. |
 | O13 | ~~One mentor per cohort in the UI~~ | PO | | Decided 2026-10-16: several mentors and reviewers, a mentor per student. See [cohorts](features/cohorts.md). |
 | O14 | ~~Notification links point at paths that don't exist~~ | FE + BE | | Built 2026-10-19, closed: [notifications](features/notifications.md) (bell, panel, `/notifications`, email switches). `fixLink()` rewrites `/mentor/submissions/{id}` → `/reviews/{id}`, `/app/cohorts/{c}/courses/{course}` → `/courses/{c}/{course}`, `/app/cohorts/{c}/lessons/{l}` → `/assignments/{c}-{l}` in the list, and a server middleware 302s the same paths for links in emails. BE should still send the real paths and add `assignment_id` to `deadline.soon` (O29). Close when built. |
 | O15 | No cohort capacity, timezone or reopening finished cohorts | PO | | Deliberately out of v2 (backend D5 for timezone). |

@@ -1,12 +1,13 @@
 # Mentoring sessions API
 
-For the backend team. Tracked as [O38](../open-items.md). UI: [sessions](sessions.md). Backend [S7.3 and S7.4](../../../lms-backend/spec/open-items.md) (G9).
+For the backend team. Tracked as [O38](../open-items.md). UI: [sessions](sessions.md). Backend [S7.3 and
+S7.4](../../../lms-backend/spec/open-items.md) (G9).
 
 ## Why
 
-Mentors run a weekly group session per cohort and 1:1 calls with mentees. Today the frontend invents a schedule in an
-in-memory mock. Mentors must create, change and cancel real sessions; students and mentors must see them on Home,
-`/mentor` and `/sessions`.
+Mentors run a weekly group session per cohort and 1:1 calls with mentees. Today nothing is stored; the frontend is built
+against this contract and reads it tolerantly. Mentors must create, change and cancel real sessions; students and
+mentors must see them on Home, `/mentor` and `/sessions`.
 
 ## Model
 
@@ -105,9 +106,9 @@ allowed. Returns the item.
 
 ## Frontend after it ships
 
-Regenerate `shared/types/api.d.ts` and read sessions from `GET /me/sessions`: the `/sessions` list, the `/mentor`
-list, the Home rail and `nextSessionAt` on the student's mentor card (the first future, not cancelled session of the
-student's current cohort). The mentor gets forms to create, edit and cancel. Until then a failing or 404 read means "not available
+Regenerate `shared/types/api.d.ts` and read sessions from `GET /me/sessions`: the `/sessions` list, the `/mentor` list,
+the Home rail and `nextSessionAt` on the student's mentor card (the first future, not cancelled session of the student's
+current cohort). The mentor gets forms to create, edit and cancel. Until then a failing or 404 read means "not available
 yet": the screens show their empty state and nothing breaks, the same rule as payments ([O34](../open-items.md)).
 
 ## Known gaps
