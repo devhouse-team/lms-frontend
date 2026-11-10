@@ -1,7 +1,6 @@
 # Career steps API
 
-For the backend team. Tracked as [O37](../open-items.md). UI: [mock features](mock-features.md) (career section, to be
-replaced).
+For the backend team. Tracked as [O37](../open-items.md). UI: [career](career.md).
 
 ## Why
 

@@ -69,8 +69,10 @@ export interface Contest {
   registered: boolean
 }
 
+export type CareerStepId = 'cv' | 'github' | 'linkedin' | 'mock' | 'apply'
+
 export interface CareerStep {
-  id: string
+  id: CareerStepId
   done: boolean
 }
 
@@ -84,7 +86,8 @@ export interface StudentDashboard {
   nextUp: QueueItem | null
   queue: QueueItem[]
   contest: Contest | null
-  career: CareerStep[]
+  /** null while the API has no career steps yet */
+  career: CareerStep[] | null
 }
 
 /* ---------- mentor ---------- */
@@ -1039,9 +1042,4 @@ export interface BillingPayment {
   paidAt: string
   recordedBy: string
   note: string | null
-}
-
-/** Career data that still comes from Nitro's mock store (`/api/mock/overview`) */
-export interface MockOverview {
-  career: CareerStep[]
 }

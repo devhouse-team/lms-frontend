@@ -1,6 +1,6 @@
 /**
  * In-memory mock for features the LMS API doesn't have yet:
- * career steps and mentoring sessions (see backend spec/open-items.md).
+ * mentoring sessions (see backend spec/open-items.md).
  * Keyed by the real user id; state resets on restart and isn't shared between
  * server instances. The rest talks to the API straight from the browser (app/api).
  */
@@ -46,25 +46,9 @@ const mentees: DbUser[] = Object.entries(menteeNames).flatMap(([cohortId, names]
   names.map((name, i) => ({ id: `s-${cohortId}-${i}`, name, cohortId }))
 )
 
-// Deterministic pseudo-random so the mock is stable between restarts
-let seed = 7
-const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647)
-
-
-
-export const CAREER_STEPS = ['cv', 'github', 'linkedin', 'mock', 'apply'] as const
-export type CareerStepId = typeof CAREER_STEPS[number]
-const career = new Map<string, Set<CareerStepId>>(
-  mentees.map(u => [u.id, new Set(CAREER_STEPS.filter(() => rand() < 0.4))])
-)
-career.set('s-c-fe7-0', new Set(['cv', 'github']))
-
-
-
 export const db = {
   users: mentees,
-  cohorts,
-  career
+  cohorts
 }
 
 export const WEEK_MS = WEEK

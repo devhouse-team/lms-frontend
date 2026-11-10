@@ -2,6 +2,12 @@
 
 Newest first. One entry per merged change: what changed, for whom, and anything to do.
 
+## 2026-11-10: career steps on the API
+
+- `/career` and the Home career rail read [career](features/career.md) from `GET /me/career` and tick steps with
+  `PUT /me/career/{step}` ([O37](open-items.md)); the in-memory career mock (`/api/career`, `/api/mock/overview`) is gone.
+- Until the backend ships, a failing or 404 read shows "Coming soon" on `/career` and hides the Home rail card. No "Demo data" badge on `/career`.
+
 ## 2026-11-10: backend contracts for career steps and mentoring sessions
 
 - Two new backend asks, docs only, so the in-memory mocks can go: [career-api](features/career-api.md)

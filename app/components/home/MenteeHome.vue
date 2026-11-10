@@ -26,7 +26,7 @@ const summary = computed(() => {
     : t('home.summary', { week: c.week, total: c.totalWeeks, cohort: c.name })
 })
 
-const careerDone = computed(() => data.value?.career.filter(s => s.done).length ?? 0)
+const careerDone = computed(() => data.value?.career?.filter(s => s.done).length ?? 0)
 
 const fmtDate = (iso: string, opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale.value, opts).format(new Date(iso))
 
@@ -151,7 +151,7 @@ async function onContest() {
           <p v-else class="mt-3 text-sm text-muted">{{ t('home.contestNone') }}</p>
         </section>
 
-        <section class="p-4" aria-labelledby="career-title">
+        <section v-if="data.career" class="p-4" aria-labelledby="career-title">
           <div class="flex items-baseline justify-between gap-3">
             <h2 id="career-title" class="text-sm font-semibold text-highlighted">{{ t('home.career') }}</h2>
             <p class="num text-xs text-muted">{{ t('home.careerDone', { done: careerDone, total: data.career.length }) }}</p>

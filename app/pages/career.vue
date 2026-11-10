@@ -7,10 +7,10 @@ useHead({ title: () => `${t('nav.career')} · dev.house` })
 
 // Career steps live on the mentee dashboard payload; reuse its cache key
 const { data, status, refresh } = await useFetch('/api/dashboard/mentee', { key: 'dashboard-mentee' })
-const done = computed(() => data.value?.career.filter(s => s.done).length ?? 0)
+const done = computed(() => data.value?.career?.filter(s => s.done).length ?? 0)
 
 async function toggle(id: string) {
-  const s = data.value?.career.find(x => x.id === id)
+  const s = data.value?.career?.find(x => x.id === id)
   if (!s) return
   s.done = !s.done
   try {
@@ -23,9 +23,10 @@ async function toggle(id: string) {
 </script>
 
 <template>
-  <AppPage mock :title="t('nav.career')">
+  <AppPage :title="t('nav.career')">
     <HomeState :status="status" :has-data="!!data" @retry="refresh()">
-      <div v-if="data" class="mx-auto w-full max-w-2xl space-y-6">
+      <UEmpty v-if="data && !data.career" icon="i-lucide-briefcase" :title="t('common.soon')" :description="t('common.soonText')" class="py-12" />
+      <div v-else-if="data?.career" class="mx-auto w-full max-w-2xl space-y-6">
         <header>
           <h1 class="text-xl font-semibold tracking-tight text-highlighted">{{ t('career.title') }}</h1>
           <p class="mt-1 max-w-prose text-sm text-muted">{{ t('career.subtitle') }}</p>

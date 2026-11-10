@@ -14,10 +14,3 @@ export async function requireMockUser(event: H3Event) {
   const headScope = getHeader(event, 'x-mock-scope') === 'programs' ? 'programs' : getHeader(event, 'x-mock-scope') === 'all' ? 'all' : undefined
   return { user: { id, role, headScope } satisfies MockUser }
 }
-
-/** `scope: 'all'`: head routes a program lead without admin rights may not call (contests) */
-export async function requireMockRole(event: H3Event, role: Role, scope?: 'all') {
-  const { user } = await requireMockUser(event)
-  if (user.role !== role || (scope === 'all' && user.headScope === 'programs')) throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
-  return user
-}

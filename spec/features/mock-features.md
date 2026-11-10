@@ -8,7 +8,6 @@ can vanish between requests).
 
 | Feature | Screens | Mock routes | Backend status |
 |---|---|---|---|
-| Career steps | `/career`, home rail | `PATCH /api/career/[id]` | Contract: [career-api](career-api.md) (O37) |
 | Mentoring sessions | `/sessions` (mentor), `/mentor` (student), rails | `GET /api/sessions`; inside `/api/mentor/profile` and dashboards | S7.3, S7.4; contract: [sessions-api](sessions-api.md) (O38) |
 
 `/mentor` (student) mixes both: the mentor comes from the API, the sessions from the mock (none for real users).

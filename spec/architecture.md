@@ -8,7 +8,7 @@ the API is `https://api.devhouse.kz/api/v1` (same site, so cookies and CORS aren
 ```
 browser ──────────────Bearer──────────────▶ LMS API (api.devhouse.kz)
    │  app/api/router.ts runs app/api/routes/* in the browser; they map API data to view models
-   ├─ /api/mock/*, career, sessions ──▶ Nitro (server/api, in-memory mock)
+   ├─ sessions ──▶ Nitro (server/api, in-memory mock)
    └─ <img>/<a> /api/files/* ──▶ Nitro ──one call──▶ API ──302──▶ signed storage URL
 ```
 
@@ -80,7 +80,7 @@ Role ids differ per database (a local one had 3 and 4): set them per environment
 | `app/api/router.ts` | Routes `$fetch('/api/…')` to those handlers, else to Nitro |
 | `app/api/utils/api.ts`, `session.ts` | API client, token refresh, in-memory session |
 | `app/api/utils/auth.ts`, `lms.ts` | `signIn`, `rolesOf`, `requireRole`; API → view model mapping |
-| `server/api/**` | Nitro: mock features (`career`, `sessions`, `mock`) and `files/*` redirects |
+| `server/api/**` | Nitro: mock features (`sessions`) and `files/*` redirects |
 | `server/utils/db.ts` | Mock store |
 | `shared/types/` | View models (`index.ts`), API types (`api.d.ts`, generated), session types |
 
