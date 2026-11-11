@@ -6,7 +6,7 @@ contract is `../backend/openapi.json` (types in `shared/types/api.d.ts`).
 
 | File | What it answers |
 |---|---|
-| [architecture.md](architecture.md) | How the app is built: Nitro as the API client (BFF), sessions, data mapping, the remaining mock, config. |
+| [architecture.md](architecture.md) | How the app is built: Nitro as the API client (BFF), sessions, data mapping, config. |
 | [features/](features/) | One file per feature: who uses it, screens, behavior, API calls, acceptance criteria. |
 | [open-items.md](open-items.md) | Known gaps and decisions still to make, with owners. |
 | [CHANGELOG.md](CHANGELOG.md) | What changed, when, and why. One entry per merged change. |
@@ -29,8 +29,11 @@ contract is `../backend/openapi.json` (types in `shared/types/api.d.ts`).
 | [Course content](features/course-content.md) (spec, not built): course and lesson pages, materials, markdown with math and code, course editor, assignment modes, exams, solutions | everyone; course editors author | API |
 | [Payments](features/payments.md): monthly billing per student, reminder 7 days before, block when overdue | head manages; student | API (backend pending) |
 | [LeetCode contests](features/contests.md): register, results, attendance, LMS rating, profiles; superuser and LeetCode mentors manage | everyone; superuser and mentors manage | API (registration, results, mentors, rating: backend pending, [contests-api](features/contests-api.md), [leetcode-api](features/leetcode-api.md)) |
-| [Home dashboards](features/dashboards.md) | everyone | API + mock widgets (career, sessions) |
-| [Mock features](features/mock-features.md): external courses (removed by course content Phase 1), career, sessions | everyone | in-memory mock |
+| [Career steps](features/career.md): five-step job-readiness checklist on `/career` and the Home rail | student | API (backend pending, O37) |
+| [Career steps API](features/career-api.md): backend contract for career steps (O37) | backend team | API (backend pending) |
+| [Mentoring sessions](features/sessions.md): mentor schedules, edits and cancels group and 1:1 sessions; students see them | mentor; student | API (backend pending, O38) |
+| [Mentoring sessions API](features/sessions-api.md): backend contract for mentoring sessions (O38) | backend team | API (backend pending) |
+| [Home dashboards](features/dashboards.md) | everyone | API |
 
 ## Spec-driven workflow
 

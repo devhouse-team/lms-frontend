@@ -1,8 +1,7 @@
 # LeetCode contests: mentors, attendance management, LMS rating, participant profile (API)
 
 For the backend team. Tracked as [O36](../open-items.md). Builds on [contests-api](contests-api.md) (O35). UI:
-[contests](contests.md). Executable form of this contract: `scripts/contests-api.check.mjs`
-(asserts it against a backend, `API_BASE=…`) and `scripts/mock-contests-api.mjs` (a stand-in server on :8010).
+[contests](contests.md).
 
 ## Why
 

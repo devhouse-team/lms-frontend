@@ -1,10 +1,11 @@
 import type { components } from '~~/shared/types/api'
-import type { EnrollmentStatus, MentorDashboard, SessionItem } from '~~/shared/types'
+import type { EnrollmentStatus, MentorDashboard } from '~~/shared/types'
 import { defineEventHandler } from '~/api/utils/h3'
+import { mySessions } from '~/api/utils/sessions'
 
 /**
  * Planned and active cohorts only (finished ones are archives), current students only. The waiting queue still
- * includes finished cohorts: mentors close the backlog after the end. Sessions stay mock.
+ * includes finished cohorts: mentors close the backlog after the end. Sessions are read tolerantly (none until the API has them); cancelled ones stay off the rail.
  */
 export default defineEventHandler(async (event): Promise<MentorDashboard> => {
   const user = await requireRole(event, 'mentor')
@@ -14,12 +15,12 @@ export default defineEventHandler(async (event): Promise<MentorDashboard> => {
     listCohorts(event),
     myReviewItems(event, 'submitted'),
     dashboardContest(event),
-    $fetch<SessionItem[]>('/api/sessions')
+    mySessions(event, user.id)
   ])
   return {
     mentor: { name: user.name.split(' ')[0]! },
     reviewQueue: waiting.sort((a, b) => a.at.localeCompare(b.at)),
-    sessions: sessions.slice(0, 4),
+    sessions: (sessions ?? []).filter(s => s.mine && !s.cancelled).slice(0, 4),
     cohorts: cohorts.flatMap((c) => {
       const info = listed.find(x => x.id === c.cohort_id)
       if (!info || info.status === 'finished') return []

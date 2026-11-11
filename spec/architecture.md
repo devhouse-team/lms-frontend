@@ -8,14 +8,13 @@ the API is `https://api.devhouse.kz/api/v1` (same site, so cookies and CORS aren
 ```
 browser ──────────────Bearer──────────────▶ LMS API (api.devhouse.kz)
    │  app/api/router.ts runs app/api/routes/* in the browser; they map API data to view models
-   ├─ /api/mock/*, career, sessions ──▶ Nitro (server/api, in-memory mock)
    └─ <img>/<a> /api/files/* ──▶ Nitro ──one call──▶ API ──302──▶ signed storage URL
 ```
 
 - **The browser is the API's client** (SPA, `ssr: false`). `app/api/router.ts` replaces `globalThis.$fetch`: a
   `/api/…` URL that matches a file in `app/api/routes` runs that handler in the browser (same file naming as Nitro:
   `[id]`, `[...path]`, `.get/.post` suffix). Call sites (`useFetch('/api/cohorts')`) did not change. Anything else
-  goes to Nitro, tagged with `x-mock-user/role/scope` headers.
+  goes to Nitro (the `/api/files/*` redirects).
 - The API must allow this site's origin (CORS, with credentials). `https://lms.devhouse.kz` is allowed.
   There is no proxy, in dev either: for `http://localhost:3000` the backend must allow that origin and issue the refresh
   cookie with `SameSite=None; Secure`, or point `NUXT_PUBLIC_API_BASE` at a local backend.
@@ -52,12 +51,6 @@ them as "already exists / already done": `submission_pending`, `enrollment_exist
 `course_slug_taken`, `invalid_transition`, `not_reviewable`. Use `apiFind()` when 403/404 should mean "nothing here"
 rather than an error.
 
-## The remaining mock
-
-`server/utils/db.ts` is an in-memory store for features with no API yet (see
-[features/mock-features.md](features/mock-features.md)). It is keyed by the real user id (sent in `x-mock-*` headers, no session), resets on restart and is not
-shared between server instances. Pages backed by it pass `mock` to `AppPage`, which shows the "Demo data" badge.
-
 ## Config
 
 | Variable | Default | Purpose |
@@ -80,8 +73,7 @@ Role ids differ per database (a local one had 3 and 4): set them per environment
 | `app/api/router.ts` | Routes `$fetch('/api/…')` to those handlers, else to Nitro |
 | `app/api/utils/api.ts`, `session.ts` | API client, token refresh, in-memory session |
 | `app/api/utils/auth.ts`, `lms.ts` | `signIn`, `rolesOf`, `requireRole`; API → view model mapping |
-| `server/api/**` | Nitro: mock features (`career`, `sessions`, `mock`) and `files/*` redirects |
-| `server/utils/db.ts` | Mock store |
+| `server/api/**` | Nitro: `files/*` redirects |
 | `shared/types/` | View models (`index.ts`), API types (`api.d.ts`, generated), session types |
 
 ## Verifying

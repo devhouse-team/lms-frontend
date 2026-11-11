@@ -3,8 +3,8 @@ import { $fetch as ofetch, FetchError } from 'ofetch'
 import type { components } from '~~/shared/types/api'
 
 /**
- * The browser calls the LMS API directly (CORS-allowed origin); Nitro only serves the mock features and the file
- * redirect. The access token lives in memory (./session.ts), the refresh token in the API's httpOnly cookie.
+ * The browser calls the LMS API directly (CORS-allowed origin); Nitro only serves the file redirect.
+ * The access token lives in memory (./session.ts), the refresh token in the API's httpOnly cookie.
  * Contract: ../backend/spec/integration/frontend.md
  */
 

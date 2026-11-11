@@ -1,7 +1,8 @@
-import type { MentorProfile, SessionItem } from '~~/shared/types'
+import type { MentorProfile } from '~~/shared/types'
 import { defineEventHandler } from '~/api/utils/h3'
+import { mySessions } from '~/api/utils/sessions'
 
-/** Mentor from the API; sessions have no API yet and stay on the mock */
+/** Mentor and sessions from the API; no sessions until the API has them */
 export default defineEventHandler(async (event): Promise<MentorProfile> => {
   const user = await requireRole(event, 'mentee')
   const cohort = (await activeStudentCohorts(event))[0]
@@ -9,6 +10,6 @@ export default defineEventHandler(async (event): Promise<MentorProfile> => {
   return {
     mentor: mentor ? { ...person(mentor), title: '' } : null,
     cohortName: cohort?.cohort_name ?? '—',
-    sessions: await $fetch<SessionItem[]>('/api/sessions')
+    sessions: (await mySessions(event, user.id) ?? []).filter(s => !s.mine)
   }
 })

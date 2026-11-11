@@ -156,8 +156,7 @@ back"; same as backend decision 19), practice is out of the review queue unless 
 
 ## Routes
 
-The nav item "Courses" (`nav.courses`) today opens the **mock** external-courses tracker. It is replaced by real
-courses for every role (Phase 1); the mock goes away (see [Mock removal](#mock-removal)).
+The nav item "Courses" (`nav.courses`) opens real courses for every role (Phase 1); the mock is gone (see [Mock removal](#mock-removal)).
 
 | Route | Who | What it shows / does | Phase |
 |---|---|---|---|
@@ -760,7 +759,7 @@ Phase 1 removes the external-courses mock: `app/pages/courses.vue` (rewritten as
 `server/api/courses/**` (mock routes), `db.courses`, `CoursesList.vue`, `CourseStatusControl.vue`, the course
 status part of `useStudentDashboard`, and the "External courses" list on the student home, which becomes "My
 courses" (real courses with "{done} / {released} lessons" and the next lesson). `QueueList`'s empty-state link to
-`/courses` stays valid. [Mock features](mock-features.md) loses the row; DESIGN.md retires the Course Status
+`/courses` stays valid. Mock features loses the row; DESIGN.md retires the Course Status
 Control.
 
 ## API

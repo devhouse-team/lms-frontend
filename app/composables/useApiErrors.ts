@@ -1,8 +1,8 @@
 /**
- * API error codes → messages under `<ns>.err.<code>` (specs cohorts.md and programs.md, Errors). Pages switch on the
+ * API error codes → messages under `<ns>.err.<code>` (specs cohorts.md, programs.md and sessions-api.md, Errors). Pages switch on the
  * code, never on the HTTP status: Nitro turns some 422s into 409. Unknown codes fall back to common.saveError.
  */
-export function useApiErrors(ns: 'cohorts' | 'programs' | 'content' | 'contest') {
+export function useApiErrors(ns: 'cohorts' | 'programs' | 'content' | 'contest' | 'sessions') {
   const { t, te } = useI18n()
   const toast = useToast()
 
@@ -29,3 +29,4 @@ export function useApiErrors(ns: 'cohorts' | 'programs' | 'content' | 'contest')
 export const useCohortErrors = () => useApiErrors('cohorts')
 export const useProgramErrors = () => useApiErrors('programs')
 export const useContestErrors = () => useApiErrors('contest')
+export const useSessionErrors = () => useApiErrors('sessions')

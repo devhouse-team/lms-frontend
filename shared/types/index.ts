@@ -16,7 +16,7 @@ export type QueueKind = 'session' | 'assignment' | 'quiz' | 'feedback' | 'contes
 
 export interface Mentor extends Person {
   role: string
-  /** Absent until mentoring sessions exist in the backend */
+  /** Absent while the student has no upcoming session with this cohort's mentor (or the API has no sessions yet) */
   nextSessionAt?: string
 }
 
@@ -69,8 +69,10 @@ export interface Contest {
   registered: boolean
 }
 
+export type CareerStepId = 'cv' | 'github' | 'linkedin' | 'mock' | 'apply'
+
 export interface CareerStep {
-  id: string
+  id: CareerStepId
   done: boolean
 }
 
@@ -84,7 +86,8 @@ export interface StudentDashboard {
   nextUp: QueueItem | null
   queue: QueueItem[]
   contest: Contest | null
-  career: CareerStep[]
+  /** null while the API has no career steps yet */
+  career: CareerStep[] | null
 }
 
 /* ---------- mentor ---------- */
@@ -98,11 +101,22 @@ export interface ReviewItem {
   to: string
 }
 
+/** A mentoring session (spec features/sessions.md). `with` is the other side as the viewer sees it: the student or the cohort for a mentor, the mentor for a student. */
 export interface SessionItem {
   id: string
   kind: 'group' | 'one'
   at: string
   with: string
+  cohortId: string
+  cohortName: string
+  /** Only for `one` */
+  studentId?: string
+  durationMin: number
+  link?: string
+  note?: string
+  cancelled: boolean
+  /** The viewer runs it as mentor (a user can be mentor in one cohort and student in another) */
+  mine: boolean
 }
 
 export interface MenteeProgress extends Person {
@@ -1039,9 +1053,4 @@ export interface BillingPayment {
   paidAt: string
   recordedBy: string
   note: string | null
-}
-
-/** Career data that still comes from Nitro's mock store (`/api/mock/overview`) */
-export interface MockOverview {
-  career: CareerStep[]
 }

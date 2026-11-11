@@ -10,7 +10,7 @@ const fmt = (iso: string) => new Intl.DateTimeFormat(locale.value, { weekday: 'l
 </script>
 
 <template>
-  <AppPage mock :title="t('nav.mentor')">
+  <AppPage :title="t('nav.mentor')">
     <HomeState :status="status" :has-data="!!data" @retry="refresh()">
       <div v-if="data" class="mx-auto w-full max-w-2xl space-y-8">
         <header v-if="data.mentor" class="flex items-center gap-4">
@@ -28,13 +28,16 @@ const fmt = (iso: string) => new Intl.DateTimeFormat(locale.value, { weekday: 'l
           <ul v-if="data.sessions.length" class="divide-y divide-default rounded-lg ring-1 ring-inset ring-default">
             <li v-for="s in data.sessions" :key="s.id" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
               <UIcon :name="s.kind === 'group' ? 'i-lucide-users' : 'i-lucide-user'" class="size-4 shrink-0 text-muted" />
-              <span class="min-w-0 flex-1 text-sm text-highlighted">{{ t(`sessions.kind.${s.kind}`) }}</span>
-              <span class="num text-xs text-muted">{{ fmt(s.at) }}</span>
-              <span class="num w-16 text-right text-xs text-muted">{{ left(s.at) }}</span>
+              <span class="min-w-0 flex-1 text-sm text-highlighted" :class="{ 'line-through decoration-dimmed': s.cancelled }">{{ t(`sessions.kind.${s.kind}`) }}</span>
+              <span class="num text-xs text-muted" :class="{ 'line-through decoration-dimmed': s.cancelled }">{{ fmt(s.at) }}</span>
+              <UBadge v-if="s.cancelled" :label="t('sessions.cancelledBadge')" color="neutral" variant="subtle" size="sm" />
+              <template v-else>
+                <UButton v-if="s.link" :href="s.link" target="_blank" rel="noopener" icon="i-lucide-video" :label="t('sessions.join')" color="neutral" variant="outline" size="xs" />
+                <span class="num w-16 text-right text-xs text-muted">{{ left(s.at) }}</span>
+              </template>
             </li>
           </ul>
           <p v-else class="text-sm text-muted">{{ t('mentor.noSessions') }}</p>
-          <p class="mt-3 text-xs text-muted">{{ t('sessions.mockNote') }}</p>
         </section>
 
         <section aria-labelledby="c-title" class="rounded-lg p-4 ring-1 ring-inset ring-default">

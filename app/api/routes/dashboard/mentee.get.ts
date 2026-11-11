@@ -1,21 +1,24 @@
 import type { components } from '~~/shared/types/api'
-import type { MockOverview, QueueItem, StudentDashboard } from '~~/shared/types'
+import type { QueueItem, StudentDashboard } from '~~/shared/types'
 import { defineEventHandler } from '~/api/utils/h3'
+import { myCareer } from '~/api/utils/career'
+import { mySessions, nextSessionAt } from '~/api/utils/sessions'
 
 type S = components['schemas']
 
 /**
- * Cohort, mentor, deadlines and the next contest come from the API; career stays on the mock.
+ * Cohort, mentor, deadlines and the next contest come from the API; career and the mentor's next session are read tolerantly (`null` / absent until the API has them).
  * The current cohort is the active one, else a planned one (the API lists active enrollments in either);
  * finished cohorts the student completed are the archive.
  */
 export default defineEventHandler(async (event): Promise<StudentDashboard> => {
   const user = await requireRole(event, 'mentee')
-  const [cohorts, listed, completed, mock, contest] = await Promise.all([
+  const [cohorts, listed, completed, career, sessions, contest] = await Promise.all([
     apiFetch<S['StudentCohort'][]>(event, '/dashboard/student'),
     listCohorts(event),
     completedStudentCohorts(event),
-    $fetch<MockOverview>('/api/mock/overview'),
+    myCareer(event),
+    mySessions(event, user.id),
     dashboardContest(event)
   ])
   const statusOf = (id: number) => listed.find(x => x.id === id)?.status
@@ -40,7 +43,7 @@ export default defineEventHandler(async (event): Promise<StudentDashboard> => {
 
   return {
     student: { name: user.name.split(' ')[0]! },
-    mentor: mentor ? { ...person(mentor), role: '' } : null,
+    mentor: mentor ? { ...person(mentor), role: '', nextSessionAt: nextSessionAt(sessions, String(c!.cohort_id)) } : null,
     cohort: c && info
       ? { id: String(c.cohort_id), name: c.cohort_name, program: programs.get(c.program_id)!, ...cohortTiming(info), members: info.active_students }
       : null,
@@ -51,6 +54,6 @@ export default defineEventHandler(async (event): Promise<StudentDashboard> => {
       ...(feedback ? [{ id: 'feedback', kind: 'feedback' as const, title: '', titleKey: 'queue.feedback', count: feedback, to: '/assignments' }] : [])
     ],
     contest: contest && { slug: contest.slug, title: contest.title, at: contest.at, registered: contest.registered },
-    career: mock.career
+    career: career ?? null
   }
 })

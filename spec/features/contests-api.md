@@ -1,7 +1,6 @@
 # LeetCode contests: registration, stored results, attendance (API)
 
-For the backend team. Tracked as [O35](../open-items.md). UI: [contests](contests.md). Executable form of this
-contract: `scripts/mock-contests-api.mjs` (a stand-in server) and `scripts/contests-api.check.mjs` (asserts it).
+For the backend team. Tracked as [O35](../open-items.md). UI: [contests](contests.md).
 
 ## Why
 
